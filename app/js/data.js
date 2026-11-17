@@ -280,16 +280,20 @@ const DB = {
 /* ==========================================================================
    শ্রীমদ্ভগবদ্গীতা — সম্পূর্ণ পাঠ সংযুক্তি
    js/gita.js   : মূল সংস্কৃত পাঠ (৭০১ শ্লোক, ১৮ অধ্যায়)
-   js/gita-bn.js: বাংলা অনুবাদ ও সহজ ভাষ্য (ধাপে ধাপে পূর্ণ হচ্ছে)
+   js/gita-bn.js : বাংলা অনুবাদ ও সহজ অর্থ (৭০১ শ্লোক)
+   js/gita-katha.js: প্রতি শ্লোকের উদাহরণ-কথা ও জীবনে প্রয়োগ
    ========================================================================== */
 (function () {
   if (typeof GITA_VERSES === 'undefined') return;
   const g = DB.books.find(b => b.id === 'gita');
   if (!g) return;
   const BN = (typeof GITA_BN !== 'undefined') ? GITA_BN : {};
+  const KT = (typeof GITA_KATHA !== 'undefined') ? GITA_KATHA : {};
   g.texts = GITA_VERSES.map(v => {
     const t = BN[v.ch + ':' + v.v] || {};
-    return { ch: v.ch, v: v.v, sk: v.sk, dev: v.dev || '', bn: t.bn || '', arth: t.arth || '' };
+    const kt = KT[v.ch + ':' + v.v] || {};
+    return { ch: v.ch, v: v.v, sk: v.sk, dev: v.dev || '', bn: t.bn || '', arth: t.arth || '',
+      katha: kt.katha || '', prayog: kt.prayog || '', ksrc: kt.src || '' };
   });
   g.verses = g.texts.length;
   g.chapterMeta = (typeof GITA_CHAPTERS !== 'undefined') ? GITA_CHAPTERS : null;

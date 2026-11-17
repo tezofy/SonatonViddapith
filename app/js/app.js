@@ -33,7 +33,7 @@
 
   const S = {
     name: store.get('name', 'সৌরভ চক্রবর্তী'),
-    theme: store.get('theme', 'dark'),
+    theme: store.get('theme', 'light'),
     sound: store.get('sound', false),
     motion: store.get('motion', true),
     font: store.get('font', 17),
@@ -61,7 +61,8 @@
     sessions: store.get('sessions', []),
     asanaDone: store.get('asanaDone', {}),
     daily: store.get('daily', {}),
-    script: store.get('script', 'bn')
+    script: store.get('script', 'bn'),
+    notes: store.get('notes', [])
   };
   const save = k => store.set(k, S[k]);
 
@@ -73,7 +74,10 @@
     sadhanaTab: 'japa',
     med: { mins: 10, left: 600, running: false, phase: '' }, medTimer: null,
     seq: { i: 0, left: 20, running: false }, seqTimer: null,
-    panjika: { y: TODAY.getFullYear(), m: TODAY.getMonth() + 1, day: TODAY_KEY, view: 'bn', by: null, bm: null }
+    panjika: { y: TODAY.getFullYear(), m: TODAY.getMonth() + 1, day: TODAY_KEY, view: 'bn', by: null, bm: null },
+    noteQ: '', noteTag: 'সব', noteCtx: null,
+    note: { text: '', tags: [], ctx: null, edit: null },
+    sheet: false
   };
 
   /* --------------------------------------------------------------- icons  */
@@ -103,6 +107,7 @@
   <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3.4 19 6v6c0 4.3-3 7.2-7 8.6-4-1.4-7-4.3-7-8.6V6z"/><path d="m9.2 12 2 2 3.6-3.8"/></symbol>
   <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M7.6 4.6h8.8v4.2a4.4 4.4 0 0 1-8.8 0z"/><path d="M7.6 6H5a2.4 2.4 0 0 0 2.6 2.4M16.4 6H19a2.4 2.4 0 0 1-2.6 2.4M12 13.2V17M8.6 20h6.8"/></symbol>
   <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-pen" viewBox="0 0 24 24"><path d="M4.6 19.4l1-4.2L16.1 4.7l3.2 3.2L8.8 18.4z"/><path d="m14.3 6.5 3.2 3.2"/></symbol>
   <symbol id="i-om" viewBox="0 0 24 24"><path d="M7 17c-2.2 0-3.4-1.4-3.4-3.2 0-1.8 1.3-3 3-3"/><path d="M6.6 10.8c0-2.4 1.9-4.1 4.2-4.1 2 0 3.4 1.2 3.4 3 0 1.6-1 2.6-2.4 2.6"/><path d="M11.8 12.4c1.6 0 2.7 1.1 2.7 2.6 0 2-2 3.4-4.6 3.4-1.6 0-3-.4-4.1-1.1"/><path d="M7.6 6.3c.9-.6 2.3-.9 3.6-.6"/><path d="M14.6 7.6c1.6.5 2.6 1.8 2.6 3.4 0 1.4-.7 2.6-1.8 3.3"/></symbol>
   <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.2 8.2 0 0 1 9.5 4a8.4 8.4 0 1 0 10.5 10.5z"/></symbol>
   <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h11"/></symbol>
@@ -218,12 +223,13 @@
   }
 
   /* ---------------------------------------------------------------- header */
-  function appbar(title, subText, backTo, withTheme) {
+  function appbar(title, subText, backTo, withTheme, subBelow) {
     return `<header class="appbar"><div class="row">
       ${backTo ? `<button class="iconbtn" data-act="nav" data-to="${backTo}" aria-label="ফিরে যান">${ico('back')}</button>` : ''}
       <div style="flex:1;min-width:0">
-        ${subText ? `<div class="eyebrow">${subText}</div>` : ''}
+        ${subText && !subBelow ? `<div class="eyebrow">${subText}</div>` : ''}
         <h3>${title}</h3>
+        ${subText && subBelow ? `<div class="sub">${subText}</div>` : ''}
       </div>
       ${withTheme ? themeBtn() : ''}</div></header>`;
   }
@@ -315,6 +321,9 @@
           <div class="mini muted" style="margin-top:6px">${bn(lv.idx + 1)}/${bn(book.texts.length)} শ্লোক · ৩ মিনিট বাকি</div>
         </div>
       </div>
+
+      <button class="btn ghost block mt" data-act="openNotes" style="justify-content:space-between">
+        <span>${ico('pen', 'sm')} আমার নোট</span><span class="tiny muted">${bn(S.notes.length)} ›</span></button>
 
       <div class="sect"><h4>আজকের সাধনা</h4><div class="line"></div><span class="mini muted">${bn(doneCount)}/৩</span></div>
       <div class="card pad" style="padding:4px 14px">
@@ -446,19 +455,43 @@
   }
 
   /* ------------------------------------------------- 3½. গীতা: অধ্যায় সূচি */
+  /* ------------------------------------------------- 3¼. কে বলছেন, কে শুনছেন */
+  const SPK = {
+    krishna: { name: 'শ্রীভগবান উবাচ', short: 'শ্রীভগবান', to: 'ভগবান শ্রীকৃষ্ণ অর্জুনকে বলছেন', cls: 'k' },
+    arjuna: { name: 'অর্জুন উবাচ', short: 'অর্জুন', to: 'অর্জুন শ্রীকৃষ্ণের কাছে বলছেন', cls: 'a' },
+    sanjaya: { name: 'সঞ্জয় উবাচ', short: 'সঞ্জয়', to: 'সঞ্জয় ধৃতরাষ্ট্রকে বলছেন', cls: 's' },
+    dhritarashtra: { name: 'ধৃতরাষ্ট্র উবাচ', short: 'ধৃতরাষ্ট্র', to: 'ধৃতরাষ্ট্র সঞ্জয়কে বলছেন', cls: 'd' }
+  };
+  const spkOf = (ch, v) => (typeof GITA_SPEAKER !== 'undefined' && GITA_SPEAKER[ch + ':' + v]) || '';
+  const spkName = (ch, v) => { const x = SPK[spkOf(ch, v)]; return x ? x.name : ''; };
+  /* শ্লোকের উপরে শ্রদ্ধার সঙ্গে বক্তার নাম — “শ্রীভগবান উবাচ” ধাঁচে */
+  const spkLine = (ch, v) => {
+    const x = SPK[spkOf(ch, v)]; if (!x) return '';
+    return `<div class="uvacha ${x.cls}">
+        <div class="u-row"><span class="u-orn">॥</span><span class="u-name">${esc(x.name)}</span><span class="u-orn">॥</span></div>
+        <div class="u-sub">${esc(x.to)}</div>
+      </div>`;
+  };
+  const spkTag = (ch, v) => {
+    const x = SPK[spkOf(ch, v)]; if (!x) return '';
+    return `<span class="utag ${x.cls}">${esc(x.short)}</span>`;
+  };
+
   const GITA_BOOK = () => DB.books.find(b => b.id === 'gita');
   const gitaMeta = () => { const b = GITA_BOOK(); return (b && b.chapterMeta) || []; };
   const gitaBnCount = () => { const b = GITA_BOOK(); return b ? b.texts.filter(t => t.bn).length : 0; };
+  const gitaKathaCount = () => { const b = GITA_BOOK(); return b ? b.texts.filter(t => t.katha).length : 0; };
 
   function gitaScreen() {
     const b = GITA_BOOK();
     const meta = gitaMeta();
     const total = b ? b.texts.length : 0;
     const done = gitaBnCount();
+    const kcount = gitaKathaCount();
     const pct = total ? Math.round(done / total * 100) : 0;
     const q = U.gitaQ.trim().toLowerCase();
     const hits = q && b ? b.texts.map((t, i) => ({ t, i })).filter(x =>
-      (x.t.bn + ' ' + x.t.sk + ' ' + x.t.arth).toLowerCase().includes(q)).slice(0, 30) : [];
+      (x.t.bn + ' ' + x.t.sk + ' ' + x.t.arth + ' ' + (x.t.katha || '') + ' ' + (x.t.prayog || '')).toLowerCase().includes(q)).slice(0, 30) : [];
 
     return `${appbar('শ্রীমদ্ভগবদ্গীতা', `${bn(18)} অধ্যায় · ${bn(total)} শ্লোক`, '#/library', true)}
     <div class="pad" style="padding-top:0">
@@ -468,6 +501,7 @@
           <span class="pill ok">${bn(pct)}%</span></div>
         <div class="bar mt"><i style="width:${pct}%"></i></div>
         <div class="kv mini muted" style="margin-top:7px"><span>বাংলা অনুবাদ হয়েছে ${bn(done)}টি শ্লোকে</span><span>বাকি ${bn(total - done)}টি</span></div>
+        <div class="kv mini muted" style="margin-top:4px"><span>উদাহরণ-কথা + জীবনে প্রয়োগ</span><span>${bn(kcount)}/${bn(total)} শ্লোক</span></div>
       </div>
 
       <div class="search mt">${ico('search', 'sm')}<input id="gitaSearch" placeholder="শ্লোক খুঁজুন — বাংলা অর্থ বা সংস্কৃত শব্দ…" value="${esc(U.gitaQ)}" aria-label="গীতায় খুঁজুন"/></div>
@@ -481,18 +515,19 @@
         : `<div class="sect"><h4>১৮ অধ্যায়</h4><div class="line"></div><span class="mini muted">শ্লোক সংখ্যা</span></div>
         ${meta.map(m => {
           const doneCh = b.texts.filter(t => t.ch === m.n && t.bn).length;
-          const all = doneCh === m.count;
+          const kathCh = b.texts.filter(t => t.ch === m.n && t.katha).length;
+          const all = kathCh === m.count;
           return `<div class="card rowcard stack" data-act="nav" data-to="#/gita/${m.n}" role="button" tabindex="0" style="cursor:pointer">
             <div class="datebox" style="width:44px;height:48px"><b>${bn(m.n)}</b><i>অধ্যায়</i></div>
             <div style="flex:1;min-width:0">
               <div class="kv"><span class="ttl" style="font-size:12.6px">${esc(m.name)}</span>
                 <span class="pill ${all ? 'ok' : ''}">${bn(m.count)} শ্লোক</span></div>
               <div class="mini muted" style="margin-top:5px;line-height:1.6">${esc(m.sum.slice(0, 78))}…</div>
-              ${doneCh ? `<div class="tiny muted" style="margin-top:5px">অনুবাদ ${bn(doneCh)}/${bn(m.count)}</div>` : ''}
+              <div class="tiny muted" style="margin-top:5px">${doneCh ? `অনুবাদ ${bn(doneCh)}/${bn(m.count)}` : ''}${kathCh ? ` · কথা ${bn(kathCh)}/${bn(m.count)}` : ''}</div>
             </div>${ico('arrow', 'sm')}</div>`;
         }).join('')}
 
-        <p class="mini muted" style="margin-top:16px;line-height:1.75">মূল সংস্কৃত পাঠ সম্পূর্ণ ও দুই উৎস মিলিয়ে যাচাই করা (৭০১টি শ্লোকের ৬৭৮টি হুবহু মিলেছে; বাকিগুলো ভিন্ন-পাঠ)। শ্লোকগুলো <b>বাংলা লিপিতে</b> দেখা যায় — রিডারে চাইলে দেবনাগরীতেও বদলানো যায়। কোনো সংস্করণে ১৩শ অধ্যায়ে ৩৪, কোনোতে ৩৫ শ্লোক। বাংলা অনুবাদ ও সহজ ভাষ্য ধাপে ধাপে যোগ হচ্ছে; প্রকাশের আগে পণ্ডিত-পর্যালোচনা বাঞ্ছনীয়।</p>`}
+        <p class="mini muted" style="margin-top:16px;line-height:1.75">মূল সংস্কৃত পাঠ সম্পূর্ণ ও দুই উৎস মিলিয়ে যাচাই করা (৭০১টি শ্লোকের ৬৭৮টি হুবহু মিলেছে; বাকিগুলো ভিন্ন-পাঠ)। শ্লোকগুলো <b>বাংলা লিপিতে</b> দেখা যায় — রিডারে চাইলে দেবনাগরীতেও বদলানো যায়। কোনো সংস্করণে ১৩শ অধ্যায়ে ৩৪, কোনোতে ৩৫ শ্লোক। প্রতিটি শ্লোকের সঙ্গে <b>বাংলা অনুবাদ ও সহজ অর্থ</b> সম্পূর্ণ (৭০১/৭০১)। এর সঙ্গে ধাপে ধাপে যোগ হচ্ছে <b>উদাহরণ-কথা</b> — শাস্ত্রীয় বা বাস্তব জীবনের গল্প, আর তার নীচে <b>জীবনে প্রয়োগ</b>। অনুবাদ ও গল্প সাধারণ পাঠকের জন্য সহজ ভাষায় লেখা; প্রকাশের আগে পণ্ডিত-পর্যালোচনা বাঞ্ছনীয়।</p>`}
     </div><div style="height:20px"></div>`;
   }
 
@@ -502,7 +537,8 @@
     const m = gitaMeta().find(x => x.n === n) || { n, name: 'অধ্যায় ' + n, count: 0, sum: '' };
     const items = b.texts.map((t, i) => ({ t, i })).filter(x => x.t.ch === n);
     const doneCh = items.filter(x => x.t.bn).length;
-    return `${appbar(`অধ্যায় ${bn(n)} · ${m.name}`, `${bn(m.count)} শ্লোক · অনুবাদ ${bn(doneCh)}`, '#/gita', true)}
+    const kathCh = items.filter(x => x.t.katha).length;
+    return `${appbar(`অধ্যায় ${bn(n)} · ${m.name}`, `${bn(m.count)} শ্লোক · অনুবাদ ${bn(doneCh)} · কথা ${bn(kathCh)}`, '#/gita', true)}
     <div class="pad" style="padding-top:0">
       <div class="card oath pad">
         <div class="mini muted">${esc(m.sum)}</div>
@@ -516,6 +552,8 @@
           <div style="flex:1;min-width:0">
             <div class="mini" style="color:var(--ink-2);margin-bottom:4px">${esc(first.slice(0, 46))}…</div>
             <div class="tiny muted">${t.bn ? esc(t.bn.slice(0, 60)) + '…' : 'বাংলা অনুবাদ যুক্ত হচ্ছে'}</div>
+            <div class="tiny" style="margin-top:5px;display:flex;gap:6px;align-items:center">${spkTag(t.ch, t.v)}</div>
+            ${t.katha ? `<div class="tiny" style="margin-top:5px;color:var(--gold-300)">কথা · ${esc(t.ksrc || 'উদাহরণ')}</div>` : ''}
           </div>${ico('arrow', 'sm')}</div>`;
       }).join('')}
       <div style="display:flex;gap:9px;margin-top:14px">
@@ -533,33 +571,40 @@
     const k = `${b.id}:${i}`;
     const saved = S.bookmarks.includes(k);
     const hasCh = !!b.chapterMeta;
-    return `${appbar(b.title, `অধ্যায় ${bn(t.ch)} · শ্লোক ${bn(t.v)}`, hasCh ? '#/gita/' + t.ch : '#/book/' + b.id)}
+    return `${appbar(b.title, `অধ্যায় ${bn(t.ch)} · শ্লোক ${bn(t.v)}`, hasCh ? '#/gita/' + t.ch : '#/book/' + b.id, false, true)}
     <div class="pad">
-      <div class="prefbar">
-        <span>ফন্ট</span>
-        <div class="grp">
-          <b data-act="font" data-d="-1">অ−</b><b class="on">${bn(S.font)}</b><b data-act="font" data-d="1">অ+</b>
-        </div>
-        <div style="flex:1"></div>
-        <div class="grp"><b class="${S.theme === 'dark' ? 'on' : ''}" data-act="themeSet" data-v="dark">ডার্ক</b>
-          <b class="${S.theme === 'light' ? 'on' : ''}" data-act="themeSet" data-v="light">পাটা</b></div>
-        ${t.dev ? `<div class="grp" style="margin-left:8px"><b class="${S.script === 'bn' ? 'on' : ''}" data-act="scriptSet" data-v="bn">বাংলা লিপি</b>
-          <b class="${S.script === 'dev' ? 'on' : ''}" data-act="scriptSet" data-v="dev">দেবনাগরী</b></div>` : ''}
-      </div>
+      ${t.dev ? `<div class="prefbar" style="justify-content:center">
+        <div class="grp"><b class="${S.script === 'bn' ? 'on' : ''}" data-act="scriptSet" data-v="bn">বাংলা লিপি</b>
+          <b class="${S.script === 'dev' ? 'on' : ''}" data-act="scriptSet" data-v="dev">দেবনাগরী</b></div>
+      </div>` : ''}
 
       <div class="card oath verse">
         <div class="vnum"><span class="l"></span><b>শ্লোক ${bn(t.ch)}.${bn(t.v)}</b><span class="l r"></span></div>
+        ${spkLine(t.ch, t.v)}
         <div class="sk" style="font-size:${S.font}px">${(S.script === 'dev' && t.dev ? t.dev : t.sk).split('\n').map(esc).join('<br/>')}
           <div class="mini muted" style="text-align:right;margin-top:8px;font-size:10.5px">॥ ${bn(t.ch)}।${bn(t.v)} ॥</div></div>
         <div class="bn"><span class="lbl">বাংলা অনুবাদ</span>${esc(t.bn)}</div>
         <div class="arth"><b style="color:var(--gold-300)">সহজ অর্থ ·</b> ${esc(t.arth)}</div>
       </div>
 
+      ${t.katha ? `<div class="card oath pad katha">
+        <div class="kv" style="align-items:center">
+          <div style="font-family:var(--f-dis);font-size:13.6px;color:var(--gold-200)">উদাহরণ-কথা</div>
+          <span class="pill">${esc(t.ksrc || 'উদাহরণ')}</span>
+        </div>
+        <p class="ktext">${esc(t.katha)}</p>
+        ${t.prayog ? `<div class="prayog"><b>জীবনে প্রয়োগ ·</b> ${esc(t.prayog)}</div>` : ''}
+        <div class="tiny muted" style="margin-top:10px;line-height:1.7">কথাটি শ্লোকের ভাব অনুসরণ করে লেখা — শাস্ত্রীয় ঘটনা বা দৈনন্দিন জীবনের দৃষ্টান্ত; উদ্দেশ্য কেবল শিক্ষা, বিনোদন নয়।</div>
+      </div>` : `<div class="card pad"><div class="mini muted">এই শ্লোকের উদাহরণ-কথা এখনো যুক্ত হয়নি — ধাপে ধাপে যোগ হচ্ছে।</div></div>`}
+
       <div style="display:flex;gap:9px;margin-top:14px">
         <button class="btn ghost" style="flex:1" data-act="nav" data-to="#/reader/${b.id}/${i - 1}" ${i === 0 ? 'disabled' : ''}>আগের</button>
         <button class="btn ghost" style="width:52px;padding:0" data-act="bookmark" data-i="${i}" aria-label="বুকমার্ক">${ico('mark', 'sm')}</button>
+        <button class="btn ghost" style="width:52px;padding:0" data-act="noteFromReader" data-i="${i}" aria-label="এই শ্লোকের নোট">${ico('pen', 'sm')}</button>
         <button class="btn gold" style="flex:1.3" data-act="markread" data-i="${i}">${S.read[k] ? 'পঠিত ✓' : 'পাঠ সম্পন্ন'}</button>
       </div>
+      ${(() => { const c = S.notes.filter(n => n.ctx && n.ctx.book === b.id && n.ctx.idx === i).length;
+        return c ? `<button class="btn ghost block mt" data-act="openNotes">${ico('pen', 'sm')} এই শ্লোকে ${bn(c)}টি নোট আছে</button>` : ''; })()}
       <button class="btn ghost block mt" data-act="nav" data-to="#/reader/${b.id}/${i + 1}" ${i === b.texts.length - 1 ? 'disabled' : ''}>পরের শ্লোক ${ico('arrow', 'sm')}</button>
       ${hasCh ? `<button class="btn ghost block mt" data-act="nav" data-to="#/gita/${t.ch}">অধ্যায় ${bn(t.ch)}-এর সব শ্লোক ▸</button>` : ''}
       ${saved ? '<p class="mini muted" style="text-align:center;margin-top:10px">বুকমার্ক করা আছে · লাইব্রেরিতে দেখুন</p>' : ''}
@@ -1690,6 +1735,156 @@
   }
 
   /* =====================================================================
+     ＋ প্যানেল — দৈনন্দিন জীবনের ট্র্যাক, পয়েন্টে হিসাবে
+     ===================================================================== */
+  function quickSheetHTML() {
+    const e = entryFor(TODAY_KEY);
+    const auto = todayAuto();
+    const sc = scoreOf(e, auto);
+    const pillars = [['আধ্যাত্মিক', sc.sadhana], ['চরিত্র', sc.charitra], ['কর্ম', sc.karma], ['জীবন', sc.jibon]];
+    return `<div class="sheet-bg" data-act="sheetClose" aria-hidden="true"></div>
+    <div class="sheet" role="dialog" aria-modal="true" aria-label="আজকের হিসাব ও নোট">
+      <div class="grab"></div>
+      <div class="kv" style="align-items:flex-start">
+        <div>
+          <div class="mini muted">আজকের হিসাব · দৈনন্দিন ট্র্যাক</div>
+          <div class="display" style="font-size:20px;color:var(--gold-200);margin-top:4px">${bn(sc.total)} <span class="tiny muted" style="font-family:var(--f-body)">/ ১০০ পয়েন্ট</span></div>
+        </div>
+        <button class="iconbtn" data-act="sheetClose" aria-label="বন্ধ করুন">${ico('close')}</button>
+      </div>
+      <div class="grid2" style="margin-top:12px">
+        ${pillars.map(([n, v]) => `<div class="stat"><div class="k">${n}</div>
+          <div class="v" style="font-size:12.5px">${bn(v)}<span class="tiny muted">/১০০</span></div>
+          <div class="bar thin" style="margin-top:6px"><i style="width:${v}%"></i></div></div>`).join('')}
+      </div>
+
+      <div class="sheet-list">
+        ${stepper('puja', 'নিত্য পূজা', e.puja, 5, 'মিনিট')}
+        ${stepper('japaExtra', 'জপ', e.japaExtra, 1, 'মালা', `অ্যাপে ${bn(auto.japa)} জপ`)}
+        ${stepper('dhyanaExtra', 'ধ্যান', e.dhyanaExtra, 5, 'মিনিট', `অ্যাপে ${bn(auto.dhyana)} মিনিট`)}
+        ${stepper('pathMin', 'শাস্ত্র পাঠ', e.pathMin, 5, 'মিনিট')}
+        ${stepper('daanTaka', 'দান', e.daanTaka, 50, '৳')}
+        ${stepper('daanMin', 'সেবায় সময়', e.daanMin, 5, 'মিনিট')}
+        ${stepper('workMin', 'কর্ম', e.workMin, 15, 'মিনিট')}
+        ${stepper('familyMin', 'পরিবারের সঙ্গে', e.familyMin, 15, 'মিনিট')}
+        ${stepper('lies', 'মিথ্যা বলা', e.lies, 1, 'বার')}
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn gold" style="flex:1.3" data-act="noteNew">${ico('pen', 'sm')} নোট লিখুন</button>
+        <button class="btn ghost" style="flex:1" data-act="nav" data-to="#/track">পূর্ণ হিসাব ›</button>
+      </div>
+      <p class="tiny muted" style="text-align:center;margin:10px 0 0;line-height:1.7">প্রতিটি কাজ পয়েন্টে গোনা হয় — আধ্যাত্মিক ৪০%, চরিত্র ২৫%, কর্ম ২০%, জীবন ১৫%</p>
+    </div>`;
+  }
+  function openSheet() {
+    const host = document.getElementById('sheetHost');
+    if (!host) return;
+    host.innerHTML = quickSheetHTML();
+    host.classList.add('on');
+    U.sheet = true;
+  }
+  function refreshSheet() { if (U.sheet) openSheet(); }
+  function closeSheet() {
+    const host = document.getElementById('sheetHost');
+    if (host) { host.classList.remove('on'); host.innerHTML = ''; }
+    U.sheet = false;
+  }
+
+  /* =====================================================================
+     নোট — পড়ার পাশাপাশি লিখে রাখা, ট্যাগ ও তারিখ ধরে সাজানো
+     ===================================================================== */
+  const NOTE_TAGS = ['শ্লোক', 'প্রশ্ন', 'সাধনা', 'প্রার্থনা', 'পূজা', 'অনুপ্রেরণা', 'কথা'];
+  const noteCtxLabel = ctx => {
+    if (!ctx) return '';
+    const b = DB.books.find(x => x.id === ctx.book);
+    let l = b ? b.title : 'পাঠ';
+    if (ctx.ch) l += ' · অধ্যায় ' + bn(ctx.ch);
+    if (ctx.v) l += ' · শ্লোক ' + bn(ctx.v);
+    return l;
+  };
+  const noteDayLabel = d => {
+    const t = new Date();
+    if (d === key(t)) return 'আজ';
+    const y = new Date(t); y.setDate(y.getDate() - 1);
+    if (d === key(y)) return 'গতকাল';
+    const dd = new Date(d + 'T00:00:00');
+    if (isNaN(dd.getTime())) return d;
+    return `${bn(dd.getDate())} ${BN_MONTH[dd.getMonth()]} ${bn(dd.getFullYear())}`;
+  };
+  const noteTagList = () => {
+    const set = [];
+    S.notes.forEach(n => (n.tags || []).forEach(t => { if (!set.includes(t)) set.push(t); }));
+    return set;
+  };
+
+  function notesScreen() {
+    const q = U.noteQ.trim().toLowerCase();
+    const tag = U.noteTag;
+    let rows = S.notes.slice().sort((a, b) => b.id - a.id);
+    if (tag !== 'সব') rows = rows.filter(n => (n.tags || []).includes(tag));
+    if (q) rows = rows.filter(n => (n.t + ' ' + (n.tags || []).join(' ') + ' ' + noteCtxLabel(n.ctx)).toLowerCase().includes(q));
+    const groups = [];
+    rows.forEach(n => {
+      const g = groups.find(x => x.d === n.d);
+      if (g) g.items.push(n); else groups.push({ d: n.d, items: [n] });
+    });
+    const allTags = noteTagList();
+    const count = t => S.notes.filter(n => (n.tags || []).includes(t)).length;
+
+    return `${appbar('আমার নোট', `${bn(S.notes.length)}টি নোট · ${bn(allTags.length)}টি ট্যাগ`, '#/home', true, true)}
+    <div class="pad" style="padding-top:0">
+      <div class="search">${ico('search', 'sm')}<input id="noteSearch" placeholder="নোট, ট্যাগ বা শ্লোক খুঁজুন" value="${esc(U.noteQ)}"/></div>
+      <div class="cats" style="margin-top:10px">${['সব'].concat(allTags).map(t => `<button class="chip ${tag === t ? 'on' : ''}" data-act="noteFilter" data-t="${esc(t)}">${t === 'সব' ? 'সব' : '#' + esc(t)}${t === 'সব' ? ' · ' + bn(S.notes.length) : ' · ' + bn(count(t))}</button>`).join('')}</div>
+
+      ${S.notes.length === 0
+        ? `<div class="card pad mt"><div class="mini muted" style="line-height:1.9">এখনো কোনো নোট নেই। বই পড়তে পড়তে যা মনে আসে, নিচের <b>＋</b> চিহ্ন দিয়ে লিখে রাখুন — শ্লোকের পাশ থেকেই।</div></div>`
+        : (rows.length === 0
+          ? `<div class="card pad mt"><div class="mini muted">এই ছাঁকনিতে কোনো নোট নেই — অন্য ট্যাগ দেখুন।</div></div>`
+          : groups.map(g => `
+        <div class="sect"><h4>${noteDayLabel(g.d)}</h4><div class="line"></div><span class="mini muted">${bn(g.items.length)}</span></div>
+        ${g.items.map(n => `<div class="card pad">
+          <div class="kv"><div class="tiny" style="color:var(--gold-300)">${esc(noteCtxLabel(n.ctx) || 'সাধারণ নোট')}</div>
+            <div class="tiny muted">${(n.tags || []).map(t => '#' + esc(t)).join(' ')}</div></div>
+          <p style="margin:8px 0 0;font-size:12.8px;line-height:1.85;white-space:pre-wrap">${esc(n.t)}</p>
+          <div class="kv" style="margin-top:10px">
+            <div class="tiny" style="display:flex;gap:10px">
+              ${n.ctx && n.ctx.book ? `<button class="act" data-act="noteGo" data-b="${esc(n.ctx.book)}" data-i="${n.ctx.idx}">পাঠে ফিরুন ›</button>` : ''}
+            </div>
+            <div class="tiny" style="display:flex;gap:10px">
+              <button class="act" data-act="noteEdit" data-id="${n.id}">সম্পাদনা</button>
+              <button class="act" data-act="noteDel" data-id="${n.id}" style="color:var(--danger)">মুছুন</button>
+            </div>
+          </div>
+        </div>`).join('')}`).join(''))}
+
+      <button class="btn gold block mt" data-act="noteNew">${ico('plus', 'sm')} নতুন নোট</button>
+      <p class="tiny muted" style="margin-top:12px;line-height:1.8;text-align:center">সব নোট আপনার এই ব্রাউজারেই থাকে — কারও সঙ্গে ভাগ হয় না।</p>
+    </div><div style="height:20px"></div>`;
+  }
+
+  function noteComposerScreen() {
+    const n = U.note;
+    const tags = n.tags || [];
+    return `${appbar(n.edit ? 'নোট সম্পাদনা' : 'নতুন নোট', 'পাঠের পাশে যা মনে আসে, লিখে রাখুন', '#/notes', false, true)}
+    <div class="pad" style="padding-top:0">
+      ${n.ctx ? `<div class="card pad" style="padding:10px 13px;margin-bottom:10px"><div class="kv">
+          <div class="mini" style="color:var(--gold-300)">${esc(noteCtxLabel(n.ctx))}</div>
+          <button class="act" data-act="noteCtxClear">লাগবে না ✕</button></div></div>` : ''}
+      <textarea class="input" id="noteText" rows="7" placeholder="যেমন — এই শ্লোকটি পড়ে মনে হলো, রাগের সময় মনে রাখতে হবে…">${esc(n.text)}</textarea>
+      <div class="mini muted" style="margin-top:14px">ট্যাগ দিন (একাধিক)</div>
+      <div class="cats" style="margin-top:7px">${NOTE_TAGS.map(t => `<button class="chip ${tags.includes(t) ? 'on' : ''}" data-act="noteTag" data-t="${esc(t)}">#${esc(t)}</button>`).join('')}</div>
+      <div style="display:flex;gap:8px;margin-top:11px">
+        <input class="input" id="noteTagNew" placeholder="নিজের ট্যাগ — যেমন: গীতা-১৮" style="flex:1"/>
+        <button class="btn ghost sm" data-act="noteTagAdd">যোগ</button>
+      </div>
+      ${tags.length ? `<div class="tiny" style="margin-top:10px;color:var(--gold-300)">${tags.map(t => '#' + esc(t)).join(' ')}</div>` : ''}
+      <button class="btn gold block mt" data-act="noteSave">${n.edit ? 'পরিবর্তন রাখুন' : 'নোট রাখুন'}</button>
+      ${n.edit ? `<button class="btn ghost block mt" data-act="noteEditCancel">বাতিল</button>` : ''}
+    </div><div style="height:20px"></div>`;
+  }
+
+  /* =====================================================================
      ROUTER
      ===================================================================== */
   const TABS = [
@@ -1727,6 +1922,8 @@
       case 'result': html = resultScreen(); tab = 'exam'; break;
       case 'puja': html = a ? pujaGuideScreen(a) : pujaScreen(); tab = 'home'; break;
       case 'panjika': html = panjikaScreen(); tab = 'home'; break;
+      case 'notes': html = notesScreen(); tab = 'home'; break;
+      case 'note': html = noteComposerScreen(); tab = 'home'; break;
       case 'seva': html = sevaScreen(); tab = 'seva'; root = true; break;
       case 'market': html = marketScreen(); tab = 'seva'; break;
       case 'me': html = meScreen(); tab = 'me'; root = true; break;
@@ -1813,7 +2010,72 @@
   }
 
   const ACTIONS = {
-    nav: el => { location.hash = el.dataset.to; },
+    nav: el => { closeSheet(); location.hash = el.dataset.to; },
+    sheetOpen: () => openSheet(),
+    sheetClose: () => closeSheet(),
+    /* ---- নোট ---- */
+    noteNew: () => {
+      closeSheet();
+      U.note = { text: '', tags: [], ctx: null, edit: null };
+      location.hash = '#/note'; render();
+    },
+    noteFromReader: el => {
+      const b = DB.books.find(x => x.id === 'gita') || DB.books[0];
+      const i = Math.max(0, Math.min(+el.dataset.i || 0, b.texts.length - 1));
+      const t = b.texts[i];
+      U.note = { text: '', tags: [], ctx: { book: b.id, idx: i, ch: t.ch, v: t.v }, edit: null };
+      location.hash = '#/note'; render();
+    },
+    openNotes: () => { U.noteTag = 'সব'; location.hash = '#/notes'; render(); },
+    noteFilter: el => { U.noteTag = el.dataset.t; render(); },
+    noteTag: el => {
+      const t = el.dataset.t, arr = U.note.tags || (U.note.tags = []);
+      const i = arr.indexOf(t);
+      if (i >= 0) arr.splice(i, 1); else arr.push(t);
+      render();
+    },
+    noteTagAdd: () => {
+      const inp = document.getElementById('noteTagNew');
+      const v = (inp ? inp.value : '').trim().replace(/^#/, '');
+      if (!v) { toast('ট্যাগের নাম লিখুন'); return; }
+      const arr = U.note.tags || (U.note.tags = []);
+      if (!arr.includes(v)) arr.push(v);
+      render();
+    },
+    noteCtxClear: () => { U.note.ctx = null; render(); },
+    noteSave: () => {
+      const ta = document.getElementById('noteText');
+      const text = (ta ? ta.value : U.note.text || '').trim();
+      if (!text) { toast('আগে কিছু লিখুন'); if (ta) ta.focus(); return; }
+      const d = key(new Date());
+      if (U.note.edit) {
+        const i = S.notes.findIndex(n => n.id === U.note.edit);
+        if (i >= 0) S.notes[i] = { ...S.notes[i], t: text, tags: U.note.tags.slice(), ctx: U.note.ctx, d };
+        toast('নোট বদলানো হলো');
+      } else {
+        S.notes.unshift({ id: Date.now(), t: text, tags: U.note.tags.slice(), ctx: U.note.ctx || null, d });
+        toast('নোট রাখা হলো ✍');
+      }
+      save('notes'); chime('tick');
+      U.note = { text: '', tags: [], ctx: null, edit: null };
+      location.hash = '#/notes'; render();
+    },
+    noteEdit: el => {
+      const n = S.notes.find(x => String(x.id) === String(el.dataset.id));
+      if (!n) return;
+      U.note = { text: n.t, tags: (n.tags || []).slice(), ctx: n.ctx || null, edit: n.id };
+      location.hash = '#/note'; render();
+    },
+    noteEditCancel: () => {
+      U.note = { text: '', tags: [], ctx: null, edit: null };
+      location.hash = '#/notes'; render();
+    },
+    noteDel: el => {
+      if (!window.confirm('এই নোটটি মুছে ফেলবেন?')) return;
+      S.notes = S.notes.filter(x => String(x.id) !== String(el.dataset.id));
+      save('notes'); toast('নোট মুছে ফেলা হলো'); render();
+    },
+    noteGo: el => { location.hash = '#/reader/' + el.dataset.b + '/' + el.dataset.i; },
     toast: el => toast(el.dataset.msg || ''),
     ritual: el => {
       const i = +el.dataset.i;
@@ -1963,7 +2225,7 @@
       else v = Math.max(0, v);
       e[k] = v; save('daily');
       if (d > 0 && (k === 'japaExtra' || k === 'puja')) chime('soft');
-      render();
+      render(); refreshSheet();
     },
     trackDone: () => {
       const e = entryFor(TODAY_KEY);
@@ -2092,6 +2354,13 @@
     if (el) { e.preventDefault(); el.click(); }
   });
   document.addEventListener('input', e => {
+    if (e.target.id === 'noteText') { U.note.text = e.target.value; return; }
+    if (e.target.id === 'noteSearch') {
+      U.noteQ = e.target.value; render();
+      const ni = document.getElementById('noteSearch');
+      if (ni) { ni.focus(); ni.setSelectionRange(ni.value.length, ni.value.length); }
+      return;
+    }
     if (e.target.id === 'libSearch') {
       U.libQ = e.target.value;
       const list = document.getElementById('libList');
@@ -2129,7 +2398,12 @@
   function render() { route(); }
 
   function init() {
+    /* ডিফল্ট থিম এখন লাইট — পুরনো সেভ করা 'dark' একবার বদলে দেওয়া হয় */
+    if (!store.get('themeLight2', false)) { store.set('themeLight2', true); S.theme = 'light'; save('theme'); }
     document.body.insertAdjacentHTML('afterbegin', SPRITE);
+    /* নেভিগেশন-বারের বাইরে, ডান পাশে ভাসমান নোট-বাটন */
+    document.body.insertAdjacentHTML('beforeend',
+      `<div id="sheetHost"></div><button class="notefab" data-act="sheetOpen" aria-label="আজকের হিসাব ও নোট" title="আজকের হিসাব ও নোট">${ico('plus')}</button>`);
     document.documentElement.dataset.theme = S.theme;
     document.documentElement.classList.toggle('no-motion', !S.motion);
     if (!location.hash) location.hash = '#/home';

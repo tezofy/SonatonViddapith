@@ -91,7 +91,8 @@ html[data-theme="light"] .grain{opacity:.09; mix-blend-mode:multiply}
     radial-gradient(60% 60% at 20% 10%, rgba(176,54,31,.10), transparent 70%),
     radial-gradient(50% 50% at 85% 90%, rgba(215,169,79,.14), transparent 70%), var(--page-bg)}
 }
-.view{flex:1 1 auto; overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; scrollbar-width:thin}
+.view{flex:1 1 auto; overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; scrollbar-width:thin; padding-bottom:14px}
+.view .pad:last-child{padding-bottom:54px}
 .view::-webkit-scrollbar{width:6px}
 .view::-webkit-scrollbar-thumb{background:rgba(215,169,79,.25); border-radius:99px}
 .pad{padding:0 18px}
@@ -547,3 +548,72 @@ html.no-motion .skel::after{animation:none !important}
 @media (prefers-reduced-motion: reduce){
   *{animation-duration:.001s !important; animation-iteration-count:1 !important; transition-duration:.05s !important}
 }
+
+/* ---- গীতা: উদাহরণ-কথা ও জীবনে প্রয়োগ ---- */
+.katha { margin-top: 14px; background: linear-gradient(180deg, rgba(214,176,90,.10), rgba(214,176,90,.03)); border: 1px solid rgba(214,176,90,.28); }
+.katha .ktext { margin: 9px 0 0; font-size: 13.2px; line-height: 1.92; color: var(--ink-1); }
+.katha .prayog { margin-top: 11px; padding: 10px 12px; border-radius: 12px; background: rgba(214,176,90,.10);
+  border-left: 3px solid var(--gold-300); font-size: 12.6px; line-height: 1.78; color: var(--ink-1); }
+.katha .prayog b { color: var(--gold-300); }
+
+/* কে বলছেন — “উবাচ” ধাঁচে শ্রদ্ধার সঙ্গে */
+.uvacha{display:flex; flex-direction:column; align-items:center; gap:4px; margin:-2px 0 15px; text-align:center}
+.uvacha .u-row{display:flex; align-items:center; gap:9px}
+.uvacha .u-orn{font-family:var(--f-dis); font-size:11px; color:rgba(215,169,79,.6); line-height:1}
+.uvacha .u-name{font-family:var(--f-dis); font-size:12.8px; letter-spacing:1.5px; color:var(--gold-200)}
+.uvacha .u-sub{font-size:10.4px; color:var(--ink-4); letter-spacing:.2px}
+.uvacha.k .u-name{color:var(--gold-100)}
+.uvacha.a .u-name{color:#cfe3ff}
+.uvacha.s .u-name{color:#d8d2ff}
+.uvacha.d .u-name{color:#eddccf}
+.utag{font-family:var(--f-dis); font-size:10.5px; letter-spacing:.5px; color:var(--gold-300)}
+.utag.a{color:#bcd3f0}
+.utag.s{color:#cbc4f5}
+.utag.d{color:#e0cabb}
+html[data-theme="light"] .uvacha .u-name,html[data-theme="light"] .uvacha.k .u-name{color:#8c2411}
+html[data-theme="light"] .uvacha.a .u-name,html[data-theme="light"] .utag.a{color:#1e4f86}
+html[data-theme="light"] .uvacha.s .u-name,html[data-theme="light"] .utag.s{color:#4b3a8f}
+html[data-theme="light"] .uvacha.d .u-name,html[data-theme="light"] .utag.d{color:#7a4526}
+html[data-theme="light"] .utag{color:#8c2411}
+html[data-theme="light"] .uvacha .u-orn{color:rgba(176,54,31,.4)}
+
+
+/* ---------- ভাসমান নোট-বাটন (নেভিগেশন-বারের বাইরে, ডান দিকে) ---------- */
+.notefab{position:fixed; right:16px; bottom:calc(80px + env(safe-area-inset-bottom)); z-index:40;
+  width:52px; height:52px; border-radius:50%; border:none; cursor:pointer; padding:0;
+  display:flex; align-items:center; justify-content:center; color:#2b1a0e;
+  background:var(--gold-fill);
+  box-shadow:0 14px 28px -14px rgba(215,169,79,.95), 0 4px 12px rgba(0,0,0,.34),
+    inset 0 0 0 1px rgba(255,255,255,.28);
+  transition:transform .16s ease, box-shadow .16s ease;
+  -webkit-tap-highlight-color:transparent}
+.notefab .ico{width:22px; height:22px}
+.notefab:hover{transform:translateY(-1px)}
+.notefab:active{transform:scale(.94)}
+html[data-theme="light"] .notefab{color:#fdf7e4;
+  box-shadow:0 14px 26px -14px rgba(176,54,31,.85), 0 4px 12px rgba(107,41,26,.22),
+    inset 0 0 0 1px rgba(255,255,255,.35)}
+html.no-motion .notefab{transition:none}
+
+/* ---------- ＋ প্যানেল (নিচ থেকে ওঠা হিসাব-শীট) ---------- */
+#sheetHost{position:fixed; inset:0; z-index:60; display:none}
+#sheetHost.on{display:block}
+.sheet-bg{position:absolute; inset:0; background:rgba(20,10,6,.5); backdrop-filter:blur(2px);
+  animation:sbfade .18s ease}
+@keyframes sbfade{from{opacity:0}to{opacity:1}}
+.sheet{position:absolute; left:0; right:0; bottom:0; max-height:84%; overflow-y:auto;
+  padding:10px 16px calc(18px + env(safe-area-inset-bottom));
+  background:var(--surface-1); color:var(--ink);
+  border-top:1px solid rgba(215,169,79,.35);
+  border-radius:22px 22px 0 0;
+  box-shadow:0 -22px 50px -22px rgba(0,0,0,.6);
+  animation:sbup .22s cubic-bezier(.2,.7,.3,1)}
+@keyframes sbup{from{transform:translateY(16px); opacity:.6}to{transform:none; opacity:1}}
+html.no-motion .sheet,html.no-motion .sheet-bg{animation:none}
+.sheet .grab{width:38px; height:4px; border-radius:99px; background:rgba(215,169,79,.45); margin:2px auto 12px}
+.sheet-list{margin-top:12px; border-top:1px solid var(--hairline)}
+.sheet-list .trow{padding:9px 0}
+html[data-theme="light"] .sheet{background:linear-gradient(180deg,#fffdf6,#fdf3e0); border-top-color:rgba(176,54,31,.3)}
+html[data-theme="light"] .sheet-bg{background:rgba(107,41,26,.28)}
+html[data-theme="light"] .sheet .grab{background:rgba(176,54,31,.35)}
+@media (min-width:900px){ .sheet{left:50%; right:auto; transform:translateX(-50%); width:min(520px,100%); border-radius:22px 22px 0 0} }
