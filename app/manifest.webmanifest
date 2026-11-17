@@ -1,0 +1,19 @@
+{
+  "name": "সনাতন বিদ্যাপীঠ — শাস্ত্রের আলোয়, সেবার পথে",
+  "short_name": "বিদ্যাপীঠ",
+  "lang": "bn",
+  "dir": "ltr",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#180304",
+  "theme_color": "#180304",
+  "description": "শাস্ত্র গ্রন্থাগার, কোর্স, পরীক্ষা ও কুইজ, পূজা পদ্ধতি, পঞ্জিকা, সেবা ও দক্ষতাভিত্তিক আয় — এক প্ল্যাটফর্মে।",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='120' fill='%233c0e12'/%3E%3Ccircle cx='256' cy='256' r='170' fill='none' stroke='%23d7a94f' stroke-width='10'/%3E%3Ctext x='256' y='330' font-size='230' text-anchor='middle' fill='%23e8c274'%3E%E0%A5%90%3C/text%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

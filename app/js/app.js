@@ -1,0 +1,2145 @@
+/* ==========================================================================
+   সনাতন বিদ্যাপীঠ · অ্যাপ কোর
+   router · state · screens · interactions
+   ========================================================================== */
+(function () {
+  'use strict';
+
+  /* ---------------------------------------------------------------- utils */
+  const BN = '০১২৩৪৫৬৭৮৯';
+  const bn = v => String(v).replace(/\d/g, d => BN[+d]);
+  const bnN = n => bn(Number(n).toLocaleString('en-US'));
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const D = (y, m, d) => new Date(y, m - 1, d);
+  const key = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const TODAY = new Date();
+  const TODAY_KEY = key(TODAY);
+  const BN_MONTH = ['জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন', 'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'];
+  const BN_DAY = ['রবিবার', 'সোমবার', 'মঙ্গলবার', 'বুধবার', 'বৃহস্পতিবার', 'শুক্রবার', 'শনিবার'];
+  const BN_DAYS = ['রবি', 'সোম', 'মঙ্গল', 'বুধ', 'বৃহঃ', 'শুক্র', 'শনি'];
+
+  /* -------------------------------------------------------------- storage */
+  const mem = {};
+  const store = {
+    get(k, d) { try { const r = localStorage.getItem('svp_' + k); return r ? JSON.parse(r) : (k in mem ? mem[k] : d); } catch (e) { return k in mem ? mem[k] : d; } },
+    set(k, v) { mem[k] = v; try { localStorage.setItem('svp_' + k, JSON.stringify(v)); } catch (e) { } }
+  };
+
+  function seedActivity() {
+    const out = {};
+    for (let i = 6; i >= 0; i--) { const d = new Date(TODAY); d.setDate(d.getDate() - i); out[key(d)] = [42, 68, 100, 55, 26, 0, 0][6 - i] || 0; }
+    return out;
+  }
+
+  const S = {
+    name: store.get('name', 'সৌরভ চক্রবর্তী'),
+    theme: store.get('theme', 'dark'),
+    sound: store.get('sound', false),
+    motion: store.get('motion', true),
+    font: store.get('font', 17),
+    streak: store.get('streak', 11),
+    rituals: store.get('rituals', {}),
+    read: store.get('read', {}),
+    lastVerse: store.get('lastVerse', { book: 'gita', idx: 2 }),
+    bookmarks: store.get('bookmarks', []),
+    attempts: store.get('attempts', []),
+    lessons: store.get('lessons', { nityakarma: [0, 1, 2] }),
+    puja: store.get('puja', {}),
+    raised: store.get('raised', {}),
+    orders: store.get('orders', []),
+    provider: store.get('provider', null),
+    activity: store.get('activity', seedActivity()),
+    chapters: store.get('chapters', [1, 2, 3, 4]),
+    role: store.get('role', 'student'),
+    children: store.get('children', [{ n: 'আরাধ্যা', cls: 'শ্রেণি ৫', pct: 45 }, { n: 'ঈশান', cls: 'শ্রেণি ৩', pct: 72 }]),
+    userState: store.get('userState', {}),
+    appState: store.get('appState', {}),
+    reportState: store.get('reportState', {}),
+    payoutAppr: store.get('payoutAppr', {}),
+    audit: store.get('audit', []),
+    japa: store.get('japa', { mantra: 'om-namah', count: 0, rounds: 0 }),
+    sessions: store.get('sessions', []),
+    asanaDone: store.get('asanaDone', {}),
+    daily: store.get('daily', {}),
+    script: store.get('script', 'bn')
+  };
+  const save = k => store.set(k, S[k]);
+
+  /* ------------------------------------------------------------- UI state */
+  const U = {
+    libQ: '', libCat: 'সব', libSeg: 'books',
+    marketQ: '', marketCat: 'সব', gitaQ: '',
+    quiz: null, quizTimer: null, adminTab: 'users', adminQ: '',
+    sadhanaTab: 'japa',
+    med: { mins: 10, left: 600, running: false, phase: '' }, medTimer: null,
+    seq: { i: 0, left: 20, running: false }, seqTimer: null,
+    panjika: { y: TODAY.getFullYear(), m: TODAY.getMonth() + 1, day: TODAY_KEY, view: 'bn', by: null, bm: null }
+  };
+
+  /* --------------------------------------------------------------- icons  */
+  const SPRITE = `
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 10.6 12 4l8 6.6V20h-5.2v-5.6H9.2V20H4z"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4.2 5.6c2.6-1 5-1 7.8.6v13c-2.8-1.6-5.2-1.6-7.8-.6z"/><path d="M19.8 5.6c-2.6-1-5-1-7.8.6v13c2.8-1.6 5.2-1.6 7.8-.6z"/></symbol>
+  <symbol id="i-exam" viewBox="0 0 24 24"><path d="M5.5 4.2h8.2l4.8 4.8v10.8H5.5z"/><path d="M13.7 4.2v4.8h4.8"/><path d="m8.9 14.6 1.9 1.9 3.7-3.7"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20.2s-7.2-4.4-7.2-9.5A4.1 4.1 0 0 1 12 7.4a4.1 4.1 0 0 1 7.2 3.3c0 5.1-7.2 9.5-7.2 9.5z"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8.4" r="3.6"/><path d="M5.2 20c1.3-3.6 3.8-5.3 6.8-5.3s5.5 1.7 6.8 5.3"/></symbol>
+  <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 3.2c1.3 1.7 2 3.2 2 4.5 0 1.6-1.1 2.6-2 3.4-.9-.8-2-1.8-2-3.4 0-1.3.7-2.8 2-4.5z"/><path d="M5.4 12.4h13.2L17.2 20H6.8z"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.8" y="5.2" width="16.4" height="15" rx="2.6"/><path d="M8.2 3.2v4M15.8 3.2v4M3.8 10h16.4"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.6"/><path d="M12 2.4v2.2M12 19.4v2.2M2.4 12h2.2M19.4 12h2.2"/></symbol>
+  <symbol id="i-bag" viewBox="0 0 24 24"><path d="M3.6 8.6h16.8L19 20.4H5z"/><path d="M8.6 8.6V7a3.4 3.4 0 0 1 6.8 0v1.6"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.4"/><path d="m15.8 15.8 4.2 4.2"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6.4 16.6V11a5.6 5.6 0 0 1 11.2 0v5.6l1.6 2H4.8z"/><path d="M10.2 20.2a2 2 0 0 0 3.6 0"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="m14.2 6-6 6 6 6"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M7 7l10 10M17 7 7 17"/></symbol>
+  <symbol id="i-mark" viewBox="0 0 24 24"><path d="M6.5 4.6h11v15.2l-5.5-3.8-5.5 3.8z"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8.4 5.6 18 12l-9.6 6.4z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5.4 12.6 4.4 4.4 8.8-9.4"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h13M12.6 6l6 6-6 6"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.2"/><path d="M12 7.6V12l3 2"/></symbol>
+  <symbol id="i-wallet" viewBox="0 0 24 24"><rect x="3.6" y="6" width="16.8" height="12.4" rx="2.6"/><path d="M3.6 10.4h16.8"/><circle cx="16.4" cy="14.6" r="1.2"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.4 5.4l1.6 1.6M17 17l1.6 1.6M18.6 5.4 17 7M7 17l-1.6 1.6"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3.4v2M12 18.6v2M3.4 12h2M18.6 12h2M5.8 5.8l1.4 1.4M16.8 16.8l1.4 1.4M18.2 5.8l-1.4 1.4M7.2 16.8l-1.4 1.4"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3.4 19 6v6c0 4.3-3 7.2-7 8.6-4-1.4-7-4.3-7-8.6V6z"/><path d="m9.2 12 2 2 3.6-3.8"/></symbol>
+  <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M7.6 4.6h8.8v4.2a4.4 4.4 0 0 1-8.8 0z"/><path d="M7.6 6H5a2.4 2.4 0 0 0 2.6 2.4M16.4 6H19a2.4 2.4 0 0 1-2.6 2.4M12 13.2V17M8.6 20h6.8"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-om" viewBox="0 0 24 24"><path d="M7 17c-2.2 0-3.4-1.4-3.4-3.2 0-1.8 1.3-3 3-3"/><path d="M6.6 10.8c0-2.4 1.9-4.1 4.2-4.1 2 0 3.4 1.2 3.4 3 0 1.6-1 2.6-2.4 2.6"/><path d="M11.8 12.4c1.6 0 2.7 1.1 2.7 2.6 0 2-2 3.4-4.6 3.4-1.6 0-3-.4-4.1-1.1"/><path d="M7.6 6.3c.9-.6 2.3-.9 3.6-.6"/><path d="M14.6 7.6c1.6.5 2.6 1.8 2.6 3.4 0 1.4-.7 2.6-1.8 3.3"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.2 8.2 0 0 1 9.5 4a8.4 8.4 0 1 0 10.5 10.5z"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h11"/></symbol>
+  <defs><radialGradient id="gGlow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffd79a" stop-opacity=".85"/><stop offset="1" stop-color="#ffd79a" stop-opacity="0"/></radialGradient></defs>
+</svg>`;
+  const ico = (n, cls) => `<svg class="ico ${cls || ''}" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+  const FLAME = (w, h) => `<svg class="flame" width="${w || 30}" height="${h || 42}" viewBox="0 0 34 46" fill="none" aria-hidden="true">
+    <ellipse class="glow" cx="17" cy="16" rx="14" ry="14" fill="url(#gGlow)"/>
+    <path class="f2" d="M17 3c4.2 5.6 6.4 9.8 6.4 13.1 0 4-2.9 6.6-6.4 8.5-3.5-1.9-6.4-4.5-6.4-8.5C10.6 12.8 12.8 8.6 17 3Z" fill="#ffb347"/>
+    <path class="f1" d="M17 8.6c2.4 3.3 3.6 5.7 3.6 7.6 0 2.3-1.6 3.9-3.6 5-2-1.1-3.6-2.7-3.6-5 0-1.9 1.2-4.3 3.6-7.6Z" fill="#fff3cd"/>
+    <path d="M8.6 32h16.8l-2 9.6H10.6L8.6 32Z" fill="#8a5a2a" stroke="#d7a94f" stroke-width=".9"/>
+  </svg>`;
+
+  const themeBtn = () => `<button class="iconbtn" data-act="toggleTheme" aria-label="${S.theme === 'light' ? 'ডার্ক মোডে যান' : 'লাইট (পাটা) মোডে যান'}" title="${S.theme === 'light' ? 'ডার্ক মোড' : 'লাইট মোড'}">
+      ${ico(S.theme === 'light' ? 'moon' : 'sun', 'sm')}</button>`;
+
+  /* ------------------------------------------------------------ feedback  */
+  let ac = null, toastT = null;
+  function toast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg; el.classList.add('show');
+    clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 2100);
+  }
+  function chime(kind) {
+    if (!S.sound) return;
+    try {
+      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+      const now = ac.currentTime;
+      const f = kind === 'complete' ? [880, 1320, 1760] : kind === 'soft' ? [660, 990] : [1046, 1568];
+      f.forEach((hz, i) => {
+        const o = ac.createOscillator(), g = ac.createGain();
+        o.type = 'sine'; o.frequency.value = hz;
+        const t0 = now + i * .045;
+        g.gain.setValueAtTime(0, t0);
+        g.gain.linearRampToValueAtTime(.09 / (i + 1), t0 + .012);
+        g.gain.exponentialRampToValueAtTime(.0001, t0 + 1.4);
+        o.connect(g); g.connect(ac.destination);
+        o.start(t0); o.stop(t0 + 1.5);
+      });
+      if (kind === 'complete' && navigator.vibrate) navigator.vibrate([12, 40, 18]);
+    } catch (e) { }
+  }
+  function burst(x, y, n = 14) {
+    if (!S.motion) return;
+    const fx = document.getElementById('fx');
+    for (let i = 0; i < n; i++) {
+      const sp = document.createElement('span');
+      const a = (Math.PI * 2 * i) / n + Math.random() * .4, dist = 42 + Math.random() * 60;
+      const size = 4 + Math.random() * 6;
+      sp.className = 'spark';
+      sp.style.cssText = `left:${x}px;top:${y}px;width:${size}px;height:${size}px;--dx:${(Math.cos(a) * dist).toFixed(1)}px;--dy:${(Math.sin(a) * dist).toFixed(1)}px;animation-delay:${(Math.random() * .1).toFixed(2)}s`;
+      fx.appendChild(sp);
+      setTimeout(() => sp.remove(), 1200);
+    }
+  }
+
+  /* -------------------------------------------------------------- panjika */
+  const P = DB.panjika;
+  const DAY_MS = 86400000;
+  function panjikaFor(dateKeyStr) {
+    const d = new Date(dateKeyStr + 'T00:00:00');
+    const start = new Date(P.startNewMoon + 'T00:00:00');
+    const diff = Math.round((d - start) / DAY_MS);
+    const pos = ((diff % 30) + 30) % 30;
+    const shukla = pos < 15;
+    const t = shukla ? P.tithi[pos] : P.tithiK[pos - 15];
+    const nak = P.nakshatra[((diff % 27) + 27) % 27];
+    const sunrise = '৬:১৪', sunset = '৫:২১';
+    const shubho = ['৯:১০–১০:৪০', '১০:৫০–১২:২০', '১১:৩০–১:০০', '৯:৪০–১১:১০'][Math.abs(diff) % 4];
+    const rahu = ['১৫:০০–১৬:৩০', '১৩:৩০–১৫:০০', '১২:০০–১৩:৩০', '১৬:৩০–১৮:০০'][Math.abs(diff) % 4];
+    const fest = P.festivals[dateKeyStr] || '';
+    return { tithi: `${shukla ? 'শুক্লা' : 'কৃষ্ণ'} ${t}`, nak, sunrise, sunset, shubho, rahu, fest, ekadashi: t === 'একাদশী' };
+  }
+  /* ---------------- বাংলা ক্যালেন্ডার (বঙ্গাব্দ · বাংলাদেশ সংশোধিত) ---------------- */
+  const BM_NAMES = ['বৈশাখ', 'জ্যৈষ্ঠ', 'আষাঢ়', 'শ্রাবণ', 'ভাদ্র', 'আশ্বিন', 'কার্তিক', 'অগ্রহায়ণ', 'পৌষ', 'মাঘ', 'ফাল্গুন', 'চৈত্র'];
+  const BM_LEN = [31, 31, 31, 31, 31, 31, 30, 30, 30, 30, 29, 30]; // ২০১৯ সংশোধিত: বৈশাখ–আশ্বিন ৩১, ফাল্গুন ২৯ (অধিবর্ষে ৩০)
+  const BM_SEASON = ['গ্রীষ্ম', 'গ্রীষ্ম', 'বর্ষা', 'বর্ষা', 'শরৎ', 'শরৎ', 'হেমন্ত', 'হেমন্ত', 'শীত', 'শীত', 'বসন্ত', 'বসন্ত'];
+  const isLeap = y => (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+  const bmLens = startGYear => { const a = BM_LEN.slice(); if (isLeap(startGYear + 1)) a[10] += 1; return a; };
+
+  function bengaliDate(dateObj) {
+    const dt = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
+    let startG = dt.getFullYear();
+    if (dt < new Date(startG, 3, 14)) startG -= 1;
+    const start = new Date(startG, 3, 14);
+    let elapsed = Math.round((dt - start) / DAY_MS);
+    const lens = bmLens(startG);
+    let m = 0;
+    while (m < 11 && elapsed >= lens[m]) { elapsed -= lens[m]; m++; }
+    return { year: startG - 593, m, d: elapsed + 1, month: BM_NAMES[m], season: BM_SEASON[m] };
+  }
+  const bnDateShort = d => `${bn(d.d)} ${d.month} ${bn(d.year)} বঙ্গাব্দ`;
+
+  function banglaMonthCells(y, m) {
+    let cur = new Date(y + 593, 3, 14), guard = 0;
+    while (guard++ < 420) { const b = bengaliDate(cur); if (b.year === y && b.m === m) break; cur.setDate(cur.getDate() + 1); }
+    const cells = [];
+    while (guard++ < 840) {
+      const b = bengaliDate(cur);
+      if (b.year !== y || b.m !== m) break;
+      cells.push({ d: b.d, date: new Date(cur) });
+      cur.setDate(cur.getDate() + 1);
+    }
+    return cells;
+  }
+
+  function nextFestival() {
+    const keys = Object.keys(P.festivals).filter(k => k >= TODAY_KEY).sort();
+    if (!keys.length) return null;
+    const k = keys[0], d = new Date(k + 'T00:00:00');
+    const days = Math.round((d - new Date(TODAY_KEY + 'T00:00:00')) / DAY_MS);
+    return { date: d, name: P.festivals[k], days };
+  }
+
+  /* ---------------------------------------------------------------- header */
+  function appbar(title, subText, backTo, withTheme) {
+    return `<header class="appbar"><div class="row">
+      ${backTo ? `<button class="iconbtn" data-act="nav" data-to="${backTo}" aria-label="ফিরে যান">${ico('back')}</button>` : ''}
+      <div style="flex:1;min-width:0">
+        ${subText ? `<div class="eyebrow">${subText}</div>` : ''}
+        <h3>${title}</h3>
+      </div>
+      ${withTheme ? themeBtn() : ''}</div></header>`;
+  }
+
+  /* =====================================================================
+     SCREENS
+     ===================================================================== */
+
+  /* ------------------------------------------------------------ 1. home */
+  function homeScreen() {
+    const p = panjikaFor(TODAY_KEY);
+    const r = S.rituals[TODAY_KEY] || [true, false, false];
+    const doneCount = r.filter(Boolean).length;
+    const lv = S.lastVerse, book = DB.books.find(b => b.id === lv.book) || DB.books[0];
+    const verse = book.texts[Math.min(lv.idx, book.texts.length - 1)] || book.texts[0];
+    const fest = nextFestival();
+    const camp = DB.campaigns[0];
+    const raised = camp.raised + (S.raised[camp.id] || 0);
+    const pct = Math.min(100, Math.round(raised / camp.goal * 100));
+    const hr = new Date().getHours();
+    const greet = hr < 5 ? 'শুভ রাত্রি' : hr < 11 ? 'সুপ্রভাত' : hr < 16 ? 'শুভ অপরাহ্ন' : hr < 19 ? 'শুভ সন্ধ্যা' : 'শুভ রাত্রি';
+
+    return `
+    <div class="home-head">
+      <div class="av round">${ico('om', 'sm')}</div>
+      <div style="flex:1"><div class="who">${greet}</div><div class="nm">${esc(S.name)}</div></div>
+      ${themeBtn()}
+      <button class="iconbtn" data-act="toast" data-msg="আজকের ২টি রিমাইন্ডার আছে" aria-label="বিজ্ঞপ্তি">${ico('bell')}</button>
+    </div>
+
+    <div class="hero">
+      <div class="pata" aria-hidden="true"></div>
+      <div class="wm">${ico('om')}</div>
+      <div class="date">${ico('cal', 'xs')} ${BN_DAY[TODAY.getDay()]}, ${bn(TODAY.getDate())} ${BN_MONTH[TODAY.getMonth()]} ${bn(TODAY.getFullYear())}</div>
+      <h2>আজকের পাঠ শুরু করুন,<br/>শাস্ত্রের আলোয়</h2>
+      <div class="meta"><span>${bn(bengaliDate(TODAY).d)} ${bengaliDate(TODAY).month} ${bn(bengaliDate(TODAY).year)}</span><span>তিথি · ${p.tithi}</span><span>নক্ষত্র · ${p.nak}</span><span>শুভ · ${p.shubho}</span></div>
+      <div class="foot">
+        <div class="ring" style="--p:${doneCount / 3 * 100}%"><div><div class="n">${bn(S.streak)}</div><div class="u">দিন</div></div></div>
+        <div style="flex:1">
+          <div class="txt">টানা <b>${bn(S.streak)} দিন</b> সাধনা · আজকের লক্ষ্য <b>${bn(doneCount)}/৩</b></div>
+          <div class="txt" style="opacity:.85;margin-top:5px">${doneCount === 3 ? 'আজকের সাধনা সম্পূর্ণ 🌸' : 'আর ' + bn(3 - doneCount) + 'টি কাজ বাকি'}</div>
+        </div>
+        ${ico('arrow')}
+      </div>
+    </div>
+
+    <div class="quick">
+      <button class="q" data-act="nav" data-to="#/puja"><span class="qi">${ico('flame')}</span>পূজা</button>
+      <button class="q" data-act="nav" data-to="#/panjika"><span class="qi">${ico('cal')}</span>পঞ্জিকা</button>
+      <button class="q" data-act="nav" data-to="#/exam"><span class="qi">${ico('target')}</span>কুইজ</button>
+      <button class="q" data-act="nav" data-to="#/market"><span class="qi">${ico('bag')}</span>কাজ</button>
+    </div>
+
+    <div class="pad">
+      <div class="mt" data-act="nav" data-to="#/track" role="button" tabindex="0" style="cursor:pointer">
+        <div class="card oath pad" style="display:flex;align-items:center;gap:13px">
+          <div class="ring" style="--p:${scoreOf(entryFor(TODAY_KEY), todayAuto()).total}%;width:52px;height:52px">
+            <div><div class="n" style="font-size:13px">${bn(scoreOf(entryFor(TODAY_KEY), todayAuto()).total)}</div><div class="u">স্কোর</div></div></div>
+          <div style="flex:1">
+            <div class="kv"><b style="font-size:12.8px">আজকের হিসাব</b><span class="pill ${entryFor(TODAY_KEY).done ? 'ok' : ''}">${entryFor(TODAY_KEY).done ? 'সম্পন্ন' : 'লিখুন'}</span></div>
+            <div class="mini muted" style="margin-top:4px">পূজা · জপ · ধ্যান · পাঠ · দান · কর্ম · সত্য — এক জায়গায়</div>
+          </div>${ico('arrow', 'sm')}
+        </div>
+      </div>
+
+      <div class="sect"><h4>সাধনা</h4><div class="line"></div><button class="act" data-act="nav" data-to="#/sadhana">সব ›</button></div>
+      <div class="grid3">
+        <div class="card pad" data-act="nav" data-to="#/sadhana/japa" role="button" tabindex="0" style="text-align:center;padding:12px 8px;cursor:pointer">
+          <div style="color:var(--gold-300);display:grid;place-items:center">${ico('om')}</div>
+          <div class="mini" style="margin-top:7px">জপ</div>
+          <b style="font-size:12px">${bn(S.japa.count)}/১০৮</b></div>
+        <div class="card pad" data-act="nav" data-to="#/sadhana/dhyana" role="button" tabindex="0" style="text-align:center;padding:12px 8px;cursor:pointer">
+          <div style="color:var(--gold-300);display:grid;place-items:center">${ico('clock')}</div>
+          <div class="mini" style="margin-top:7px">ধ্যান</div>
+          <b style="font-size:12px">${bn(S.sessions.length ? S.sessions[S.sessions.length - 1].mins : 0)} মিনিট</b></div>
+        <div class="card pad" data-act="nav" data-to="#/sadhana/yoga" role="button" tabindex="0" style="text-align:center;padding:12px 8px;cursor:pointer">
+          <div style="color:var(--gold-300);display:grid;place-items:center">${ico('heart')}</div>
+          <div class="mini" style="margin-top:7px">যোগা</div>
+          <b style="font-size:12px">${bn(Object.keys(S.asanaDone).filter(k => S.asanaDone[k]).length)}/${bn(DB.asanas.length)}</b></div>
+      </div>
+
+      <div class="sect"><h4>চলমান পাঠ</h4><div class="line"></div><button class="act" data-act="nav" data-to="#/library">সব ›</button></div>
+      <div class="card rowcard oath" data-act="nav" data-to="#/reader/${book.id}/${lv.idx}" role="button" tabindex="0" style="cursor:pointer">
+        <div class="cover ${book.cls}"><span class="sym">${book.sym}</span></div>
+        <div style="flex:1;min-width:0">
+          <div class="kv"><span class="ttl">${book.title}</span><span class="pill">${bn(verse.ch)}.${bn(verse.v)}</span></div>
+          <div class="mini muted" style="margin:4px 0 9px">${esc(verse.sk.split('\n')[0].slice(0, 34))}…</div>
+          <div class="bar thin"><i style="width:${Math.round((lv.idx + 1) / book.texts.length * 100)}%"></i></div>
+          <div class="mini muted" style="margin-top:6px">${bn(lv.idx + 1)}/${bn(book.texts.length)} শ্লোক · ৩ মিনিট বাকি</div>
+        </div>
+      </div>
+
+      <div class="sect"><h4>আজকের সাধনা</h4><div class="line"></div><span class="mini muted">${bn(doneCount)}/৩</span></div>
+      <div class="card pad" style="padding:4px 14px">
+        ${['সকালের নিত্যকর্ম সম্পন্ন', `গীতা ${bn(2)}.${bn(47)} পাঠ`, 'সন্ধ্যা আরতি ও কুইজ'].map((label, i) => `
+          <div class="ritual ${r[i] ? 'done' : ''}" data-act="ritual" data-i="${i}" role="checkbox" aria-checked="${!!r[i]}" tabindex="0">
+            <span class="tick">${ico('check', 'xs')}</span>
+            <span class="lab">${label}</span>
+            <span class="xp">${r[i] ? '✓' : ['+১০', '+২০', '+৩০'][i]}</span>
+          </div>`).join('')}
+      </div>
+
+      <div class="sect"><h4>এখনই করার সময়</h4><div class="line"></div><button class="act" data-act="nav" data-to="#/puja">শুরু ›</button></div>
+      <div class="card oath rowcard" data-act="nav" data-to="#/puja/sandhya" style="cursor:pointer;gap:14px">
+        ${FLAME(34, 46)}
+        <div style="flex:1">
+          <div class="kv"><span class="ttl">সন্ধ্যা আরতি</span><span class="pill">${p.sunset} সূর্যাস্ত</span></div>
+          <div class="mini muted" style="margin-top:5px">প্রদীপ ও ধূপ প্রস্তুত করুন · ${bn(7)} ধাপ</div>
+        </div>
+        ${ico('arrow', 'sm')}
+      </div>
+
+      ${fest ? `
+      <div class="sect"><h4>আসন্ন উৎসব</h4><div class="line"></div><button class="act" data-act="nav" data-to="#/panjika">পঞ্জিকা ›</button></div>
+      <div class="card rowcard">
+        <div class="datebox"><b>${bn(fest.date.getDate())}</b><i>${BN_MONTH[fest.date.getMonth()].slice(0, 4)}</i></div>
+        <div style="flex:1">
+          <div class="kv"><span class="ttl">${esc(fest.name)}</span><span class="pill">${fest.days === 0 ? 'আজ' : bn(fest.days) + ' দিন'}</span></div>
+          <div class="mini muted" style="margin-top:5px">${panjikaFor(key(fest.date)).tithi} · শুভ সময় ${panjikaFor(key(fest.date)).shubho}</div>
+        </div>
+      </div>` : ''}
+    </div>
+
+    <div class="sevaband" data-act="nav" data-to="#/seva" style="cursor:pointer">
+      ${ico('heart')}
+      <div style="flex:1"><h5>${esc(camp.title)}</h5><p>${esc(camp.sh || camp.blurb)}</p></div>
+      <span class="pill ok">${bn(pct)}%</span>
+    </div>
+    <div style="height:24px"></div>`;
+  }
+
+  /* --------------------------------------------------------- 2. library */
+  function bookCards() {
+    const q = U.libQ.trim().toLowerCase();
+    const list = DB.books.filter(b => {
+      const okCat = U.libCat === 'সব' || b.tag === U.libCat;
+      const okQ = !q || (b.title + b.author + b.desc).toLowerCase().includes(q);
+      return okCat && okQ;
+    });
+    if (!list.length) return `<div class="card empty"><div class="illu">${ico('book')}</div><h5>কিছু পাওয়া যায়নি</h5><p>অন্য শব্দ বা বিভাগ দিয়ে খুঁজুন।</p></div>`;
+    return list.map(b => {
+      const lv = S.lastVerse.book === b.id ? S.lastVerse.idx : 0;
+      const pct = Math.round((lv + 1) / b.texts.length * 100);
+      return `<div class="card book" data-act="nav" data-to="${b.chapterMeta ? '#/gita' : '#/book/' + b.id}" role="button" tabindex="0">
+        <div class="cover ${b.cls}"><span class="sym">${b.sym}</span></div>
+        <div style="flex:1;min-width:0">
+          <div class="kv"><span class="ttl">${esc(b.title)}</span><span class="pill ${b.tag === 'নতুন' ? 'ok' : 'flat'}">${b.tag}</span></div>
+          <div class="mini muted" style="margin:4px 0 8px">${bn(b.chapters)} অধ্যায় · ${bn(b.verses)} শ্লোক${b.audio ? ' · অডিও' : ''}</div>
+          <div class="bar thin"><i style="width:${pct}%"></i></div>
+          <div class="kv" style="margin-top:7px"><span class="mini muted">${bn(pct)}% পড়া হয়েছে</span><span class="mini muted">${b.texts.length} শ্লোক এই ডেমোতে</span></div>
+        </div></div>`;
+    }).join('');
+  }
+
+  function libraryScreen() {
+    const cats = ['সব', 'চলমান', 'নতুন', 'মুখস্থ', 'সংক্ষিপ্ত'];
+    return `${appbar('শাস্ত্র গ্রন্থাগার', 'Digital Granthagar', undefined, true)}
+    <div class="pad" style="padding-top:0">
+      <div class="search">${ico('search', 'sm')}<input id="libSearch" placeholder="গ্রন্থ, শ্লোক বা শব্দ খুঁজুন…" value="${esc(U.libQ)}" aria-label="খুঁজুন"/></div>
+      <div class="segment mt">
+        ${[['books', 'গ্রন্থ'], ['verse', 'শ্লোক'], ['audio', 'অডিও']].map(([k, l]) =>
+          `<button class="${U.libSeg === k ? 'on' : ''}" data-act="seg" data-s="${k}">${l}</button>`).join('')}
+      </div>
+    </div>
+    <div class="cats">${cats.map(c => `<button class="chip ${U.libCat === c ? 'on' : ''}" data-act="cat" data-c="${c}">${c}</button>`).join('')}</div>
+    <div class="pad" style="padding-top:12px">
+      ${U.libSeg === 'audio' ? `<div class="card empty"><div class="illu">${ico('flame')}</div>
+          <h5>অডিও পাঠ শীঘ্রই আসছে</h5><p>শিক্ষকের কণ্ঠে উচ্চারণসহ স্তোত্র শোনা যাবে।<br/>আপাতত লিখিত পাঠ ও বাংলা অর্থ ব্যবহার করুন।</p>
+          <button class="btn ghost sm" data-act="seg" data-s="books">লিখিত পাঠে যান</button></div>`
+        : U.libSeg === 'verse' ? `<div class="card pad"><div class="mini muted" style="margin-bottom:8px">শ্লোক অনুসন্ধান — বাংলা বা শব্দ দিয়ে</div>
+            <div class="mini muted">সার্চ বক্সে লিখে গ্রন্থ খুঁজুন, তারপর গ্রন্থ খুলে শ্লোক বেছে নিন।</div></div>`
+          : `<div class="card oath pad" style="margin-bottom:12px">
+              <div class="kv"><div><div class="mini muted">পাঠ-অগ্রগতি</div><div class="display" style="font-size:14px;margin-top:3px">গীতা · অধ্যায় ম্যাপ</div></div>
+                <span class="pill">${bn(S.chapters.length)}/১৮</span></div>
+              <div class="map">${Array.from({ length: 18 }, (_, i) => {
+        const n = i + 1, done = S.chapters.includes(n), cur = n === Math.max(...S.chapters) + 1;
+        return `<button class="ch ${done ? 'done' : cur ? 'cur' : ''}" data-act="chapter" data-n="${n}">${bn(n)}</button>`;
+      }).join('')}</div>
+              <div class="mapkey"><span><i style="background:linear-gradient(180deg,#f8e3b3,#b1842e)"></i>সম্পূর্ণ</span>
+                <span><i style="border:1px solid #d7a94f"></i>চলমান</span><span><i style="background:rgba(255,255,255,.1)"></i>বাকি</span></div>
+            </div>
+            <div id="libList">${bookCards()}</div>`}
+    </div><div style="height:20px"></div>`;
+  }
+
+  /* ------------------------------------------------------------ 3. book */
+  function bookScreen(id) {
+    const b = DB.books.find(x => x.id === id) || DB.books[0];
+    return `${appbar(b.title, esc(b.author), '#/library')}
+    <div class="pad">
+      <div class="card oath pad stack">
+        <div style="display:flex;gap:14px;align-items:center">
+          <div class="cover ${b.cls}" style="width:64px;height:84px"><span class="sym" style="font-size:24px">${b.sym}</span></div>
+          <div style="flex:1">
+            <div class="kv"><span class="ttl" style="font-size:14px">${esc(b.title)}</span><span class="pill">${b.tag}</span></div>
+            <div class="mini muted" style="margin:5px 0 9px">${bn(b.chapters)} অধ্যায় · ${bn(b.verses)} শ্লোক</div>
+            <div class="bar thin"><i style="width:${S.read[b.id + ':any'] ? 60 : 25}%"></i></div>
+          </div>
+        </div>
+        <p class="tiny muted" style="margin:12px 0 0;line-height:1.8">${esc(b.desc)}</p>
+      </div>
+
+      ${b.chapterMeta ? `<button class="btn gold block mt" data-act="nav" data-to="#/gita">অধ্যায়ভিত্তিক সম্পূর্ণ পাঠ ▸</button>` : ''}
+      <div class="sect"><h4>${b.chapterMeta ? 'অধ্যায়' : 'এই ডেমোতে পাঠ'}</h4><div class="line"></div><span class="mini muted">${b.chapterMeta ? bn(18) + ' অধ্যায়' : bn(b.texts.length) + ' শ্লোক'}</span></div>
+      ${b.chapterMeta ? b.chapterMeta.map(m => `<div class="card rowcard stack" data-act="nav" data-to="#/gita/${m.n}" role="button" tabindex="0" style="cursor:pointer">
+          <div class="datebox" style="width:44px;height:48px"><b>${bn(m.n)}</b><i>অধ্যায়</i></div>
+          <div style="flex:1;min-width:0"><div class="kv"><span class="ttl" style="font-size:12.6px">${esc(m.name)}</span><span class="pill">${bn(m.count)}</span></div>
+          <div class="mini muted" style="margin-top:5px">${esc(m.sum.slice(0, 66))}…</div></div>${ico('arrow', 'sm')}</div>`).join('') : ''}
+      ${b.chapterMeta ? '' : b.texts.map((t, i) => {
+        const done = !!S.read[`${b.id}:${i}`];
+        const saved = S.bookmarks.includes(`${b.id}:${i}`);
+        return `<div class="card rowcard stack" data-act="nav" data-to="#/reader/${b.id}/${i}" role="button" tabindex="0" style="cursor:pointer">
+          <div class="datebox" style="width:44px;height:48px"><b>${bn(t.ch)}.${bn(t.v)}</b><i>শ্লোক</i></div>
+          <div style="flex:1;min-width:0">
+            <div class="mini muted" style="margin-bottom:4px">${esc(t.bn.slice(0, 54))}…</div>
+            <div style="display:flex;gap:6px">${done ? '<span class="pill ok">পঠিত</span>' : ''}${saved ? '<span class="pill">বুকমার্ক</span>' : ''}</div>
+          </div>${ico('arrow', 'sm')}</div>`;
+      }).join('')}
+    </div><div style="height:20px"></div>`;
+  }
+
+  /* ------------------------------------------------- 3½. গীতা: অধ্যায় সূচি */
+  const GITA_BOOK = () => DB.books.find(b => b.id === 'gita');
+  const gitaMeta = () => { const b = GITA_BOOK(); return (b && b.chapterMeta) || []; };
+  const gitaBnCount = () => { const b = GITA_BOOK(); return b ? b.texts.filter(t => t.bn).length : 0; };
+
+  function gitaScreen() {
+    const b = GITA_BOOK();
+    const meta = gitaMeta();
+    const total = b ? b.texts.length : 0;
+    const done = gitaBnCount();
+    const pct = total ? Math.round(done / total * 100) : 0;
+    const q = U.gitaQ.trim().toLowerCase();
+    const hits = q && b ? b.texts.map((t, i) => ({ t, i })).filter(x =>
+      (x.t.bn + ' ' + x.t.sk + ' ' + x.t.arth).toLowerCase().includes(q)).slice(0, 30) : [];
+
+    return `${appbar('শ্রীমদ্ভগবদ্গীতা', `${bn(18)} অধ্যায় · ${bn(total)} শ্লোক`, '#/library', true)}
+    <div class="pad" style="padding-top:0">
+      <div class="card oath pad">
+        <div class="kv"><div><div class="mini muted">মূল সংস্কৃত পাঠ · সম্পূর্ণ</div>
+          <div class="display" style="font-size:17px;color:var(--gold-200);margin-top:3px">৭০১ শ্লোক, ১৮ অধ্যায়</div></div>
+          <span class="pill ok">${bn(pct)}%</span></div>
+        <div class="bar mt"><i style="width:${pct}%"></i></div>
+        <div class="kv mini muted" style="margin-top:7px"><span>বাংলা অনুবাদ হয়েছে ${bn(done)}টি শ্লোকে</span><span>বাকি ${bn(total - done)}টি</span></div>
+      </div>
+
+      <div class="search mt">${ico('search', 'sm')}<input id="gitaSearch" placeholder="শ্লোক খুঁজুন — বাংলা অর্থ বা সংস্কৃত শব্দ…" value="${esc(U.gitaQ)}" aria-label="গীতায় খুঁজুন"/></div>
+
+      ${q ? `<div class="sect"><h4>সন্ধান: “${esc(U.gitaQ)}”</h4><div class="line"></div><span class="mini muted">${bn(hits.length)}টি ফল</span></div>
+        ${hits.length ? hits.map(x => `<div class="card rowcard stack" data-act="nav" data-to="#/reader/gita/${x.i}" role="button" tabindex="0" style="cursor:pointer">
+            <div class="datebox" style="width:44px;height:48px"><b>${bn(x.t.ch)}.${bn(x.t.v)}</b><i>শ্লোক</i></div>
+            <div style="flex:1;min-width:0"><div class="mini" style="margin-bottom:4px">${esc((x.t.bn || x.t.sk).slice(0, 70))}${(x.t.bn || x.t.sk).length > 70 ? '…' : ''}</div>
+              <div class="tiny muted">${esc(x.t.sk.split('\n').filter(l => !/উবাচ/.test(l))[0].slice(0, 42))}…</div></div>${ico('arrow', 'sm')}</div>`).join('')
+          : `<div class="card empty"><div class="illu">${ico('search')}</div><h5>কিছু পাওয়া যায়নি</h5><p>অন্য শব্দে চেষ্টা করুন — যেমন “কর্ম”, “ভক্তি”, “আত্মা”।</p></div>`}`
+        : `<div class="sect"><h4>১৮ অধ্যায়</h4><div class="line"></div><span class="mini muted">শ্লোক সংখ্যা</span></div>
+        ${meta.map(m => {
+          const doneCh = b.texts.filter(t => t.ch === m.n && t.bn).length;
+          const all = doneCh === m.count;
+          return `<div class="card rowcard stack" data-act="nav" data-to="#/gita/${m.n}" role="button" tabindex="0" style="cursor:pointer">
+            <div class="datebox" style="width:44px;height:48px"><b>${bn(m.n)}</b><i>অধ্যায়</i></div>
+            <div style="flex:1;min-width:0">
+              <div class="kv"><span class="ttl" style="font-size:12.6px">${esc(m.name)}</span>
+                <span class="pill ${all ? 'ok' : ''}">${bn(m.count)} শ্লোক</span></div>
+              <div class="mini muted" style="margin-top:5px;line-height:1.6">${esc(m.sum.slice(0, 78))}…</div>
+              ${doneCh ? `<div class="tiny muted" style="margin-top:5px">অনুবাদ ${bn(doneCh)}/${bn(m.count)}</div>` : ''}
+            </div>${ico('arrow', 'sm')}</div>`;
+        }).join('')}
+
+        <p class="mini muted" style="margin-top:16px;line-height:1.75">মূল সংস্কৃত পাঠ সম্পূর্ণ ও দুই উৎস মিলিয়ে যাচাই করা (৭০১টি শ্লোকের ৬৭৮টি হুবহু মিলেছে; বাকিগুলো ভিন্ন-পাঠ)। শ্লোকগুলো <b>বাংলা লিপিতে</b> দেখা যায় — রিডারে চাইলে দেবনাগরীতেও বদলানো যায়। কোনো সংস্করণে ১৩শ অধ্যায়ে ৩৪, কোনোতে ৩৫ শ্লোক। বাংলা অনুবাদ ও সহজ ভাষ্য ধাপে ধাপে যোগ হচ্ছে; প্রকাশের আগে পণ্ডিত-পর্যালোচনা বাঞ্ছনীয়।</p>`}
+    </div><div style="height:20px"></div>`;
+  }
+
+  function gitaChapterScreen(nStr) {
+    const n = Math.max(1, Math.min(18, parseInt(nStr || '1', 10)));
+    const b = GITA_BOOK(); if (!b) return gitaScreen();
+    const m = gitaMeta().find(x => x.n === n) || { n, name: 'অধ্যায় ' + n, count: 0, sum: '' };
+    const items = b.texts.map((t, i) => ({ t, i })).filter(x => x.t.ch === n);
+    const doneCh = items.filter(x => x.t.bn).length;
+    return `${appbar(`অধ্যায় ${bn(n)} · ${m.name}`, `${bn(m.count)} শ্লোক · অনুবাদ ${bn(doneCh)}`, '#/gita', true)}
+    <div class="pad" style="padding-top:0">
+      <div class="card oath pad">
+        <div class="mini muted">${esc(m.sum)}</div>
+        <div class="bar thin mt"><i style="width:${m.count ? Math.round(doneCh / m.count * 100) : 0}%"></i></div>
+      </div>
+      ${items.map(x => {
+        const t = x.t;
+        const first = t.sk.split('\n').filter(l => !/উবাচ/.test(l))[0] || t.sk.split('\n')[0];
+        return `<div class="card rowcard stack" data-act="nav" data-to="#/reader/gita/${x.i}" role="button" tabindex="0" style="cursor:pointer">
+          <div class="datebox" style="width:44px;height:48px"><b>${bn(t.v)}</b><i>শ্লোক</i></div>
+          <div style="flex:1;min-width:0">
+            <div class="mini" style="color:var(--ink-2);margin-bottom:4px">${esc(first.slice(0, 46))}…</div>
+            <div class="tiny muted">${t.bn ? esc(t.bn.slice(0, 60)) + '…' : 'বাংলা অনুবাদ যুক্ত হচ্ছে'}</div>
+          </div>${ico('arrow', 'sm')}</div>`;
+      }).join('')}
+      <div style="display:flex;gap:9px;margin-top:14px">
+        <button class="btn ghost" style="flex:1" data-act="nav" data-to="#/gita/${n - 1}" ${n === 1 ? 'disabled' : ''}>আগের অধ্যায়</button>
+        <button class="btn ghost" style="flex:1" data-act="nav" data-to="#/gita/${n + 1}" ${n === 18 ? 'disabled' : ''}>পরের অধ্যায়</button>
+      </div>
+    </div><div style="height:20px"></div>`;
+  }
+
+  /* ---------------------------------------------------------- 4. reader */
+  function readerScreen(id, idx) {
+    const b = DB.books.find(x => x.id === id) || DB.books[0];
+    const i = Math.max(0, Math.min(parseInt(idx || '0', 10), b.texts.length - 1));
+    const t = b.texts[i];
+    const k = `${b.id}:${i}`;
+    const saved = S.bookmarks.includes(k);
+    const hasCh = !!b.chapterMeta;
+    return `${appbar(b.title, `অধ্যায় ${bn(t.ch)} · শ্লোক ${bn(t.v)}`, hasCh ? '#/gita/' + t.ch : '#/book/' + b.id)}
+    <div class="pad">
+      <div class="prefbar">
+        <span>ফন্ট</span>
+        <div class="grp">
+          <b data-act="font" data-d="-1">অ−</b><b class="on">${bn(S.font)}</b><b data-act="font" data-d="1">অ+</b>
+        </div>
+        <div style="flex:1"></div>
+        <div class="grp"><b class="${S.theme === 'dark' ? 'on' : ''}" data-act="themeSet" data-v="dark">ডার্ক</b>
+          <b class="${S.theme === 'light' ? 'on' : ''}" data-act="themeSet" data-v="light">পাটা</b></div>
+        ${t.dev ? `<div class="grp" style="margin-left:8px"><b class="${S.script === 'bn' ? 'on' : ''}" data-act="scriptSet" data-v="bn">বাংলা লিপি</b>
+          <b class="${S.script === 'dev' ? 'on' : ''}" data-act="scriptSet" data-v="dev">দেবনাগরী</b></div>` : ''}
+      </div>
+
+      <div class="card oath verse">
+        <div class="vnum"><span class="l"></span><b>শ্লোক ${bn(t.ch)}.${bn(t.v)}</b><span class="l r"></span></div>
+        <div class="sk" style="font-size:${S.font}px">${(S.script === 'dev' && t.dev ? t.dev : t.sk).split('\n').map(esc).join('<br/>')}
+          <div class="mini muted" style="text-align:right;margin-top:8px;font-size:10.5px">॥ ${bn(t.ch)}।${bn(t.v)} ॥</div></div>
+        <div class="bn"><span class="lbl">বাংলা অনুবাদ</span>${esc(t.bn)}</div>
+        <div class="arth"><b style="color:var(--gold-300)">সহজ অর্থ ·</b> ${esc(t.arth)}</div>
+      </div>
+
+      <div style="display:flex;gap:9px;margin-top:14px">
+        <button class="btn ghost" style="flex:1" data-act="nav" data-to="#/reader/${b.id}/${i - 1}" ${i === 0 ? 'disabled' : ''}>আগের</button>
+        <button class="btn ghost" style="width:52px;padding:0" data-act="bookmark" data-i="${i}" aria-label="বুকমার্ক">${ico('mark', 'sm')}</button>
+        <button class="btn gold" style="flex:1.3" data-act="markread" data-i="${i}">${S.read[k] ? 'পঠিত ✓' : 'পাঠ সম্পন্ন'}</button>
+      </div>
+      <button class="btn ghost block mt" data-act="nav" data-to="#/reader/${b.id}/${i + 1}" ${i === b.texts.length - 1 ? 'disabled' : ''}>পরের শ্লোক ${ico('arrow', 'sm')}</button>
+      ${hasCh ? `<button class="btn ghost block mt" data-act="nav" data-to="#/gita/${t.ch}">অধ্যায় ${bn(t.ch)}-এর সব শ্লোক ▸</button>` : ''}
+      ${saved ? '<p class="mini muted" style="text-align:center;margin-top:10px">বুকমার্ক করা আছে · লাইব্রেরিতে দেখুন</p>' : ''}
+    </div><div style="height:20px"></div>`;
+  }
+
+  /* --------------------------------------------------------- 5. courses */
+  function coursesScreen() {
+    return `${appbar('কোর্স ও পাঠ্যক্রম', 'Pathshala')}
+    <div class="pad" style="padding-top:0">
+      ${DB.courses.map(c => {
+      const done = (S.lessons[c.id] || []).length;
+      const pct = Math.round(done / c.lessons.length * 100);
+      return `<div class="card pad stack" data-act="nav" data-to="#/course/${c.id}" role="button" tabindex="0" style="cursor:pointer">
+          <div class="kv"><span class="ttl" style="font-family:var(--f-dis);font-size:14px">${esc(c.title)}</span><span class="pill">${done ? bn(pct) + '%' : 'নতুন'}</span></div>
+          <div class="mini muted" style="margin:5px 0 8px">${esc(c.level)} · ${esc(c.teacher)}</div>
+          <p class="tiny muted" style="margin:0 0 10px;line-height:1.7">${esc(c.summary)}</p>
+          <div class="bar thin"><i style="width:${pct}%"></i></div>
+        </div>`;
+    }).join('')}
+    </div><div style="height:20px"></div>`;
+  }
+  function courseScreen(id) {
+    const c = DB.courses.find(x => x.id === id) || DB.courses[0];
+    const done = S.lessons[c.id] || [];
+    const pct = Math.round(done.length / c.lessons.length * 100);
+    return `${appbar(c.title, esc(c.level), '#/courses')}
+    <div class="pad">
+      <div class="card oath pad stack">
+        <div class="kv"><div><div class="mini muted">কোর্স অগ্রগতি</div><div class="display" style="font-size:14px;margin-top:3px">${esc(c.teacher)}</div></div>
+          <div class="ring" style="--p:${pct}%;width:48px;height:48px"><div><div class="n" style="font-size:12px">${bn(pct)}%</div></div></div></div>
+        <div class="grid3 mt"><div class="stat"><div class="k">লেসন</div><div class="v">${bn(done.length)}/${bn(c.lessons.length)}</div></div>
+          <div class="stat"><div class="k">সময়</div><div class="v">${bn(c.hours)} ঘণ্টা</div></div>
+          <div class="stat"><div class="k">কুইজ</div><div class="v">৩</div></div></div>
+      </div>
+      <div class="sect"><h4>সিলেবাস</h4><div class="line"></div><span class="mini muted">ট্যাপ করে সম্পন্ন করুন</span></div>
+      <div class="timeline">
+        ${c.lessons.map((l, i) => `<div class="card tl ${done.includes(i) ? 'done' : ''}" data-act="lesson" data-id="${c.id}" data-i="${i}" role="button" tabindex="0">
+          <div class="node">${done.includes(i) ? ico('check', 'xs') : bn(i + 1)}</div>
+          <h5>${esc(l.t)} ${!done.includes(i) && done.length === i ? '<span class="pill">এখনই</span>' : ''}</h5>
+          <p>${esc(l.d)} · ${bn(l.m)} মিনিট</p></div>`).join('')}
+      </div>
+      <button class="btn gold block" data-act="nav" data-to="#/quiz">লেসন শেষে কুইজ দিন</button>
+    </div><div style="height:20px"></div>`;
+  }
+
+  /* ------------------------------------------------------------ 6. exam */
+  function nextFriday() {
+    const d = new Date(TODAY);
+    d.setHours(20, 0, 0, 0);
+    const add = (5 - d.getDay() + 7) % 7;
+    d.setDate(d.getDate() + (add === 0 && Date.now() > d.getTime() ? 7 : add));
+    return d;
+  }
+  function examScreen() {
+    const target = nextFriday();
+    const diff = Math.max(0, target - Date.now());
+    const hh = Math.floor(diff / 3600000), mm = Math.floor(diff % 3600000 / 60000), dd = Math.floor(hh / 24);
+    const best = S.attempts.length ? Math.max(...S.attempts.map(a => a.score)) : 0;
+    const rows = DB.leaderboard.concat([{ n: S.name + ' (আপনি)', c: 'ঢাকা', s: best, me: true }])
+      .sort((a, b) => b.s - a.s);
+    return `${appbar('পরীক্ষা ও কুইজ', 'Pariksha Kendra', undefined, true)}
+    <div class="pad" style="padding-top:0">
+      <div class="card oath pad">
+        <div class="kv" style="align-items:flex-start">
+          <div><span class="pill">সাপ্তাহিক কুইজ · ৪৭তম</span>
+            <div class="display" style="font-size:16px;margin-top:9px">${esc(DB.quizzes.weekly.topic)}</div>
+            <div class="mini muted" style="margin-top:4px">${bn(DB.quizzes.weekly.questions.length)}টি প্রশ্ন · ${bn(DB.quizzes.weekly.minutes)} মিনিট · নেগেটিভ মার্কিং নেই</div></div>
+          <div style="text-align:center"><div class="mini muted">পুরস্কার</div><div style="font-size:16px;margin-top:4px">🥇</div>
+            <div class="mini" style="color:var(--gold-300);margin-top:2px">স্বর্ণ পদক</div></div>
+        </div>
+        <div class="cd"><div><b>${bn(dd)}</b><i>দিন</i></div><div><b>${bn(String(hh % 24).padStart(2, '0'))}</b><i>ঘণ্টা</i></div><div><b>${bn(String(mm).padStart(2, '0'))}</b><i>মিনিট</i></div></div>
+        <button class="btn gold block mt" data-act="quizStart">এখনই অংশ নিন</button>
+      </div>
+
+      <div class="grid3 mt">
+        <div class="card pad" style="text-align:center;padding:12px 6px"><div style="color:var(--gold-300);display:grid;place-items:center">${ico('cal')}</div><div class="mini" style="margin-top:7px">মাসিক</div></div>
+        <div class="card pad" style="text-align:center;padding:12px 6px"><div style="color:var(--gold-300);display:grid;place-items:center">${ico('trophy')}</div><div class="mini" style="margin-top:7px">বার্ষিক</div></div>
+        <div class="card pad" style="text-align:center;padding:12px 6px"><div style="color:var(--gold-300);display:grid;place-items:center">${ico('shield')}</div><div class="mini" style="margin-top:7px">সার্টিফিকেট</div></div>
+      </div>
+
+      <div class="sect"><h4>লিডারবোর্ড</h4><div class="line"></div><span class="mini muted">আপনার সেরা: ${best ? bn(best) : '—'}</span></div>
+      <div class="card pad" style="padding:6px 13px">
+        ${rows.slice(0, 6).map((r, i) => `
+          <div class="li ${r.me ? 'me-row' : ''}">
+            <span class="rankbox ${i === 0 ? 'g1' : i === 1 ? 'g2' : i === 2 ? 'g3' : ''}">${bn(i + 1)}</span>
+            <div class="av round" style="width:30px;height:30px;font-size:12px">${esc(r.n.slice(0, 1))}</div>
+            <div style="flex:1"><div style="font-size:12.5px;font-weight:600">${esc(r.n)}</div><div class="mini muted">${esc(r.c)} · ${r.s ? bn(r.s) : '—'}</div></div>
+            ${r.me ? '<span class="pill">আপনি</span>' : ''}
+          </div>`).join('')}
+      </div>
+
+      ${S.attempts.length ? `<div class="sect"><h4>আগের ফলাফল</h4><div class="line"></div></div>
+      ${S.attempts.slice(-3).reverse().map(a => `<div class="card rowcard stack">
+        <div class="datebox" style="width:44px;height:48px"><b>${bn(a.score)}</b><i>নম্বর</i></div>
+        <div style="flex:1"><div class="ttl">${esc(a.title)}</div><div class="mini muted" style="margin-top:4px">${bn(a.correct)}/${bn(a.total)} সঠিক · ${esc(a.when)}</div></div>
+        <span class="pill ${a.score >= 50 ? 'ok' : ''}">${a.score >= 50 ? 'উত্তীর্ণ' : 'আবার চেষ্টা'}</span></div>`).join('')}` : ''}
+    </div><div style="height:20px"></div>`;
+  }
+
+  /* ------------------------------------------------------------ 7. quiz */
+  function quizScreen() {
+    const q = U.quiz;
+    if (!q) return `<div class="pad" style="padding-top:24px"><div class="card empty"><h5>কুইজ শুরু হয়নি</h5><p>পরীক্ষা পাতায় গিয়ে “এখনই অংশ নিন” চাপুন।</p><button class="btn gold sm" data-act="nav" data-to="#/exam">পরীক্ষায় যান</button></div></div>`;
+    const Q = DB.quizzes.weekly.questions;
+    const cur = Q[q.i];
+    const left = q.left;
+    return `${appbar(`প্রশ্ন ${bn(q.i + 1)} / ${bn(Q.length)}`, DB.quizzes.weekly.topic, '#/exam')}
+    <div class="pad">
+      <div class="kv" style="margin-top:4px"><span class="mini muted">সময় বাকি</span><span class="pill" id="quizTimer">${bn(String(Math.floor(left / 60)).padStart(2, '0'))}:${bn(String(left % 60).padStart(2, '0'))}</span></div>
+      <div class="qbar">${Q.map((_, i) => `<i class="${i <= q.i ? 'on' : ''}"></i>`).join('')}</div>
+      <div class="card pad" style="margin-bottom:15px;padding:16px">
+        <div class="mini muted" style="margin-bottom:9px">${esc(DB.quizzes.weekly.topic)} · প্রশ্ন ${bn(q.i + 1)}</div>
+        <div style="font-size:14px;line-height:1.75">${esc(cur.q)}</div>
+      </div>
+      ${cur.opts.map((o, i) => `<button class="opt ${q.answers[q.i] === i ? 'sel' : ''}" data-act="pick" data-i="${i}">
+        <span class="k">${['ক', 'খ', 'গ', 'ঘ'][i]}</span>${esc(o)}</button>`).join('')}
+      <div style="display:flex;gap:9px;margin-top:16px">
+        <button class="btn ghost" style="flex:1" data-act="quizPrev" ${q.i === 0 ? 'disabled' : ''}>আগের</button>
+        ${q.i === Q.length - 1
+        ? `<button class="btn gold" style="flex:1.5" data-act="quizSubmit">জমা দিন</button>`
+        : `<button class="btn gold" style="flex:1.5" data-act="quizNext">পরের প্রশ্ন</button>`}
+      </div>
+      <p class="mini muted" style="text-align:center;margin-top:14px">উত্তর দেওয়া হয়েছে ${bn(Object.keys(q.answers).length)}/${bn(Q.length)}</p>
+    </div><div style="height:20px"></div>`;
+  }
+
+  function resultScreen() {
+    const r = U.result;
+    if (!r) return homeScreen();
+    const Q = DB.quizzes.weekly.questions;
+    const pct = Math.round(r.correct / Q.length * 100);
+    return `${appbar('ফলাফল', DB.quizzes.weekly.topic, '#/exam')}
+    <div class="pad">
+      <div class="card oath pad" style="text-align:center">
+        <div class="eyebrow">আপনার স্কোর</div>
+        <div class="display" style="font-size:40px;margin:8px 0 4px;color:var(--gold-200)">${bn(r.score)}</div>
+        <div class="tiny muted">১০০-এর মধ্যে · ${bn(r.correct)}/${bn(Q.length)} সঠিক</div>
+        <div class="bar" style="margin:14px 0 6px"><i style="width:${pct}%"></i></div>
+        <div class="mini muted">${pct >= 80 ? 'অসাধারণ! শাস্ত্রজ্ঞান দৃঢ় হচ্ছে 🌸' : pct >= 50 ? 'ভালো — আরেকটু অনুশীলন করুন' : 'চিন্তা নেই, ব্যাখ্যা পড়ে আবার দিন'}</div>
+      </div>
+      <div class="sect"><h4>উত্তরপত্র ও ব্যাখ্যা</h4><div class="line"></div></div>
+      ${Q.map((q, i) => {
+        const mine = r.answers[i], ok = mine === q.ans;
+        return `<div class="card pad stack">
+          <div class="kv"><span class="tiny" style="flex:1;line-height:1.6">${bn(i + 1)}. ${esc(q.q)}</span>
+            <span class="pill ${ok ? 'ok' : ''}">${ok ? 'সঠিক' : 'ভুল'}</span></div>
+          <div class="mini" style="margin-top:8px">আপনার উত্তর: <b>${mine === undefined ? '—' : esc(q.opts[mine])}</b></div>
+          ${!ok ? `<div class="mini" style="color:var(--ok);margin-top:4px">সঠিক: ${esc(q.opts[q.ans])}</div>` : ''}
+          <div class="arth" style="margin-top:9px;font-size:11.5px">${esc(q.ex)}</div>
+        </div>`;
+      }).join('')}
+      <div style="display:flex;gap:9px"><button class="btn ghost" style="flex:1" data-act="nav" data-to="#/exam">শেষ</button>
+        <button class="btn gold" style="flex:1" data-act="quizStart">আবার দিন</button></div>
+    </div><div style="height:20px"></div>`;
+  }
+
+  /* ------------------------------------------------------------- 8. puja */
+  function pujaScreen() {
+    return `${appbar('পূজা ও নিত্যকর্ম', 'Achar Guide')}
+    <div class="pad" style="padding-top:0">
+      ${DB.pujas.map(p => {
+      const done = (S.puja[p.id + ':' + TODAY_KEY] || []).length;
+      const pct = Math.round(done / p.steps.length * 100);
+      return `<div class="card pad stack" data-act="nav" data-to="#/puja/${p.id}" role="button" tabindex="0" style="cursor:pointer">
+          <div style="display:flex;gap:13px;align-items:center">
+            <div style="width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:var(--glass);border:1px solid var(--card-border);color:var(--gold-300)">${ico('flame')}</div>
+            <div style="flex:1">
+              <div class="kv"><span class="ttl" style="font-family:var(--f-dis);font-size:14px">${esc(p.title)}</span><span class="pill">${pct ? bn(pct) + '%' : bn(p.mins) + ' মিনিট'}</span></div>
+              <div class="mini muted" style="margin-top:4px">${esc(p.time)} · ${bn(p.steps.length)} ধাপ</div>
+            </div>
+          </div>
+          <p class="tiny muted" style="margin:10px 0 8px;line-height:1.7">${esc(p.summary)}</p>
+          <div class="bar thin"><i style="width:${pct}%"></i></div>
+        </div>`;
+    }).join('')}
+    </div><div style="height:20px"></div>`;
+  }
+  function pujaGuideScreen(id) {
+    const p = DB.pujas.find(x => x.id === id) || DB.pujas[0];
+    const k = p.id + ':' + TODAY_KEY;
+    const done = S.puja[k] || [];
+    return `${appbar(p.title, `${esc(p.time)} · ${bn(p.steps.length)} ধাপ`, '#/puja')}
+    <div class="pad">
+      <div class="card oath pad stack">
+        <div class="diya" style="display:flex;gap:12px;align-items:center">
+          ${FLAME(34, 46)}
+          <div style="flex:1"><div class="mini muted">আজকের অগ্রগতি</div>
+            <div style="font-size:12.5px;font-weight:600;margin-top:4px">${bn(done.length)}/${bn(p.steps.length)} ধাপ সম্পন্ন</div></div>
+          <span class="pill ${done.length === p.steps.length ? 'ok' : ''}">${done.length === p.steps.length ? 'সম্পূর্ণ' : bn(Math.round(done.length / p.steps.length * 100)) + '%'}</span>
+        </div>
+        <div class="bar thin mt"><i style="width:${done.length / p.steps.length * 100}%"></i></div>
+      </div>
+      <div class="sect"><h4>পূজা ক্রম</h4><div class="line"></div><span class="mini muted">≈ ${bn(p.mins)} মিনিট</span></div>
+      ${p.steps.map((s, i) => `
+        <div class="card step ${done.includes(i) ? 'done' : ''}" data-act="pujaStep" data-id="${p.id}" data-i="${i}" role="button" tabindex="0">
+          <div class="sno">${done.includes(i) ? ico('check', 'xs') : bn(i + 1)}</div>
+          <div style="flex:1"><h5>${esc(s.t)}</h5><p>${esc(s.d)}</p>
+            ${s.m ? `<div class="mantra">${esc(s.m)}</div>
+              <button class="btn ghost sm" style="margin-top:8px" data-act="speak" data-text="${esc(s.m)}">${ico('play', 'xs')} উচ্চারণ শুনুন</button>` : ''}
+          </div>
+        </div>`).join('')}
+      <button class="btn ghost block" data-act="nav" data-to="#/panjika">আজকের শুভ সময় দেখুন</button>
+    </div><div style="height:20px"></div>`;
+  }
+
+  /* ---------------------------------------------------------- 9. panjika */
+  function panjikaScreen() {
+    const bt = bengaliDate(TODAY);
+    if (U.panjika.by == null) { U.panjika.by = bt.year; U.panjika.bm = bt.m; }
+    const isBn = U.panjika.view === 'bn';
+    const selKey = U.panjika.day;
+    const sel = panjikaFor(selKey);
+    const selDate = new Date(selKey + 'T00:00:00');
+    const selBn = bengaliDate(selDate);
+
+    let head, cellsHtml, nav, note, monthStart, monthEnd;
+
+    if (isBn) {
+      const y = U.panjika.by, m = U.panjika.bm;
+      const cells = banglaMonthCells(y, m);
+      const lead = cells.length ? cells[0].date.getDay() : 0;
+      monthStart = cells.length ? key(cells[0].date) : '0000-00-00';
+      monthEnd = cells.length ? key(cells[cells.length - 1].date) : '9999-99-99';
+      cellsHtml = Array.from({ length: lead }, () => '<div class="day mut"></div>').join('') +
+        cells.map(c => {
+          const k = key(c.date), ek = panjikaFor(k).ekadashi, now = k === TODAY_KEY, selected = k === selKey;
+          return `<button class="day bn-day ${ek ? 'ek' : ''} ${now ? 'now' : ''} ${selected ? 'sel' : ''}" data-act="pday" data-k="${k}"
+            aria-label="${bn(c.d)} ${BM_NAMES[m]} ${bn(y)}">
+            <span class="bnn">${bn(c.d)}</span><span class="eng">${bn(c.date.getDate())}</span></button>`;
+        }).join('');
+      head = `${BM_NAMES[m]} ${bn(y)} বঙ্গাব্দ`;
+      nav = `<button class="act" data-act="pbm" data-d="-1">◀</button><button class="act" data-act="pbm" data-d="1">▶</button>`;
+      note = `ঋতু: ${BM_SEASON[m]} · ${bn(cells.length)} দিন · ইংরেজি ${bn(cells.length ? cells[0].date.getDate() : 0)} ${BN_MONTH[cells.length ? cells[0].date.getMonth() : 0]} – ${bn(cells.length ? cells[cells.length - 1].date.getDate() : 0)} ${BN_MONTH[cells.length ? cells[cells.length - 1].date.getMonth() : 0]}`;
+    } else {
+      const { y, m } = U.panjika;
+      const first = new Date(y, m - 1, 1);
+      const startDow = first.getDay();
+      const daysInMonth = new Date(y, m, 0).getDate();
+      const prevDays = new Date(y, m - 1, 0).getDate();
+      const cells = [];
+      for (let i = startDow - 1; i >= 0; i--) cells.push({ d: prevDays - i, mut: true, date: new Date(y, m - 2, prevDays - i) });
+      for (let d = 1; d <= daysInMonth; d++) cells.push({ d, date: new Date(y, m - 1, d) });
+      while (cells.length % 7) cells.push({ d: cells.length - startDow - daysInMonth + 1, mut: true, date: new Date(y, m - 1, daysInMonth + (cells.length - startDow - daysInMonth + 1)) });
+      monthStart = key(new Date(y, m - 1, 1));
+      monthEnd = key(new Date(y, m - 1, daysInMonth));
+      cellsHtml = cells.map(c => {
+        const k = key(c.date), ek = panjikaFor(k).ekadashi, now = k === TODAY_KEY, selected = k === selKey;
+        const bd = bengaliDate(c.date);
+        return `<button class="day bn-day ${c.mut ? 'mut' : ''} ${ek ? 'ek' : ''} ${now ? 'now' : ''} ${selected ? 'sel' : ''}" data-act="pday" data-k="${k}">
+          <span class="bnn">${bn(c.d)}</span><span class="eng">${bn(bd.d)}</span></button>`;
+      }).join('');
+      head = `${BN_MONTH[m - 1]} ${bn(y)}`;
+      nav = `<button class="act" data-act="pmonth" data-d="-1">◀</button><button class="act" data-act="pmonth" data-d="1">▶</button>`;
+      note = `বঙ্গাব্দ ${bn(bt.year)} · ${bn(daysInMonth)} দিন`;
+    }
+
+    const festList = Object.keys(P.festivals).filter(k => k >= monthStart && k <= monthEnd).sort();
+
+    return `${appbar('পঞ্জিকা ও একাদশী', 'Panjika · বঙ্গাব্দ ' + bn(bt.year))}
+    <div class="pad" style="padding-top:0">
+      <div class="segment">
+        <button class="${isBn ? 'on' : ''}" data-act="pview" data-v="bn">বাংলা (বঙ্গাব্দ)</button>
+        <button class="${!isBn ? 'on' : ''}" data-act="pview" data-v="en">ইংরেজি</button>
+      </div>
+
+      <div class="card oath pad mt">
+        <div class="kv"><div><div class="mini muted">নির্বাচিত দিন</div>
+          <div class="display" style="font-size:15px;margin-top:3px">${bn(selBn.d)} ${selBn.month}, ${BN_DAY[selDate.getDay()]}</div>
+          <div class="mini muted" style="margin-top:3px">${bn(selDate.getDate())} ${BN_MONTH[selDate.getMonth()]} ${bn(selDate.getFullYear())} · ${bn(selBn.year)} বঙ্গাব্দ</div></div>
+          <span class="pill">${sel.tithi}</span></div>
+        ${sel.fest ? `<div class="mini" style="color:var(--gold-300);margin-top:8px">✦ ${esc(sel.fest)}</div>` : ''}
+        <div class="grid2 mt">
+          <div class="stat"><div class="k">শুভ সময়</div><div class="v" style="color:var(--ok)">${sel.shubho}</div></div>
+          <div class="stat"><div class="k">রাহুকাল</div><div class="v" style="color:var(--danger)">${sel.rahu}</div></div>
+          <div class="stat"><div class="k">সূর্যোদয়</div><div class="v">${sel.sunrise}</div></div>
+          <div class="stat"><div class="k">ঋতু</div><div class="v">${selBn.season}</div></div>
+        </div>
+      </div>
+
+      <div class="sect"><h4>${head}</h4><div class="line"></div>${nav}</div>
+      <div class="card pad">
+        <div class="cal">${BN_DAYS.map(d => `<div class="h">${d}</div>`).join('')}${cellsHtml}</div>
+        <div class="legend"><span><i style="background:#7e2127;border:1px solid #d7a94f"></i>একাদশী</span>
+          <span><i style="background:rgba(215,169,79,.5)"></i>আজ</span>
+          <span class="mini muted">${note}</span></div>
+      </div>
+
+      <div class="sect"><h4>ব্রত ও উৎসব</h4><div class="line"></div></div>
+      ${festList.length ? festList.map(k => {
+        const d = new Date(k + 'T00:00:00'), diff = Math.round((d - new Date(TODAY_KEY + 'T00:00:00')) / DAY_MS);
+        const bD = bengaliDate(d);
+        return `<div class="card rowcard stack"><div class="datebox"><b>${bn(bD.d)}</b><i>${bD.month.slice(0, 4)}</i></div>
+          <div style="flex:1"><div class="kv"><span class="ttl">${esc(P.festivals[k])}</span>
+            <span class="pill">${diff === 0 ? 'আজ' : diff > 0 ? bn(diff) + ' দিন' : 'সম্পন্ন'}</span></div>
+            <div class="mini muted" style="margin-top:5px">${bn(d.getDate())} ${BN_MONTH[d.getMonth()]} · ${panjikaFor(k).tithi} · শুভ ${panjikaFor(k).shubho}</div></div></div>`;
+      }).join('') : '<p class="tiny muted">এই মাসে কোনো ব্রত নেই।</p>'}
+
+      <p class="mini muted" style="margin-top:16px;line-height:1.7">বঙ্গাব্দ গণনা: বাংলাদেশ সংশোধিত পঞ্জিকা অনুযায়ী <b>বৈশাখ ১ = ১৪ এপ্রিল</b>. উপরের ছোট সংখ্যা ইংরেজি তারিখ। কিছু ক্ষেত্রে আঞ্চলিক পঞ্জিকায় ১ দিন পার্থক্য হতে পারে।</p>
+    </div><div style="height:20px"></div>`;
+  }
+
+  /* ------------------------------------------------------------- 10. seva */
+  function sevaScreen() {
+    const totalRaised = DB.campaigns.reduce((s, c) => s + c.raised + (S.raised[c.id] || 0), 0);
+    const totalSpent = Math.round(totalRaised * .93);
+    return `${appbar('সেবা ও সহায়তা', 'Seva · স্বচ্ছ দান', undefined, true)}
+    <div class="pad" style="padding-top:0">
+      <div class="card oath pad">
+        <div class="kv"><div><div class="mini muted">এই মাসে সংগ্রহ</div>
+          <div class="display" style="font-size:20px;color:var(--gold-200);margin-top:3px">৳ ${bnN(totalRaised)}</div></div>
+          <div style="text-align:right"><div class="mini muted">সেবায় ব্যয়</div>
+            <div class="display" style="font-size:20px;color:var(--ok);margin-top:3px">৳ ${bnN(totalSpent)}</div></div></div>
+        <div class="dualbar mt"><i style="width:93%;background:linear-gradient(90deg,#3f8d68,#8fd6b0)"></i><i style="width:7%;background:rgba(215,169,79,.6)"></i></div>
+        <div class="kv" style="margin-top:8px"><span class="mini muted">৯৩% সরাসরি সেবা</span><span class="mini muted">৭% অপারেশনাল (ঘোষিত)</span></div>
+      </div>
+
+      ${(() => {
+        const c = DB.campaigns.find(x => x.id === 'gita');
+        if (!c) return '';
+        const raised = c.raised + (S.raised[c.id] || 0), pct = Math.min(100, Math.round(raised / c.goal * 100));
+        const gitas = Math.round(raised / c.perUnit);
+        return `<div class="sect"><h4>গীতা দান</h4><div class="line"></div><span class="mini muted">${bn(gitas)}টি গীতা</span></div>
+        <div class="card oath pad stack gita-daan">
+          <div class="kv"><div><div class="mini muted">শ্রীমদ্ভগবদ্গীতা · এক ঘরে এক গীতা</div>
+            <h5 style="margin-top:4px">৳ ${bn(c.perUnit)} দিয়ে একটি পরিবারে গীতা পৌঁছাবে</h5></div>
+            ${ico('book', 'sm')}</div>
+          <p class="mini muted" style="margin:8px 0 0;line-height:1.75">${esc(c.blurb)}</p>
+          <div class="kv mini muted" style="margin-top:10px"><span>৳ ${bnN(raised)} সংগ্রহ</span><span>লক্ষ্য ৳ ${bnN(c.goal)}</span></div>
+          <div class="bar mt"><i style="width:${pct}%"></i></div>
+          <div class="kv mini muted" style="margin-top:7px"><span>${bn(pct)}% পূর্ণ</span><span>${bn(Math.max(0, Math.round(c.goal / c.perUnit) - gitas))}টি গীতা বাকি</span></div>
+          <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+            <button class="btn gold sm" style="flex:1" data-act="donate" data-id="${c.id}" data-amt="${c.perUnit}">১টি গীতা · ৳${bn(c.perUnit)}</button>
+            <button class="btn ghost sm" data-act="donate" data-id="${c.id}" data-amt="${c.perUnit * 5}">৫টি · ৳${bn(c.perUnit * 5)}</button>
+            <button class="btn ghost sm" data-act="donate" data-id="${c.id}" data-amt="${c.perUnit * 11}">১১টি · ৳${bn(c.perUnit * 11)}</button>
+          </div>
+          <div class="mini muted" style="margin-top:9px;text-align:center">প্রতিটি দানের রিসিট ও বিতরণের প্রমাণ অ্যাপে সংরক্ষিত থাকবে</div>
+        </div>`;
+      })()}
+
+      <div class="sect"><h4>চলমান অভিযান</h4><div class="line"></div></div>
+      ${DB.campaigns.filter(c => c.id !== 'gita').map(c => {
+      const raised = c.raised + (S.raised[c.id] || 0), pct = Math.min(100, Math.round(raised / c.goal * 100));
+      return `<div class="card pad campaign stack">
+          <div class="kv"><h5>${esc(c.title)}</h5><span class="pill ok">${bn(pct)}%</span></div>
+          <p>${esc(c.blurb)}</p>
+          <div class="kv mini muted"><span>৳ ${bnN(raised)} সংগ্রহ</span><span>লক্ষ্য ৳ ${bnN(c.goal)}</span></div>
+          <div class="bar mt"><i style="width:${pct}%"></i></div>
+          <div style="display:flex;gap:8px;margin-top:11px">
+            <button class="btn gold sm" style="flex:1" data-act="donate" data-id="${c.id}" data-amt="${c.perUnit}">৳ ${bn(c.perUnit)} — ${esc(c.unit)}</button>
+            <button class="btn ghost sm" data-act="donate" data-id="${c.id}" data-amt="${c.perUnit * 5}">৳ ${bn(c.perUnit * 5)}</button>
+          </div>
+        </div>`;
+    }).join('')}
+      ${S.orders.filter(o => o.kind === 'donation').length ? `<div class="sect"><h4>আপনার দান</h4><div class="line"></div></div>
+        <div class="card pad">${S.orders.filter(o => o.kind === 'donation').slice(-4).reverse().map(o => `
+          <div class="ledger"><span>${esc(o.title)}</span><span>৳ ${bnN(o.amount)}</span></div>`).join('')}</div>` : ''}
+
+      <div class="card pad mt" style="background:var(--glass)">
+        <div class="kv"><b style="font-size:12.5px">স্বচ্ছতার প্রতিশ্রুতি</b>${ico('shield', 'sm')}</div>
+        <p class="mini muted" style="margin:8px 0 0;line-height:1.7">প্রতিটি দানের রিসিট ও ব্যয়ের প্রমাণ প্রকাশ্যে থাকবে। দানের টাকা প্লাটফর্মের খরচে ব্যবহার হবে না — আলাদা ট্রাস্ট অ্যাকাউন্ট।</p>
+      </div>
+    </div><div style="height:20px"></div>`;
+  }
+
+  /* ----------------------------------------------------------- 11. market */
+  function providerCards() {
+    const q = U.marketQ.trim().toLowerCase();
+    const all = (S.provider ? [{ ...S.provider, mine: true }] : []).concat(DB.providers);
+    const list = all.filter(p => (U.marketCat === 'সব' || p.cat === U.marketCat) &&
+      (!q || (p.name + p.role).toLowerCase().includes(q)));
+    if (!list.length) return `<div class="card empty"><div class="illu">${ico('bag')}</div><h5>এই বিভাগে কেউ নেই</h5><p>অন্য বিভাগ বেছে নিন, অথবা নিজেই প্রোফাইল খুলুন।</p></div>`;
+    return list.map(p => `<div class="card provider">
+      <div class="av">${esc(p.ini || p.name.slice(0, 1))}</div>
+      <div style="flex:1;min-width:0">
+        <h5>${esc(p.name)} ${p.mine ? '<span class="pill">আপনি</span>' : '<span class="badge-v">✓</span>'}</h5>
+        <div class="role">${esc(p.role)}</div>
+        <div class="kv"><span class="stars">${'★'.repeat(Math.round(p.rating))}${'☆'.repeat(5 - Math.round(p.rating))} <span class="mini muted">${bn(p.rating)} (${bn(p.reviews || 0)})</span></span>
+          <b style="font-size:12.5px;color:var(--gold-200)">৳ ${bnN(p.rate)}/${esc(p.rateLabel || 'কাজ')}</b></div>
+        <button class="btn ghost sm mt" data-act="order" data-id="${p.id}">বুক করুন · এসক্রো সুরক্ষা</button>
+      </div></div>`).join('');
+  }
+  function marketScreen() {
+    const cats = ['সব', 'টিউটর', 'পুরোহিত', 'গ্রাফিক্স', 'কথক'];
+    return `${appbar('সেবা ও কাজ', 'Skills · Income')}
+    <div class="pad" style="padding-top:0">
+      <div class="search">${ico('search', 'sm')}<input id="marketSearch" placeholder="টিউটর, পুরোহিত, ডিজাইনার…" value="${esc(U.marketQ)}" aria-label="সেবা খুঁজুন"/></div>
+      <div class="tiny muted" style="margin-top:9px">ভেরিফায়েড প্রোভাইডার · ১২% প্ল্যাটফর্ম ফি · পেআউট প্রতি রবিবার</div>
+    </div>
+    <div class="cats">${cats.map(c => `<button class="chip ${U.marketCat === c ? 'on' : ''}" data-act="mcat" data-c="${c}">${c}</button>`).join('')}</div>
+    <div class="pad" style="padding-top:12px">
+      <div id="marketList">${providerCards()}</div>
+      <div class="card oath pad">
+        <div class="kv"><b style="font-size:12.8px">আপনার দক্ষতা দিয়ে আয় করুন</b>${ico('wallet', 'sm')}</div>
+        <p class="mini muted" style="margin:7px 0 11px;line-height:1.65">শিক্ষক, ডিজাইনার, লেখক, কথক — প্রোফাইল খুলে কাজ নিন। ৮৫% আপনার শেয়ার।</p>
+        ${S.provider
+        ? `<div class="mini">প্রোফাইল সক্রিয়: <b>${esc(S.provider.name)}</b> · ${esc(S.provider.cat)} · ৳${bnN(S.provider.rate)}</div>
+             <button class="btn ghost sm mt" data-act="myProfile">আয়ের হিসাব দেখুন</button>`
+        : `<button class="btn gold block sm" data-act="providerForm">প্রোফাইল খুলুন</button>`}
+      </div>
+      ${S.orders.filter(o => o.kind === 'service').length ? `<div class="sect"><h4>আপনার অর্ডার</h4><div class="line"></div></div>
+        <div class="card pad">${S.orders.filter(o => o.kind === 'service').slice(-4).reverse().map(o => `
+          <div class="ledger"><span>${esc(o.title)}</span><span>৳ ${bnN(o.amount)} · ${o.status}</span></div>`).join('')}</div>` : ''}
+    </div><div style="height:20px"></div>`;
+  }
+
+  /* --------------------------------------------------------------- 12. me */
+  function meScreen() {
+    const days = Object.keys(S.activity).sort().slice(-7);
+    const max = Math.max(...days.map(d => S.activity[d]), 100);
+    const weekDone = days.filter(d => S.activity[d] > 0).length;
+    const avg = Math.round(days.reduce((s, d) => s + S.activity[d], 0) / days.length);
+    const earnings = S.provider ? S.orders.filter(o => o.kind === 'service').reduce((s, o) => s + o.amount, 0) : 0;
+    return `${appbar('আমার অগ্রগতি', 'Dashboard', undefined, true)}
+    <div class="pad" style="padding-top:0">
+      <div class="card oath pad stack">
+        <div style="display:flex;gap:14px;align-items:center">
+          <div class="av round" style="width:56px;height:56px;font-size:19px">${esc(S.name.slice(0, 2))}</div>
+          <div style="flex:1">
+            <div class="display" style="font-size:15px">${esc(S.name)}</div>
+            <div class="mini muted" style="margin-top:4px">শিক্ষার্থী · স্তর ${bn(2)} · যোগ দিয়েছেন জুন ২০২৬</div>
+            <div style="display:flex;gap:6px;margin-top:9px;flex-wrap:wrap">
+              <span class="pill">🔥 ${bn(S.streak)} দিন</span>
+              <span class="pill">${bn(Object.keys(S.read).length)} শ্লোক</span>
+              <span class="pill ok">${bn(S.attempts.length)} কুইজ</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt">${roleSwitch()}</div>
+      <div class="mt">${rolePanel()}</div>
+
+      <div class="sect"><h4>এই সপ্তাহের সাধনা</h4><div class="line"></div><span class="mini muted">${bn(weekDone)}/৭ দিন</span></div>
+      <div class="card pad">
+        <div class="chart">
+          ${days.map(d => {
+        const v = S.activity[d] || 0;
+        const h = Math.max(6, Math.round(v / max * 100));
+        const dd = new Date(d + 'T00:00:00');
+        return `<div class="col"><div class="bwrap"><div class="b ${v ? '' : 'empty'}" style="height:${h}%"></div></div>
+              <div class="d">${BN_DAYS[dd.getDay()]}</div></div>`;
+      }).join('')}
+        </div>
+        <div class="kv" style="margin-top:13px;padding-top:11px;border-top:1px solid var(--hairline)">
+          <span class="mini muted">দৈনিক লক্ষ্য ${bn(25)} মিনিট</span>
+          <span class="mini" style="color:var(--ok)">গড় ${bn(avg)} মিনিট</span></div>
+      </div>
+
+      <div class="sect"><h4>দৈনিক হিসাব</h4><div class="line"></div><button class="act" data-act="nav" data-to="#/track/history">হিস্ট্রি ›</button></div>
+      <div class="card pad" style="display:flex;align-items:center;gap:12px" data-act="nav" data-to="#/track" role="button" tabindex="0">
+        <div class="ring" style="--p:${scoreOf(entryFor(TODAY_KEY), todayAuto()).total}%;width:46px;height:46px"><div><div class="n" style="font-size:12px">${bn(scoreOf(entryFor(TODAY_KEY), todayAuto()).total)}</div></div></div>
+        <div style="flex:1"><div style="font-size:12.5px;font-weight:600">আজকের স্কোর</div>
+          <div class="mini muted" style="margin-top:3px">গড় ${bn((() => { const ks = Object.keys(S.daily); if (!ks.length) return 0; return Math.round(ks.reduce((a, k) => a + scoreOf(S.daily[k], k === TODAY_KEY ? todayAuto() : null).total, 0) / ks.length); })())}/১০০ · ${bn(Object.keys(S.daily).length)} দিনের হিসাব</div></div>
+        ${ico('arrow', 'sm')}
+      </div>
+
+      <div class="sect"><h4>আমার আয়</h4><div class="line"></div>
+        <span class="pill ${S.provider ? 'ok' : ''}">${S.provider ? 'সক্রিয়' : 'নিষ্ক্রিয়'}</span></div>
+      <div class="card pad">
+        ${S.provider ? `
+          <div class="kv"><div><div class="mini muted">মোট আয়</div>
+            <div class="display" style="font-size:21px;color:var(--gold-200);margin-top:3px">৳ ${bnN(earnings)}</div></div>
+            <div style="text-align:right"><div class="mini muted">পরবর্তী পেআউট</div>
+              <div style="font-size:12.5px;font-weight:600;margin-top:5px">রবিবার · ৳ ${bnN(Math.round(earnings * .85))}</div></div></div>
+          <div class="mt">
+            <div class="ledger"><span>মোট অর্ডার (৮৫% শেয়ার)</span><span>৳ ${bnN(Math.round(earnings * .85))}</span></div>
+            <div class="ledger"><span>প্লাটফর্ম ফি ১২%</span><span style="color:var(--danger)">− ৳ ${bnN(Math.round(earnings * .12))}</span></div>
+          </div>`
+        : `<p class="mini muted" style="margin:0 0 11px;line-height:1.7">এখনো প্রোভাইডার প্রোফাইল নেই। দক্ষতা দিয়ে আয় শুরু করতে প্রোফাইল খুলুন।</p>
+             <button class="btn gold block sm" data-act="nav" data-to="#/market">মার্কেটপ্লেসে যান</button>`}
+      </div>
+
+      <div class="sect"><h4>পছন্দ ও সেটিংস</h4><div class="line"></div></div>
+      <div class="card pad" style="padding:4px 14px">
+        <div class="setting" data-act="toggleTheme">
+          <span style="color:var(--gold-300)">${ico('sun', 'sm')}</span>
+          <div style="flex:1;font-size:12.5px">লাইট মোড (পাটা-থিম)</div>
+          <span class="toggle ${S.theme === 'light' ? 'on' : ''}"></span></div>
+        <div class="setting" data-act="toggleSound">
+          <span style="color:var(--gold-300)">${ico('bell', 'sm')}</span>
+          <div style="flex:1;font-size:12.5px">মৃদু ঘণ্টাধ্বনি</div>
+          <span class="toggle ${S.sound ? 'on' : ''}"></span></div>
+        <div class="setting" data-act="toggleMotion">
+          <span style="color:var(--gold-300)">${ico('flame', 'sm')}</span>
+          <div style="flex:1;font-size:12.5px">অ্যানিমেশন</div>
+          <span class="toggle ${S.motion ? 'on' : ''}"></span></div>
+        <div class="setting" data-act="toggleName">
+          <span style="color:var(--gold-300)">${ico('user', 'sm')}</span>
+          <div style="flex:1;font-size:12.5px">নাম পরিবর্তন</div>
+          <span class="mini muted">${esc(S.name.split(' ')[0])} ›</span></div>
+        <div class="setting" data-act="reset">
+          <span style="color:var(--danger)">${ico('close', 'sm')}</span>
+          <div style="flex:1;font-size:12.5px;color:var(--danger)">ডেমো ডেটা রিসেট</div>
+          <span class="mini muted">›</span></div>
+      </div>
+      <p class="mini muted" style="text-align:center;margin:18px 0 0;line-height:1.7">সনাতন বিদ্যাপীঠ · ডেমো সংস্করণ ১.০<br/>আপনার ডেটা শুধু এই ব্রাউজারে সংরক্ষিত</p>
+    </div><div style="height:24px"></div>`;
+  }
+
+  /* =====================================================================
+     12½. সাধনা — জপ · ধ্যান · যোগা
+     ===================================================================== */
+  const JAPA_C = 2 * Math.PI * 104;
+
+  function sadhanaScreen() {
+    const t = U.sadhanaTab;
+    const tabs = [['japa', 'জপ'], ['dhyana', 'ধ্যান'], ['yoga', 'যোগা']];
+    let body = t === 'dhyana' ? dhyanaView() : t === 'yoga' ? yogaView() : japaView();
+    return `${appbar('সাধনা', 'Japa · Dhyana · Yoga', '#/home', true)}
+    <div class="pad" style="padding-top:0">
+      <div class="segment">${tabs.map(([k, l]) => `<button class="${t === k ? 'on' : ''}" data-act="sadhanaTab" data-t="${k}">${l}</button>`).join('')}</div>
+      <div class="mt">${body}</div>
+    </div><div style="height:22px"></div>`;
+  }
+
+  function japaView() {
+    const j = S.japa;
+    const m = DB.japas.find(x => x.id === j.mantra) || DB.japas[0];
+    const pct = j.count / 108;
+    const off = (JAPA_C * (1 - pct)).toFixed(1);
+    return `<div class="card oath pad">
+      <div class="kv"><div><div class="mini muted">জপ চলছে</div>
+        <div class="display" style="font-size:14px;margin-top:3px">${esc(m.title)}</div></div>
+        <span class="pill">${bn(j.rounds)} মালা</span></div>
+
+      <div class="japa-wrap">
+        <button class="japa-btn" data-act="japaTap" aria-label="জপ গণনা">
+          <svg class="japa-ring" viewBox="0 0 226 226" aria-hidden="true">
+            <defs><linearGradient id="jg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#f8e3b3"/><stop offset="1" stop-color="#b1842e"/></linearGradient></defs>
+            <circle class="bg" cx="113" cy="113" r="104"/>
+            <circle class="fg" id="japaFg" cx="113" cy="113" r="104" stroke-dasharray="${JAPA_C.toFixed(1)}" stroke-dashoffset="${off}"/>
+          </svg>
+          <span class="japa-core">
+            <span class="c" id="japaCount">${bn(j.count)}</span>
+            <span class="of">/ ১০৮</span>
+            <span class="hint">ট্যাপ করুন</span>
+          </span>
+        </button>
+      </div>
+
+      <div class="mala-dots" id="malaDots">${Array.from({ length: 18 }, (_, i) =>
+        `<i class="${j.count >= (i + 1) * 6 ? 'on' : ''}"></i>`).join('')}</div>
+
+      <div class="kv" style="margin-top:14px">
+        <span class="mini muted">মোট জপ</span>
+        <b style="font-size:12.5px">${bn(j.rounds * 108 + j.count)}</b></div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn ghost sm" style="flex:1" data-act="japaReset">রিসেট</button>
+        <button class="btn gold sm" style="flex:1.4" data-act="japaFinish">মালা সম্পূর্ণ</button>
+      </div>
+    </div>
+
+    <div class="sect"><h4>মন্ত্র বেছে নিন</h4><div class="line"></div></div>
+    ${DB.japas.map(x => `<div class="card rowcard stack" data-act="japaMantra" data-id="${x.id}" role="button" tabindex="0" style="cursor:pointer">
+      <div class="datebox" style="width:42px;height:44px"><b>ॐ</b></div>
+      <div style="flex:1"><div class="kv"><span class="ttl">${esc(x.title)}</span>
+        ${x.id === S.japa.mantra ? '<span class="pill ok">চলছে</span>' : ''}</div>
+        <div class="mini muted" style="margin-top:4px">${esc(x.note)} · ${bn(108)} জপ = ১ মালা</div></div>
+    </div>`).join('')}`;
+  }
+
+  function dhyanaView() {
+    const md = U.med;
+    const sel = DB.meditations.find(x => x.mins === md.mins) || DB.meditations[1];
+    const mm = String(Math.floor(md.left / 60)).padStart(2, '0'), ss = String(md.left % 60).padStart(2, '0');
+    const total = md.mins * 60;
+    const pct = (1 - md.left / total) * 100;
+    return `<div class="card oath pad">
+      <div class="kv"><div><div class="mini muted">ধ্যান সেশন</div>
+        <div class="display" style="font-size:14px;margin-top:3px">${esc(sel.title)}</div></div>
+        <span class="pill ${md.running ? 'ok' : ''}">${md.running ? 'চলছে' : 'প্রস্তুত'}</span></div>
+
+      <div class="breath-stage">
+        <div class="breath ${md.running ? 'in' : ''}" id="breathCircle">
+          <div>
+            <div class="ph" id="breathPhase">${md.running ? 'শ্বাস নিন' : 'প্রস্তুত'}</div>
+            <div class="tm" id="medTime">${bn(mm)}:${bn(ss)}</div>
+          </div>
+        </div>
+      </div>
+      <div class="bar"><i id="medBar" style="width:${pct}%"></i></div>
+      <div class="kv" style="margin-top:9px"><span class="mini muted">শ্বাস: ৪-৪-৮ ছন্দ</span>
+        <span class="mini muted">${esc(sel.note)}</span></div>
+
+      <div style="display:flex;gap:8px;margin-top:13px">
+        <button class="btn ghost sm" style="flex:1" data-act="medReset">রিসেট</button>
+        <button class="btn gold sm" style="flex:1.6" data-act="medToggle">${md.running ? 'বিরতি দিন' : 'ধ্যান শুরু করুন'}</button>
+      </div>
+    </div>
+
+    <div class="sect"><h4>সময় বেছে নিন</h4><div class="line"></div></div>
+    <div class="preset">
+      ${DB.meditations.map(x => `<button class="${md.mins === x.mins ? 'on' : ''}" data-act="medPreset" data-m="${x.mins}">${bn(x.mins)} মিনিট</button>`).join('')}
+    </div>
+
+    ${S.sessions.length ? `<div class="sect"><h4>আগের সেশন</h4><div class="line"></div></div>
+      <div class="card pad">${S.sessions.slice(-4).reverse().map(x => `
+        <div class="ledger"><span>${esc(x.title)}</span><span>${bn(x.mins)} মিনিট · ${esc(x.when)}</span></div>`).join('')}</div>` : ''}
+    <p class="mini muted" style="text-align:center;margin-top:14px;line-height:1.7">চোখ বন্ধ করে বসুন, মেরুদণ্ড সোজা রাখুন।<br/>শ্বাসে মন ফেরান — বিচার করবেন না, শুধু লক্ষ্য করুন।</p>`;
+  }
+
+  function yogaView() {
+    const doneCount = Object.keys(S.asanaDone).filter(k => S.asanaDone[k]).length;
+    return `<div class="card oath rowcard stack" data-act="nav" data-to="#/sadhana/seq" role="button" tabindex="0" style="cursor:pointer">
+      <div class="datebox" style="width:44px;height:48px"><b>১২</b><i>ধাপ</i></div>
+      <div style="flex:1"><div class="kv"><span class="ttl" style="font-family:var(--f-dis)">সূর্য নমস্কার</span><span class="pill">গাইডেড</span></div>
+        <div class="mini muted" style="margin-top:4px">১২ ধাপ · ≈ ৫ মিনিট · সকালে খালি পেটে</div></div>
+      ${ico('arrow', 'sm')}</div>
+
+    <div class="sect"><h4>যোগাসন</h4><div class="line"></div><span class="mini muted">${bn(doneCount)}/${bn(DB.asanas.length)} আজ</span></div>
+    ${DB.asanas.map(a => `<div class="card pad asana stack">
+      <div class="kv"><h5>${esc(a.name)}</h5>
+        <span class="pill ${S.asanaDone[a.id] ? 'ok' : 'flat'}">${S.asanaDone[a.id] ? 'সম্পন্ন' : a.level}</span></div>
+      <div class="mini muted" style="margin-top:3px">${bn(a.time)} সেকেন্ড · ${esc(a.benefit)}</div>
+      <ol class="st">${a.steps.map(s => `<li>${esc(s)}</li>`).join('')}</ol>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn ghost sm" style="flex:1" data-act="asanaToggle" data-id="${a.id}">${S.asanaDone[a.id] ? 'আবার শুরু' : 'সম্পন্ন করুন'}</button>
+      </div>
+    </div>`).join('')}
+    <p class="mini muted" style="text-align:center;margin-top:12px;line-height:1.7">শরীরে ব্যথা বা উচ্চ রক্তচাপ থাকলে চিকিৎসকের পরামর্শ নিন।<br/>প্রতিটি আসনে শ্বাস স্বাভাবিক রাখুন — জোর করবেন না।</p>`;
+  }
+
+  function seqScreen() {
+    const st = DB.suryaNamaskar, cur = U.seq.i;
+    return `${appbar('সূর্য নমস্কার', '১২ ধাপ · গাইডেড', '#/sadhana/yoga')}
+    <div class="pad">
+      <div class="seq-head">
+        <div style="text-align:center">
+          <div class="n">${esc(st[cur].n)}</div>
+          <div class="d">${esc(st[cur].d)}</div>
+          <div class="pill" style="margin-top:10px" id="seqTimer">${bn(st[cur].s)} সে.</div>
+        </div>
+      </div>
+      <div class="bar" style="margin:12px 0"><i id="seqBar" style="width:${(cur / st.length) * 100}%"></i></div>
+      <div class="kv"><span class="mini muted">ধাপ ${bn(cur + 1)} / ${bn(st.length)}</span>
+        <span class="mini muted">${U.seq.running ? 'চলছে' : 'বিরতিতে'}</span></div>
+
+      <div style="display:flex;gap:8px;margin:12px 0">
+        <button class="btn ghost sm" style="flex:1" data-act="seqPrev" ${cur === 0 ? 'disabled' : ''}>আগের</button>
+        <button class="btn gold sm" style="flex:1.5" data-act="seqToggle">${U.seq.running ? 'বিরতি' : 'শুরু করুন'}</button>
+        <button class="btn ghost sm" style="flex:1" data-act="seqNext">পরের</button>
+      </div>
+
+      <div id="seqList">${st.map((x, i) => `
+        <div class="card rowcard stack" data-seq-step="${i}" style="${i === cur ? 'border-color:var(--card-border-strong)' : 'opacity:' + (i < cur ? '.62' : '1') + ';background:transparent'}">
+          <div class="datebox" style="width:38px;height:40px"><b>${bn(i + 1)}</b></div>
+          <div style="flex:1"><div class="kv"><span class="ttl">${esc(x.n)}</span><span class="mini muted">${bn(x.s)} সে.</span></div>
+            <div class="mini muted" style="margin-top:3px">${esc(x.d)}</div></div>
+          ${i < cur ? `<span class="pill ok">✓</span>` : i === cur ? '<span class="pill">এখন</span>' : ''}
+        </div>`).join('')}</div>
+    </div><div style="height:20px"></div>`;
+  }
+
+  /* --------------------------- japa / med / seq engine --------------------------- */
+  function japaUpdate() {
+    const j = S.japa;
+    const c = document.getElementById('japaCount'), fg = document.getElementById('japaFg'), dots = document.getElementById('malaDots');
+    if (c) c.textContent = bn(j.count);
+    if (fg) fg.setAttribute('stroke-dashoffset', (JAPA_C * (1 - j.count / 108)).toFixed(1));
+    if (dots) [...dots.children].forEach((d, i) => d.classList.toggle('on', j.count >= (i + 1) * 6));
+  }
+  function japaTap() {
+    const j = S.japa;
+    j.count++;
+    if (j.count >= 108) {
+      j.count = 0; j.rounds++;
+      chime('complete'); bumpActivity(6);
+      setTimeout(() => burst(window.innerWidth / 2, 260, 22), 60);
+      toast(`এক মালা সম্পূর্ণ 🌸 · মোট ${bn(j.rounds)} মালা`);
+    } else {
+      if (j.count % 9 === 0) chime('soft');
+      if (navigator.vibrate) navigator.vibrate(8);
+    }
+    save('japa'); japaUpdate();
+  }
+
+  function medTick() {
+    const md = U.med;
+    md.left--;
+    if (md.left <= 0) { medComplete(); return; }
+    const mm = String(Math.floor(md.left / 60)).padStart(2, '0'), ss = String(md.left % 60).padStart(2, '0');
+    const tEl = document.getElementById('medTime'); if (tEl) tEl.textContent = `${bn(mm)}:${bn(ss)}`;
+    const bar = document.getElementById('medBar'); if (bar) bar.style.width = (1 - md.left / (md.mins * 60)) * 100 + '%';
+    const el = (md.mins * 60 - md.left) % 16;
+    const phase = el < 4 ? 'শ্বাস নিন' : el < 8 ? 'ধরে রাখুন' : 'শ্বাস ছাড়ুন';
+    if (phase !== md.phase) {
+      md.phase = phase;
+      const pEl = document.getElementById('breathPhase'); if (pEl) pEl.textContent = phase;
+      const circ = document.getElementById('breathCircle');
+      if (circ) { circ.classList.toggle('in', phase === 'শ্বাস নিন'); circ.classList.toggle('out', phase === 'শ্বাস ছাড়ুন'); }
+    }
+  }
+  function medStart() {
+    clearInterval(U.medTimer);
+    U.med.running = true;
+    U.medTimer = setInterval(medTick, 1000);
+  }
+  function medComplete() {
+    clearInterval(U.medTimer); U.medTimer = null;
+    U.med.running = false;
+    const mins = U.med.mins;
+    S.sessions.push({ title: (DB.meditations.find(x => x.mins === mins) || {}).title || 'ধ্যান', mins, date: TODAY_KEY, when: `${bn(new Date().getDate())} ${BN_MONTH[new Date().getMonth()].slice(0, 4)}` });
+    S.sessions = S.sessions.slice(-20); save('sessions');
+    bumpActivity(mins);
+    U.med.left = mins * 60;
+    chime('complete');
+    setTimeout(() => burst(window.innerWidth / 2, 300, 26), 80);
+    toast(`ধ্যান সম্পূর্ণ 🌸 · ${bn(mins)} মিনিট`);
+    render();
+  }
+
+  function seqTick() {
+    const st = DB.suryaNamaskar;
+    U.seq.left--;
+    if (U.seq.left <= 0) {
+      if (U.seq.i >= st.length - 1) {
+        clearInterval(U.seqTimer); U.seqTimer = null; U.seq.running = false;
+        bumpActivity(5); chime('complete');
+        setTimeout(() => burst(window.innerWidth / 2, 250, 24), 80);
+        toast('সূর্য নমস্কার সম্পূর্ণ 🌸 · ৫ মিনিট');
+        render(); return;
+      }
+      U.seq.i++; U.seq.left = st[U.seq.i].s; render(); return;
+    }
+    const tEl = document.getElementById('seqTimer'); if (tEl) tEl.textContent = `${bn(U.seq.left)} সে.`;
+  }
+  function seqStart() {
+    clearInterval(U.seqTimer);
+    U.seq.running = true;
+    U.seqTimer = setInterval(seqTick, 1000);
+  }
+
+  /* =====================================================================
+     13. ব্যবহারকারী ব্যবস্থাপনা (User Management)
+     ===================================================================== */
+  const ROLES = [
+    { id: 'student', label: 'শিক্ষার্থী', icon: 'user' },
+    { id: 'parent', label: 'অভিভাবক', icon: 'heart' },
+    { id: 'teacher', label: 'শিক্ষক', icon: 'book' },
+    { id: 'reviewer', label: 'পর্যালোচক', icon: 'shield' },
+    { id: 'admin', label: 'অ্যাডমিন', icon: 'gear' }
+  ];
+  const roleLabel = id => (ROLES.find(r => r.id === id) || ROLES[0]).label;
+  const uStatus = u => S.userState[u.id] || u.status;
+  const statusPill = st => st === 'active' ? '<span class="pill ok">সক্রিয়</span>'
+    : st === 'pending' ? '<span class="pill">অপেক্ষমাণ</span>'
+      : '<span class="pill" style="color:var(--danger);border-color:rgba(224,114,106,.45)">স্থগিত</span>';
+
+  function logAction(text) {
+    S.audit.unshift({ text, at: new Date().toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' }) });
+    S.audit = S.audit.slice(0, 12); save('audit');
+  }
+
+  function roleSwitch() {
+    return `<div class="card pad" style="padding:12px">
+      <div class="kv" style="margin-bottom:9px"><b style="font-size:12px">ভূমিকা (রোল) বদলে দেখুন</b>
+        <span class="mini muted">ডেমো</span></div>
+      <div class="cats" style="padding:0;gap:6px">
+        ${ROLES.map(r => `<button class="chip ${S.role === r.id ? 'on' : ''}" data-act="setRole" data-r="${r.id}">${r.label}</button>`).join('')}
+      </div>
+      <div class="mini muted" style="margin-top:9px;line-height:1.6">বর্তমানে আপনি <b>${roleLabel(S.role)}</b> হিসেবে আছেন — এই ভূমিকা অনুযায়ী স্ক্রিন ও অনুমতি বদলাবে।</div>
+    </div>`;
+  }
+
+  function rolePanel() {
+    if (S.role === 'parent') {
+      return `<div class="card oath pad">
+        <div class="kv"><b style="font-size:12.8px">আমার সন্তান</b><button class="act" data-act="addChild">+ যোগ করুন</button></div>
+        ${S.children.map((c, i) => `<div class="li">
+          <div class="av round">${esc(c.n.slice(0, 1))}</div>
+          <div style="flex:1">
+            <div style="font-size:12.5px;font-weight:600">${esc(c.n)} <span class="mini muted">· ${esc(c.cls)}</span></div>
+            <div class="bar thin" style="margin-top:6px"><i style="width:${c.pct}%"></i></div>
+            <div class="mini muted" style="margin-top:5px">শাস্ত্র পাঠ ${bn(c.pct)}% · সাপ্তাহিক কুইজে অংশ নিয়েছে</div>
+          </div>
+          <button class="iconbtn" data-act="toast" data-msg="${esc(c.n)}-এর রিপোর্ট কার্ড শীঘ্রই">${ico('arrow', 'sm')}</button>
+        </div>`).join('')}
+        <div class="mini muted" style="margin-top:10px;line-height:1.6">অভিভাবক হিসেবে আপনি সন্তানের অগ্রগতি দেখতে পাবেন — তার পাসওয়ার্ড বা ব্যক্তিগত চ্যাট নয়।</div>
+      </div>`;
+    }
+    if (S.role === 'teacher') {
+      const earn = S.orders.filter(o => o.kind === 'service').reduce((a, o) => a + o.amount, 0);
+      return `<div class="card oath pad">
+        <div class="kv"><b style="font-size:12.8px">শিক্ষক প্যানেল</b><span class="pill ok">যাচাইকৃত</span></div>
+        <div class="grid3 mt">
+          <div class="stat"><div class="k">শিক্ষার্থী</div><div class="v">${bn(24)}</div></div>
+          <div class="stat"><div class="k">চলমান কোর্স</div><div class="v">${bn(3)}</div></div>
+          <div class="stat"><div class="k">এই মাসের আয়</div><div class="v">৳ ${bnN(12450)}</div></div>
+        </div>
+        <div class="li" style="margin-top:4px"><div class="av round">আ</div>
+          <div style="flex:1"><div style="font-size:12.5px">আরাধ্যা — গীতা ২.৪৭</div><div class="mini muted">২ দিন আগে · অগ্রগতি ৪৫%</div></div>
+          <span class="pill">ফিডব্যাক দিন</span></div>
+        <div class="li"><div class="av round">ঈ</div>
+          <div style="flex:1"><div style="font-size:12.5px">ঈশান — নিত্যকর্ম লেসন ৪</div><div class="mini muted">আজ · ৭২%</div></div>
+          <span class="pill ok">সম্পূর্ণ</span></div>
+        <button class="btn ghost block sm mt" data-act="nav" data-to="#/courses">আমার কোর্স দেখুন</button>
+      </div>`;
+    }
+    if (S.role === 'reviewer') {
+      return `<div class="card oath pad">
+        <div class="kv"><b style="font-size:12.8px">পর্যালোচনা কিউ</b><span class="pill">${bn(DB.reports.length)} টি</span></div>
+        <p class="mini muted" style="margin:8px 0 10px;line-height:1.6">শাস্ত্রীয় নির্ভুলতা ও নীতিমালা — অনুমোদনের আগে দুইজন পর্যালোচকের সম্মতি লাগবে।</p>
+        <button class="btn ghost block sm" data-act="nav" data-to="#/manage">মডারেশন কিউ খুলুন</button>
+      </div>`;
+    }
+    if (S.role === 'admin') {
+      return `<div class="card oath pad">
+        <div class="kv"><b style="font-size:12.8px">অ্যাডমিন সারসংক্ষেপ</b><span class="pill ok">পূর্ণ অনুমতি</span></div>
+        <div class="grid3 mt">
+          <div class="stat"><div class="k">ব্যবহারকারী</div><div class="v">${bn(DB.users.length)}</div></div>
+          <div class="stat"><div class="k">যাচাই বাকি</div><div class="v">${bn(DB.applications.filter(a => !S.appState[a.id]).length)}</div></div>
+          <div class="stat"><div class="k">রিপোর্ট</div><div class="v">${bn(DB.reports.filter(r => !S.reportState[r.id]).length)}</div></div>
+        </div>
+        <button class="btn gold block sm mt" data-act="nav" data-to="#/manage">ম্যানেজমেন্ট প্যানেল</button>
+      </div>`;
+    }
+    return `<div class="card pad">
+      <div class="kv"><b style="font-size:12.8px">আমার শিক্ষা-প্রোফাইল</b><span class="pill">শিক্ষার্থী</span></div>
+      <p class="mini muted" style="margin:8px 0 0;line-height:1.7">পাঠ, কুইজ ও কোর্সের অগ্রগতি নিচে দেখুন। অভিভাবক লিংক বা শিক্ষক-অনুমতি দরকার হলে প্রোফাইল থেকে যোগ করুন।</p>
+    </div>`;
+  }
+
+  function manageScreen() {
+    if (S.role !== 'admin' && S.role !== 'reviewer') {
+      return `${appbar('ম্যানেজমেন্ট', 'User Management')}
+      <div class="pad"><div class="card oath empty" style="margin-top:6px">
+        <div class="illu">${ico('shield')}</div>
+        <h5>শুধু অনুমোদিত ভূমিকার জন্য</h5>
+        <p>এই প্যানেলে পৌঁছাতে অ্যাডমিন বা পর্যালোচক হতে হবে।<br/>ডেমোতে ভূমিকা বদলে দেখতে পারেন।</p>
+        <button class="btn gold sm" data-act="setRole" data-r="admin">অ্যাডমিন হিসেবে দেখুন</button>
+      </div>
+      <div class="mt">${roleSwitch()}</div></div>`;
+    }
+    const tabs = [['users', 'ব্যবহারকারী'], ['verify', 'যাচাই'], ['moderation', 'মডারেশন'], ['payouts', 'পেআউট'], ['audit', 'লগ']];
+    let body = '';
+
+    if (U.adminTab === 'users') {
+      const q = U.adminQ.trim().toLowerCase();
+      const list = DB.users.filter(u => !q || (u.name + u.role + u.city).toLowerCase().includes(q));
+      const counts = { active: 0, pending: 0, suspended: 0 };
+      DB.users.forEach(u => { counts[uStatus(u)] = (counts[uStatus(u)] || 0) + 1; });
+      body = `<div class="grid3">
+          <div class="stat"><div class="k">সক্রিয়</div><div class="v">${bn(counts.active)}</div></div>
+          <div class="stat"><div class="k">অপেক্ষমাণ</div><div class="v">${bn(counts.pending)}</div></div>
+          <div class="stat"><div class="k">স্থগিত</div><div class="v">${bn(counts.suspended)}</div></div>
+        </div>
+        <div class="search mt">${ico('search', 'sm')}<input id="adminSearch" placeholder="নাম, ভূমিকা বা শহর…" value="${esc(U.adminQ)}" aria-label="ব্যবহারকারী খুঁজুন"/></div>
+        <div class="mt">${list.map(u => {
+        const st = uStatus(u);
+        return `<div class="card pad stack">
+            <div style="display:flex;gap:11px;align-items:center">
+              <div class="av">${esc(u.name.slice(0, 1))}</div>
+              <div style="flex:1;min-width:0">
+                <div class="kv"><b style="font-size:12.8px">${esc(u.name)}</b>${statusPill(st)}</div>
+                <div class="mini muted" style="margin-top:3px">${esc(u.role)} · ${esc(u.city)} · যোগ ${esc(u.joined)}</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:7px;margin-top:10px">
+              ${st !== 'active' ? `<button class="btn ghost sm" style="flex:1" data-act="uStatus" data-id="${u.id}" data-v="active">${st === 'pending' ? 'অনুমোদন' : 'পুনর্বহাল'}</button>` : ''}
+              ${st !== 'suspended' ? `<button class="btn ghost sm" style="flex:1;color:var(--danger)" data-act="uStatus" data-id="${u.id}" data-v="suspended">স্থগিত</button>` : ''}
+              <button class="btn ghost sm" data-act="toast" data-msg="${esc(u.name)}-কে বার্তা পাঠানো হবে (ডেমো)">বার্তা</button>
+            </div>
+          </div>`;
+      }).join('')}</div>`;
+    }
+
+    if (U.adminTab === 'verify') {
+      body = `<p class="mini muted" style="margin:6px 0 12px;line-height:1.7">শিক্ষক/কথক হিসেবে যোগ দিতে আবেদন — NID ও যোগ্যতার প্রমাণ যাচাই করে অনুমোদন দিন।</p>
+        ${DB.applications.map(a => {
+        const st = S.appState[a.id];
+        return `<div class="card pad stack">
+            <div class="kv"><b style="font-size:12.8px">${esc(a.name)}</b>
+              ${st === 'approved' ? '<span class="pill ok">অনুমোদিত</span>' : st === 'rejected' ? '<span class="pill" style="color:var(--danger)">বাতিল</span>' : '<span class="pill">অপেক্ষমাণ</span>'}</div>
+            <div class="mini muted" style="margin:4px 0 8px">${esc(a.type)} · ${esc(a.subject)} · ${esc(a.at)}</div>
+            <div class="mini" style="color:var(--ok)">${esc(a.docs)}</div>
+            ${!st ? `<div style="display:flex;gap:7px;margin-top:10px">
+              <button class="btn gold sm" style="flex:1" data-act="appDecide" data-id="${a.id}" data-v="approved">অনুমোদন</button>
+              <button class="btn ghost sm" style="flex:1" data-act="appDecide" data-id="${a.id}" data-v="rejected">বাতিল</button></div>` : ''}
+          </div>`;
+      }).join('')}`;
+    }
+
+    if (U.adminTab === 'moderation') {
+      body = `<p class="mini muted" style="margin:6px 0 12px;line-height:1.7">নীতিমালা অনুযায়ী রিপোর্ট — ভয়/অলৌকিক প্রতিশ্রুতি, অন্য সম্প্রদায় নিয়ে অবমাননা, আর্থিক অনিয়ম।</p>
+        ${DB.reports.map(r => {
+        const st = S.reportState[r.id];
+        return `<div class="card pad stack">
+            <div class="kv"><b style="font-size:12.8px">${esc(r.kind)} · ${esc(r.target)}</b>
+              ${st ? '<span class="pill ok">নিষ্পত্তি</span>' : '<span class="pill">খোলা</span>'}</div>
+            <div class="tiny muted" style="margin:6px 0 8px;line-height:1.65">${esc(r.text)}</div>
+            <div class="mini muted">${esc(r.by)}</div>
+            ${!st ? `<div style="display:flex;gap:7px;margin-top:10px">
+              <button class="btn gold sm" style="flex:1" data-act="repDecide" data-id="${r.id}" data-v="actioned">কনটেন্ট সরান</button>
+              <button class="btn ghost sm" style="flex:1" data-act="repDecide" data-id="${r.id}" data-v="dismissed">রিপোর্ট খারিজ</button></div>` : ''}
+          </div>`;
+      }).join('')}`;
+    }
+
+    if (U.adminTab === 'payouts') {
+      body = `<p class="mini muted" style="margin:6px 0 12px;line-height:1.7">দ্বৈত নিয়ন্ত্রণ: প্রতিটি পেআউটে <b>দুইজন</b> অনুমোদনকারীর সম্মতি লাগবে।</p>
+        ${DB.payouts.map(p => {
+        const n = S.payoutAppr[p.id] !== undefined ? S.payoutAppr[p.id] : p.approvals;
+        const done = n >= 2;
+        return `<div class="card pad stack">
+            <div class="kv"><b style="font-size:12.8px">${esc(p.provider)}</b>
+              <span class="pill ${done ? 'ok' : ''}">${done ? 'রিলিজ হয়েছে' : bn(n) + '/২ অনুমোদন'}</span></div>
+            <div class="kv" style="margin-top:6px"><span class="mini muted">${esc(p.method)}</span>
+              <b style="font-size:13px;color:var(--gold-200)">৳ ${bnN(p.amount)}</b></div>
+            <div class="bar thin" style="margin-top:9px"><i style="width:${Math.min(100, n / 2 * 100)}%"></i></div>
+            ${!done ? `<button class="btn gold block sm mt" data-act="payoutAppr" data-id="${p.id}">আমি অনুমোদন করছি</button>` : ''}
+          </div>`;
+      }).join('')}`;
+    }
+
+    if (U.adminTab === 'audit') {
+      body = S.audit.length ? `<div class="card pad">${S.audit.map(a =>
+        `<div class="ledger"><span>${esc(a.text)}</span><span class="mini muted">${esc(a.at)}</span></div>`).join('')}</div>`
+        : `<div class="card empty"><div class="illu">${ico('clock')}</div><h5>এখনো কোনো লগ নেই</h5><p>যেকোনো অনুমোদন/স্থগিত করার পর এখানে অডিট লগ দেখা যাবে।</p></div>`;
+    }
+
+    return `${appbar('ব্যবহারকারী ব্যবস্থাপনা', 'User Management · ' + roleLabel(S.role), '#/me', true)}
+    <div class="pad" style="padding-top:0">
+      <div class="segment">${tabs.map(([k, l]) => `<button class="${U.adminTab === k ? 'on' : ''}" data-act="adminTab" data-t="${k}">${l}</button>`).join('')}</div>
+      <div class="mt">${body}</div>
+    </div><div style="height:22px"></div>`;
+  }
+
+  /* =====================================================================
+     12¾. দৈনিক হিসাব — Daily Tracker (৪ স্তম্ভ · মাস্টারমাইন্ড)
+     ===================================================================== */
+  const TRAK_DEF = () => ({
+    puja: 0, japaExtra: 0, dhyanaExtra: 0, pathMin: 0, daanTaka: 0, daanMin: 0,
+    workMin: 0, income: 0, studyMin: 0, familyMin: 0, sleepH: 8,
+    lies: 0, anger: 0,
+    gratitude: '', sankalpa: '', helpToday: '', learned: '', tomorrow: '', done: false
+  });
+  const entryFor = k => { if (!S.daily[k]) S.daily[k] = TRAK_DEF(); return S.daily[k]; };
+  const clamp = (v, a = 0, b = 100) => Math.max(a, Math.min(b, v));
+  const todayAuto = () => ({
+    japa: S.japa.rounds * 108 + S.japa.count,
+    dhyana: S.sessions.filter(x => x.date === TODAY_KEY).reduce((a, x) => a + x.mins, 0),
+    path: Object.keys(S.read).length,
+    yoga: Object.keys(S.asanaDone).filter(k => S.asanaDone[k]).length
+  });
+  function scoreOf(e, auto) {
+    const japa = e.japaExtra * 108 + (auto ? auto.japa : 0);
+    const dhyana = e.dhyanaExtra + (auto ? auto.dhyana : 0);
+    const path = e.pathMin + (auto ? auto.path * 2 : 0);
+    const sadhana = clamp(
+      20 * Math.min(1, e.puja / 20) + 25 * Math.min(1, japa / 108) + 20 * Math.min(1, dhyana / 10) +
+      15 * Math.min(1, path / 10) + 20 * ((e.daanTaka > 0 || e.daanMin > 0) ? 1 : 0));
+    const charitra = clamp(100 - e.lies * 15 - e.anger * 10);
+    const karma = clamp(60 * Math.min(1, e.workMin / 240) + 25 * Math.min(1, e.income / 500) + 15 * Math.min(1, e.studyMin / 30));
+    const jibon = clamp(50 * Math.min(1, e.familyMin / 60) + 30 * (e.sleepH >= 6 && e.sleepH <= 9 ? 1 : .4) + 20 * Math.min(1, (auto ? auto.yoga : 0) / 3));
+    const total = Math.round(sadhana * .4 + charitra * .25 + karma * .2 + jibon * .15);
+    const engaged = (e.puja + e.japaExtra + e.dhyanaExtra + e.pathMin + e.daanTaka + e.daanMin +
+      e.workMin + e.income + e.studyMin + e.familyMin + e.lies + e.anger) > 0 ||
+      (auto && (auto.japa || auto.dhyana || auto.path || auto.yoga));
+    if (!engaged) return { sadhana: 0, charitra: 0, karma: 0, jibon: 0, total: 0, japa: auto ? auto.japa : 0, dhyana: auto ? auto.dhyana : 0, path: auto ? auto.path : 0 };
+    return { sadhana: Math.round(sadhana), charitra: Math.round(charitra), karma: Math.round(karma), jibon: Math.round(jibon), total, japa, dhyana, path };
+  }
+
+  function stepper(k, label, val, step, unit, hint) {
+    return `<div class="trow">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12.5px">${label}</div>
+        ${hint ? `<div class="mini muted" style="margin-top:2px">${hint}</div>` : ''}
+      </div>
+      <div class="stepr">
+        <button data-act="tfield" data-k="${k}" data-d="-1" aria-label="কমান">−</button>
+        <span id="tv-${k}">${bn(val)}${unit ? ' <i>' + unit + '</i>' : ''}</span>
+        <button data-act="tfield" data-k="${k}" data-d="1" aria-label="বাড়ান">+</button>
+      </div>
+    </div>`;
+  }
+
+  function trackScreen() {
+    const e = entryFor(TODAY_KEY);
+    const auto = todayAuto();
+    const sc = scoreOf(e, auto);
+    const ringPct = sc.total;
+    const _bt = bengaliDate(TODAY);
+    return `${appbar('আজকের হিসাব', `${bn(_bt.d)} ${_bt.month} ${bn(_bt.year)} · ${_bt.season}`, '#/home', true)}
+    <div class="pad" style="padding-top:0">
+      <div class="card oath pad">
+        <div style="display:flex;gap:14px;align-items:center">
+          <div class="ring" style="--p:${ringPct}%;width:64px;height:64px"><div><div class="n" style="font-size:16px">${bn(sc.total)}</div><div class="u">স্কোর</div></div></div>
+          <div style="flex:1">
+            <div class="kv"><b style="font-size:13px">আজকের ভারসাম্য</b>
+              <span class="pill ${e.done ? 'ok' : ''}">${e.done ? 'হিসাব সম্পন্ন' : 'চলমান'}</span></div>
+            <div class="mini muted" style="margin-top:5px">৪টি স্তম্ভের গড় — আধ্যাত্মিক ৪০%, চরিত্র ২৫%, কর্ম ২০%, জীবন ১৫%</div>
+          </div>
+        </div>
+        <div class="grid2 mt">
+          ${[['আধ্যাত্মিক', sc.sadhana], ['চরিত্র', sc.charitra], ['কর্ম', sc.karma], ['জীবন', sc.jibon]].map(([n, v]) => `
+            <div class="stat"><div class="k">${n}</div><div class="v">${bn(v)}/১০০</div>
+              <div class="bar thin" style="margin-top:6px"><i style="width:${v}%"></i></div></div>`).join('')}
+        </div>
+      </div>
+
+      <div class="sect"><h4>১ · ভগবান ও আধ্যাত্মিক সময়</h4><div class="line"></div></div>
+      <div class="card pad" style="padding:4px 14px">
+        ${stepper('puja', 'নিত্য পূজা', e.puja, 5, 'মিনিট', 'আরতি, দীপ, পুষ্পাঞ্জলিসহ')}
+        ${stepper('japaExtra', 'জপ (অ্যাপের বাইরে)', e.japaExtra, 1, 'মালা', `অ্যাপে গণনা: ${bn(auto.japa)} জপ`)}
+        ${stepper('dhyanaExtra', 'ধ্যান (অ্যাপের বাইরে)', e.dhyanaExtra, 5, 'মিনিট', `অ্যাপে সেশন: ${bn(auto.dhyana)} মিনিট`)}
+        ${stepper('pathMin', 'শাস্ত্র পাঠ', e.pathMin, 5, 'মিনিট', `অ্যাপে পঠিত শ্লোক: ${bn(auto.path)}`)}
+        ${stepper('daanTaka', 'দান', e.daanTaka, 50, '৳')}
+        ${stepper('daanMin', 'সেবায় সময়', e.daanMin, 5, 'মিনিট', 'সাহায্য, সেবা, স্বেচ্ছাসেবা')}
+      </div>
+      <div class="mini muted" style="margin:8px 4px 0">স্বয়ংক্রিয়: জপ ${bn(auto.japa)} · ধ্যান ${bn(auto.dhyana)} মিনিট · শ্লোক ${bn(auto.path)} · যোগাসন ${bn(auto.yoga)}</div>
+
+      <div class="sect"><h4>২ · চরিত্র ও মন</h4><div class="line"></div></div>
+      <div class="card pad" style="padding:4px 14px">
+        ${stepper('lies', 'আজ কতবার মিথ্যা বলেছি', e.lies, 1, 'বার', 'সৎ হিসাবই সবচেয়ে বড় সাধনা — বিচার নয়, সচেতনতা')}
+        ${stepper('anger', 'ক্রোধ / রাগ', e.anger, 1, 'বার')}
+        <div style="padding:11px 0;border-top:1px solid var(--hairline)">
+          <div class="mini muted" style="margin-bottom:6px">আজকের কৃতজ্ঞতা</div>
+          <textarea class="input" data-field="gratitude" rows="2" placeholder="আজ যা পেয়েছি তার জন্য কৃতজ্ঞ…">${esc(e.gratitude)}</textarea>
+        </div>
+        <div style="padding:0 0 11px">
+          <div class="mini muted" style="margin-bottom:6px">কালকের সংকল্প</div>
+          <textarea class="input" data-field="sankalpa" rows="2" placeholder="কাল একটি ছোট ভালো কাজ করব…">${esc(e.sankalpa)}</textarea>
+        </div>
+      </div>
+
+      <div class="sect"><h4>৩ · কর্ম, ইনকাম ও শেখা</h4><div class="line"></div></div>
+      <div class="card pad" style="padding:4px 14px">
+        ${stepper('workMin', 'নিজের কাজ / ইনকামের কাজ', e.workMin, 15, 'মিনিট')}
+        ${stepper('income', 'আজকের আয়', e.income, 100, '৳')}
+        ${stepper('studyMin', 'নতুন কিছু শেখা', e.studyMin, 10, 'মিনিট', 'স্কিল, পড়াশোনা, কোর্স')}
+        ${stepper('familyMin', 'পরিবার ও প্রিয়জনের সাথে', e.familyMin, 15, 'মিনিট')}
+        ${stepper('sleepH', 'ঘুম', e.sleepH, 1, 'ঘণ্টা', '৬–৯ ঘণ্টা স্বাস্থ্যকর')}
+      </div>
+
+      <div class="sect"><h4>৪ · আত্মপর্যালোচনা</h4><div class="line"></div></div>
+      <div class="card pad">
+        <div style="margin-bottom:10px"><div class="mini muted" style="margin-bottom:6px">আজ কারও উপকার করেছি?</div>
+          <textarea class="input" data-field="helpToday" rows="2" placeholder="ছোট হলেও লিখে রাখুন…">${esc(e.helpToday)}</textarea></div>
+        <div style="margin-bottom:10px"><div class="mini muted" style="margin-bottom:6px">আজ কী শিখলাম?</div>
+          <textarea class="input" data-field="learned" rows="2" placeholder="শাস্ত্র থেকে বা জীবনের ঘটনা থেকে…">${esc(e.learned)}</textarea></div>
+        <div><div class="mini muted" style="margin-bottom:6px">কাল কী আরও ভালো করতে পারি?</div>
+          <textarea class="input" data-field="tomorrow" rows="2" placeholder="একটি নির্দিষ্ট পদক্ষেপ…">${esc(e.tomorrow)}</textarea></div>
+      </div>
+
+      <div style="display:flex;gap:9px;margin-top:14px">
+        <button class="btn ghost" style="flex:1" data-act="nav" data-to="#/track/history">হিস্ট্রি</button>
+        <button class="btn gold" style="flex:1.5" data-act="trackDone">${e.done ? 'হিসাব আপডেট রাখুন' : 'আজকের হিসাব সম্পূর্ণ'}</button>
+      </div>
+      <p class="mini muted" style="text-align:center;margin-top:12px;line-height:1.7">হিসাব প্রতিটি পরিবর্তনে স্বয়ংক্রিয়ভাবে সেভ হয়।<br/>এটি বিচারের খাতা নয় — নিজেকে জানার আয়না।</p>
+    </div><div style="height:24px"></div>`;
+  }
+
+  function historyScreen() {
+    const days = [];
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(TODAY); d.setDate(d.getDate() - i);
+      const k = key(d);
+      const e = S.daily[k];
+      const auto = k === TODAY_KEY ? todayAuto() : null;
+      const sc = e ? scoreOf(e, auto) : { total: 0, sadhana: 0, charitra: 0, karma: 0, jibon: 0, japa: 0, dhyana: 0, path: 0 };
+      days.push({ k, d, e, sc });
+    }
+    const real = days.filter(x => x.e);
+    const avg = real.length ? Math.round(real.reduce((s, x) => s + x.sc.total, 0) / real.length) : 0;
+    const best = real.slice().sort((a, b) => b.sc.total - a.sc.total)[0];
+    const totals = real.reduce((acc, x) => {
+      acc.japa += x.sc.japa; acc.dhyana += x.sc.dhyana; acc.daan += x.e.daanTaka;
+      acc.income += x.e.income; acc.lies += x.e.lies; acc.puja += x.e.puja; acc.work += x.e.workMin;
+      return acc;
+    }, { japa: 0, dhyana: 0, daan: 0, income: 0, lies: 0, puja: 0, work: 0 });
+    const last7 = days.slice(-7);
+
+    // মাস্টারমাইন্ড ইনসাইট
+    const insights = [];
+    if (!real.length) insights.push('আজ প্রথম হিসাব শুরু করুন — ৭ দিনেই নিজের ছন্দ বোঝা যাবে।');
+    else {
+      if (avg >= 70) insights.push('ভারসাম্য চমৎকার — এই ছন্দ ধরে রাখলে এক মাসেই বড় পরিবর্তন।');
+      else if (avg >= 45) insights.push('ভালো শুরু। সবচেয়ে দুর্বল স্তম্ভে ৫ মিনিট বাড়ালেই স্কোর লাফ দেবে।');
+      else insights.push('স্কোর কম — চিন্তা নেই। শুধু প্রতিদিন হিসাব লিখতে থাকুন, প্রথমে সচেতনতাই লক্ষ্য।');
+      const weakest = ['sadhana', 'charitra', 'karma', 'jibon'].map(k => ({ k, v: real.reduce((s, x) => s + x.sc[k], 0) / real.length })).sort((a, b) => a.v - b.v)[0];
+      const names = { sadhana: 'আধ্যাত্মিক সময়', charitra: 'চরিত্র (সত্য-পালন)', karma: 'কর্ম ও ইনকাম', jibon: 'জীবনযাত্রা ও পরিবার' };
+      insights.push(`সবচেয়ে দুর্বল স্তম্ভ: ${names[weakest.k]} (গড় ${bn(Math.round(weakest.v))}/১০০)।`);
+      if (totals.lies > 0) insights.push(`এই সময়ে মোট ${bn(totals.lies)} বার মিথ্যা লিপিবদ্ধ — এটি কমাতে চেষ্টা করাই সবচেয়ে বড় পুণ্য।`);
+      else insights.push('মিথ্যা শূন্য — সত্য-পালনে আপনি ঈর্ষণীয়। 🌸');
+      if (totals.japa >= 108) insights.push(`মোট ${bn(Math.round(totals.japa / 108))} মালা জপ সম্পন্ন।`);
+    }
+
+    return `${appbar('হিস্ট্রি ও বিশ্লেষণ', 'সর্বশেষ ১৪ দিন', '#/track')}
+    <div class="pad" style="padding-top:0">
+      <div class="card oath pad">
+        <div class="kv"><div><div class="mini muted">গড় স্কোর</div>
+          <div class="display" style="font-size:24px;color:var(--gold-200);margin-top:3px">${bn(avg)}<span style="font-size:12px;color:var(--ink-3)">/১০০</span></div></div>
+          <div style="text-align:right"><div class="mini muted">হিসাব করা দিন</div><b style="font-size:13px">${bn(real.length)}/১৪</b></div></div>
+        <div class="chart" style="height:70px;margin-top:14px">
+          ${last7.map(x => {
+      const h = Math.max(5, Math.round(x.sc.total));
+      return `<div class="col"><div class="bwrap"><div class="b ${x.e ? '' : 'empty'}" style="height:${h}%"></div></div>
+              <div class="d">${BN_DAYS[x.d.getDay()]}</div></div>`;
+    }).join('')}
+        </div>
+        <div class="kv mini muted" style="margin-top:8px"><span>শেষ ৭ দিন</span>${best ? `<span>সেরা দিন: ${bn(best.d.getDate())} ${BN_MONTH[best.d.getMonth()].slice(0, 4)} · ${bn(best.sc.total)}</span>` : ''}</div>
+      </div>
+
+      <div class="sect"><h4>মোট অর্জন (হিসাব করা দিনগুলোতে)</h4><div class="line"></div></div>
+      <div class="grid2">
+        <div class="stat"><div class="k">জপ</div><div class="v">${bn(totals.japa)} জপ</div></div>
+        <div class="stat"><div class="k">ধ্যান</div><div class="v">${bn(totals.dhyana)} মিনিট</div></div>
+        <div class="stat"><div class="k">পূজা</div><div class="v">${bn(totals.puja)} মিনিট</div></div>
+        <div class="stat"><div class="k">দান</div><div class="v">৳ ${bnN(totals.daan)}</div></div>
+        <div class="stat"><div class="k">ইনকাম</div><div class="v">৳ ${bnN(totals.income)}</div></div>
+        <div class="stat"><div class="k">কাজ</div><div class="v">${bn(Math.round(totals.work / 60))} ঘণ্টা</div></div>
+      </div>
+
+      <div class="sect"><h4>মাস্টারমাইন্ড পর্যালোচনা</h4><div class="line"></div></div>
+      <div class="card pad">${insights.map(t => `<div class="li" style="align-items:flex-start"><span style="color:var(--gold-300);margin-top:2px">${ico('target', 'xs')}</span>
+        <div class="tiny" style="line-height:1.8;flex:1">${t}</div></div>`).join('')}</div>
+
+      <div class="sect"><h4>দিন-ভিত্তিক হিসাব</h4><div class="line"></div></div>
+      ${days.slice().reverse().map(x => `
+        <div class="card rowcard stack" style="opacity:${x.e ? 1 : .62}">
+          <div class="datebox" style="width:44px;height:48px"><b>${bn(x.d.getDate())}</b><i>${BN_MONTH[x.d.getMonth()].slice(0, 4)}</i></div>
+          <div style="flex:1"><div class="kv"><span class="ttl">${BN_DAY[x.d.getDay()]}</span>
+            <span class="pill ${x.sc.total >= 60 ? 'ok' : ''}">${bn(x.sc.total)}</span></div>
+            <div class="mini muted" style="margin-top:4px">${x.e ? `পূজা ${bn(x.e.puja)} মি · জপ ${bn(x.sc.japa)} · ধ্যান ${bn(x.sc.dhyana)} মি · মিথ্যা ${bn(x.e.lies)}` : 'হিসাব নেই — ট্যাপ করে যোগ করুন'}</div></div>
+        </div>`).join('')}
+    </div><div style="height:24px"></div>`;
+  }
+
+  /* =====================================================================
+     ROUTER
+     ===================================================================== */
+  const TABS = [
+    { id: 'home', icon: 'home', label: 'হোম', target: '#/home' },
+    { id: 'library', icon: 'book', label: 'লাইব্রেরি', target: '#/library' },
+    { id: 'sadhana', icon: 'flame', label: 'সাধনা', target: '#/sadhana' },
+    { id: 'exam', icon: 'exam', label: 'পরীক্ষা', target: '#/exam' },
+    { id: 'seva', icon: 'heart', label: 'সেবা', target: '#/seva' },
+    { id: 'me', icon: 'user', label: 'আমি', target: '#/me' }
+  ];
+
+  function renderTabbar(active) {
+    document.getElementById('tabbar').innerHTML = TABS.map(t => `
+      <button class="tab ${active === t.id ? 'on' : ''}" data-act="nav" data-to="${t.target}" aria-label="${t.label}">
+        <span class="ind"></span>${ico(t.icon)}${t.label}</button>`).join('');
+  }
+
+  function route() {
+    const raw = (location.hash || '#/home').replace(/^#\/?/, '');
+    const parts = raw.split('/').filter(Boolean);
+    const name = parts[0] || 'home';
+    const a = parts[1], b = parts[2];
+    let html = '', tab = 'home', root = false;
+
+    switch (name) {
+      case 'home': html = homeScreen(); tab = 'home'; root = true; break;
+      case 'library': html = libraryScreen(); tab = 'library'; root = true; break;
+      case 'book': html = bookScreen(a); tab = 'library'; break;
+      case 'gita': html = a ? gitaChapterScreen(a) : gitaScreen(); tab = 'library'; root = !a; break;
+      case 'reader': html = readerScreen(a, b); tab = 'library'; break;
+      case 'courses': html = coursesScreen(); tab = 'library'; break;
+      case 'course': html = courseScreen(a); tab = 'library'; break;
+      case 'exam': html = examScreen(); tab = 'exam'; root = true; break;
+      case 'quiz': html = quizScreen(); tab = 'exam'; break;
+      case 'result': html = resultScreen(); tab = 'exam'; break;
+      case 'puja': html = a ? pujaGuideScreen(a) : pujaScreen(); tab = 'home'; break;
+      case 'panjika': html = panjikaScreen(); tab = 'home'; break;
+      case 'seva': html = sevaScreen(); tab = 'seva'; root = true; break;
+      case 'market': html = marketScreen(); tab = 'seva'; break;
+      case 'me': html = meScreen(); tab = 'me'; root = true; break;
+      case 'manage': html = manageScreen(); tab = 'me'; break;
+      case 'track': html = (a === 'history') ? historyScreen() : trackScreen(); tab = 'me'; break;
+      case 'sadhana':
+        if (a === 'seq') { html = seqScreen(); tab = 'sadhana'; }
+        else { if (a) U.sadhanaTab = a; html = sadhanaScreen(); tab = 'sadhana'; }
+        break;
+      default: html = homeScreen(); tab = 'home'; root = true;
+    }
+
+    clearInterval(U.quizTimer); U.quizTimer = null;
+    clearInterval(U.medTimer); U.medTimer = null;
+    clearInterval(U.seqTimer); U.seqTimer = null;
+    const view = document.getElementById('view');
+    view.innerHTML = html;
+    view.scrollTop = 0;
+    document.querySelector('.shell').classList.toggle('sub', !root);
+    renderTabbar(tab);
+    if (name === 'quiz' && U.quiz) startQuizTimer();
+    if (name === 'sadhana' && a !== 'seq' && U.sadhanaTab === 'dhyana' && U.med.running) medStart();
+    if (name === 'sadhana' && a === 'seq' && U.seq.running) seqStart();
+  }
+
+  /* =====================================================================
+     QUIZ ENGINE
+     ===================================================================== */
+  function startQuiz() {
+    U.quiz = { i: 0, answers: {}, left: DB.quizzes.weekly.minutes * 60 };
+    U.result = null;
+    location.hash = '#/quiz';
+    render();
+  }
+  function startQuizTimer() {
+    clearInterval(U.quizTimer);
+    U.quizTimer = setInterval(() => {
+      if (!U.quiz) return clearInterval(U.quizTimer);
+      U.quiz.left--;
+      const el = document.getElementById('quizTimer');
+      if (el) el.textContent = `${bn(String(Math.floor(U.quiz.left / 60)).padStart(2, '0'))}:${bn(String(U.quiz.left % 60).padStart(2, '0'))}`;
+      if (U.quiz.left <= 0) { clearInterval(U.quizTimer); submitQuiz(); }
+    }, 1000);
+  }
+  function submitQuiz() {
+    const q = U.quiz; if (!q) return;
+    const Qs = DB.quizzes.weekly.questions;
+    let correct = 0;
+    Qs.forEach((qq, i) => { if (q.answers[i] === qq.ans) correct++; });
+    const score = Math.round(correct / Qs.length * 100);
+    const when = `${bn(new Date().getDate())} ${BN_MONTH[new Date().getMonth()].slice(0, 4)}`;
+    S.attempts.push({ title: DB.quizzes.weekly.title, score, correct, total: Qs.length, when });
+    save('attempts');
+    bumpActivity(12);
+    U.result = { score, correct, answers: { ...q.answers } };
+    U.quiz = null;
+    clearInterval(U.quizTimer);
+    chime(score >= 50 ? 'complete' : 'tick');
+    location.hash = '#/result';
+    render();
+    setTimeout(() => burst(window.innerWidth / 2, 220, score >= 50 ? 22 : 10), 200);
+  }
+
+  /* =====================================================================
+     ACTIONS
+     ===================================================================== */
+  function bumpActivity(min) {
+    S.activity[TODAY_KEY] = (S.activity[TODAY_KEY] || 0) + min;
+    save('activity');
+  }
+  function setTheme(v) {
+    S.theme = v; save('theme');
+    document.documentElement.dataset.theme = v;
+    document.querySelector('meta[name="theme-color"]').setAttribute('content', v === 'light' ? '#fdf7e4' : '#180304');
+  }
+  function speak(text) {
+    try {
+      if (!('speechSynthesis' in window)) return toast('এই ব্রাউজারে উচ্চারণ সমর্থিত নয়');
+      const u = new SpeechSynthesisUtterance(text.replace(/…/g, ''));
+      u.lang = 'bn-IN'; u.rate = .85;
+      speechSynthesis.cancel(); speechSynthesis.speak(u);
+      toast('উচ্চারণ চালু হচ্ছে…');
+    } catch (e) { toast('উচ্চারণ সম্ভব হয়নি'); }
+  }
+
+  const ACTIONS = {
+    nav: el => { location.hash = el.dataset.to; },
+    toast: el => toast(el.dataset.msg || ''),
+    ritual: el => {
+      const i = +el.dataset.i;
+      const arr = (S.rituals[TODAY_KEY] || [true, false, false]).slice();
+      arr[i] = !arr[i];
+      S.rituals[TODAY_KEY] = arr; save('rituals');
+      if (arr[i]) { bumpActivity(8); chime('tick'); }
+      if (arr.filter(Boolean).length === 3) {
+        chime('complete'); bumpActivity(15);
+        setTimeout(() => { burst(window.innerWidth / 2, 200, 22); toast('আজকের সাধনা সম্পূর্ণ 🌸 · +৬০ পুণ্য'); }, 150);
+      }
+      render();
+    },
+    seg: el => { U.libSeg = el.dataset.s; render(); },
+    cat: el => { U.libCat = el.dataset.c; render(); },
+    mcat: el => { U.marketCat = el.dataset.c; render(); },
+    chapter: el => {
+      const n = +el.dataset.n;
+      if (S.chapters.includes(n)) toast(`অধ্যায় ${bn(n)} আবার পড়ুন`);
+      else toast(`অধ্যায় ${bn(n)} এখনো খোলা হয়নি — আগে ${bn(Math.max(...S.chapters) + 1)} সম্পূর্ণ করুন`);
+    },
+    font: el => {
+      S.font = Math.max(14, Math.min(24, S.font + (+el.dataset.d) * 1)); save('font'); render();
+    },
+    themeSet: el => { setTheme(el.dataset.v); render(); },
+    toggleTheme: () => {
+      const next = S.theme === 'light' ? 'dark' : 'light';
+      setTheme(next); render();
+      toast(next === 'light' ? 'লাইট মোড (পাটা-থিম) চালু ☀' : 'ডার্ক মোড চালু 🌙');
+    },
+    toggleSound: () => { S.sound = !S.sound; save('sound'); if (S.sound) chime('soft'); render(); },
+    toggleMotion: () => {
+      S.motion = !S.motion; save('motion');
+      document.documentElement.classList.toggle('no-motion', !S.motion); render();
+    },
+    toggleName: () => {
+      const n = prompt('আপনার নাম লিখুন', S.name);
+      if (n && n.trim()) { S.name = n.trim().slice(0, 40); save('name'); render(); toast('নাম সংরক্ষিত'); }
+    },
+    bookmark: el => {
+      const i = +el.dataset.i;
+      const id = (location.hash.split('/')[2]) || 'gita';
+      const k = `${id}:${i}`;
+      const at = S.bookmarks.indexOf(k);
+      if (at >= 0) { S.bookmarks.splice(at, 1); toast('বুকমার্ক সরানো হলো'); }
+      else { S.bookmarks.push(k); toast('বুকমার্কে যোগ হয়েছে'); chime('soft'); }
+      save('bookmarks'); render();
+    },
+    markread: el => {
+      const i = +el.dataset.i;
+      const id = (location.hash.split('/')[2]) || 'gita';
+      S.read[`${id}:${i}`] = true; save('read');
+      S.lastVerse = { book: id, idx: i }; save('lastVerse');
+      bumpActivity(6);
+      const gita = DB.books.find(b => b.id === id);
+      if (gita && gita.texts[i] && gita.texts[i].ch > Math.max(...S.chapters) && S.chapters.length < 18) {
+        S.chapters.push(gita.texts[i].ch); save('chapters');
+      }
+      chime('tick'); toast('পাঠ সম্পন্ন ✓ · +৬ মিনিট');
+      render();
+    },
+    lesson: el => {
+      const id = el.dataset.id, i = +el.dataset.i;
+      const arr = (S.lessons[id] || []).slice();
+      const at = arr.indexOf(i);
+      if (at >= 0) arr.splice(at, 1); else { arr.push(i); chime('tick'); bumpActivity(10); }
+      S.lessons[id] = arr; save('lessons'); render();
+    },
+    pujaStep: el => {
+      const id = el.dataset.id, i = +el.dataset.i;
+      const k = id + ':' + TODAY_KEY;
+      const arr = (S.puja[k] || []).slice();
+      const at = arr.indexOf(i);
+      if (at >= 0) arr.splice(at, 1); else { arr.push(i); chime('tick'); bumpActivity(4); }
+      S.puja[k] = arr; save('puja');
+      const total = (DB.pujas.find(p => p.id === id) || {}).steps.length;
+      if (arr.length === total) { chime('complete'); setTimeout(() => { burst(window.innerWidth / 2, 200, 20); toast('পূজা সম্পূর্ণ 🌸'); }, 160); }
+      render();
+    },
+    speak: el => speak(el.dataset.text || ''),
+    pmonth: el => {
+      let { y, m } = U.panjika; m += +el.dataset.d;
+      if (m < 1) { m = 12; y--; } if (m > 12) { m = 1; y++; }
+      U.panjika.y = y; U.panjika.m = m; render();
+    },
+    pday: el => { U.panjika.day = el.dataset.k; render(); },
+    scriptSet: el => { S.script = el.dataset.v; save('script'); render(); },
+    pview: el => { U.panjika.view = el.dataset.v; render(); },
+    pbm: el => {
+      let y = U.panjika.by, m = U.panjika.bm + (+el.dataset.d);
+      if (m < 0) { m = 11; y--; } if (m > 11) { m = 0; y++; }
+      U.panjika.by = y; U.panjika.bm = m; render();
+    },
+    donate: el => {
+      const id = el.dataset.id, amt = +el.dataset.amt;
+      const c = DB.campaigns.find(x => x.id === id);
+      const ok = confirm(`৳ ${bnN(amt)} দান নিশ্চিত করবেন?\n(${c.title})\n\nএটি ডেমো — কোনো বাস্তব পেমেন্ট হবে না।`);
+      if (!ok) return;
+      S.raised[id] = (S.raised[id] || 0) + amt; save('raised');
+      S.orders.push({ kind: 'donation', title: c.title, amount: amt, status: 'সম্পন্ন', at: Date.now() }); save('orders');
+      chime('complete'); burst(window.innerWidth / 2, window.innerHeight / 2, 18);
+      const gitas = id === 'gita' ? Math.max(1, Math.round(amt / c.perUnit)) : 0;
+      toast(gitas ? `গীতা দান গৃহীত 🙏 · ${bn(gitas)}টি গীতা ${bn(gitas)}টি পরিবারে পৌঁছাবে` : 'দানের জন্য ধন্যবাদ 🙏 · রিসিট সংরক্ষিত');
+      render();
+    },
+    order: el => {
+      const id = el.dataset.id;
+      const p = (S.provider && S.provider.id === id) ? S.provider : DB.providers.find(x => x.id === id);
+      const ok = confirm(`${p.name} — ৳ ${bnN(p.rate)} / ${p.rateLabel}\n\nবুকিং নিশ্চিত করবেন? (ডেমো — পেমেন্ট হবে না)`);
+      if (!ok) return;
+      S.orders.push({ kind: 'service', title: p.name + ' · ' + p.cat, amount: p.rate, status: 'এসক্রোতে', at: Date.now() });
+      save('orders'); chime('soft'); toast('বুকিং তৈরি হয়েছে · এসক্রো সুরক্ষিত');
+      render();
+    },
+    providerForm: () => {
+      const name = prompt('আপনার নাম', S.name); if (!name) return;
+      const cat = prompt('দক্ষতা / বিভাগ (টিউটর, পুরোহিত, গ্রাফিক্স, কথক)', 'গ্রাফিক্স'); if (!cat) return;
+      const rate = parseInt(prompt('আপনার রেট (টাকায়)', '800'), 10) || 500;
+      S.provider = { id: 'me', name: name.trim(), ini: name.trim().slice(0, 1), cat: cat.trim(), role: `${cat.trim()} · নিজের প্রোফাইল`, rate, rateLabel: 'কাজ', rating: 5, reviews: 0 };
+      save('provider'); chime('complete'); toast('প্রোফাইল তৈরি হয়েছে ✓');
+      render();
+    },
+    myProfile: () => {
+      const e = S.orders.filter(o => o.kind === 'service').reduce((s, o) => s + o.amount, 0);
+      toast(`মোট আয় ৳ ${bnN(e)} · আপনার শেয়ার ৳ ${bnN(Math.round(e * .85))}`);
+    },
+    quizStart: () => startQuiz(),
+    pick: el => {
+      U.quiz.answers[U.quiz.i] = +el.dataset.i;
+      chime('soft'); render();
+    },
+    quizNext: () => { if (U.quiz.i < DB.quizzes.weekly.questions.length - 1) { U.quiz.i++; render(); } },
+    quizPrev: () => { if (U.quiz.i > 0) { U.quiz.i--; render(); } },
+    quizSubmit: () => {
+      const answered = Object.keys(U.quiz.answers).length;
+      if (answered < DB.quizzes.weekly.questions.length && !confirm(`আপনি ${bn(DB.quizzes.weekly.questions.length - answered)}টি প্রশ্নের উত্তর দেননি। তবুও জমা দেবেন?`)) return;
+      submitQuiz();
+    },
+    tfield: el => {
+      const k = el.dataset.k, d = +el.dataset.d;
+      const e = entryFor(TODAY_KEY);
+      const steps = { puja: 5, japaExtra: 1, dhyanaExtra: 5, pathMin: 5, daanTaka: 50, daanMin: 5,
+        workMin: 15, income: 100, studyMin: 10, familyMin: 15, sleepH: 1, lies: 1, anger: 1 };
+      const step = steps[k] || 1;
+      let v = (e[k] || 0) + d * step;
+      if (k === 'sleepH') v = clamp(v, 3, 12);
+      else v = Math.max(0, v);
+      e[k] = v; save('daily');
+      if (d > 0 && (k === 'japaExtra' || k === 'puja')) chime('soft');
+      render();
+    },
+    trackDone: () => {
+      const e = entryFor(TODAY_KEY);
+      const sc = scoreOf(e, todayAuto());
+      e.done = true; save('daily');
+      if (sc.total >= 60) { chime('complete'); setTimeout(() => burst(window.innerWidth / 2, 260, 24), 80); }
+      else chime('tick');
+      toast(`আজকের হিসাব সংরক্ষিত ✓ · স্কোর ${bn(sc.total)}/১০০`);
+      render();
+    },
+    sadhanaTab: el => { U.sadhanaTab = el.dataset.t; location.hash = '#/sadhana/' + U.sadhanaTab; render(); },
+    japaTap: () => japaTap(),
+    japaReset: () => {
+      if (!confirm('আজকের জপ গণনা রিসেট করবেন?')) return;
+      S.japa.count = 0; save('japa'); japaUpdate(); toast('জপ গণনা রিসেট');
+    },
+    japaFinish: () => {
+      const done = 108 - S.japa.count;
+      S.japa.rounds += 1; S.japa.count = 0; save('japa');
+      chime('complete'); bumpActivity(6);
+      setTimeout(() => burst(window.innerWidth / 2, 260, 22), 60);
+      toast(`মালা সম্পূর্ণ 🌸${done > 0 ? ' (বাকি ' + bn(done) + ' জপ গণ্য হলো)' : ''}`);
+      japaUpdate(); render();
+    },
+    japaMantra: el => { S.japa.mantra = el.dataset.id; save('japa'); render(); },
+    medPreset: el => {
+      if (U.med.running && !confirm('চলমান ধ্যান বন্ধ করে সময় বদলাবেন?')) return;
+      clearInterval(U.medTimer); U.medTimer = null;
+      U.med = { mins: +el.dataset.m, left: +el.dataset.m * 60, running: false, phase: '' };
+      render();
+    },
+    medToggle: () => {
+      if (U.med.running) {
+        clearInterval(U.medTimer); U.medTimer = null; U.med.running = false;
+        toast('ধ্যান বিরতিতে'); render();
+      } else { medStart(); chime('soft'); render(); }
+    },
+    medReset: () => {
+      clearInterval(U.medTimer); U.medTimer = null;
+      U.med.left = U.med.mins * 60; U.med.running = false;
+      render(); toast('ধ্যান রিসেট');
+    },
+    asanaToggle: el => {
+      const id = el.dataset.id;
+      S.asanaDone[id] = !S.asanaDone[id]; save('asanaDone');
+      if (S.asanaDone[id]) { chime('tick'); bumpActivity(1); }
+      render();
+    },
+    seqToggle: () => {
+      if (U.seq.running) { clearInterval(U.seqTimer); U.seqTimer = null; U.seq.running = false; render(); }
+      else { seqStart(); render(); }
+    },
+    seqNext: () => {
+      const st = DB.suryaNamaskar;
+      if (U.seq.i < st.length - 1) { U.seq.i++; U.seq.left = st[U.seq.i].s; render(); }
+      else { clearInterval(U.seqTimer); U.seq.running = false; U.seq.i = 0; U.seq.left = st[0].s; toast('শেষ ধাপ — আবার শুরু হলো'); render(); }
+    },
+    seqPrev: () => {
+      const st = DB.suryaNamaskar;
+      if (U.seq.i > 0) { U.seq.i--; U.seq.left = st[U.seq.i].s; render(); }
+    },
+    setRole: el => {
+      S.role = el.dataset.r; save('role');
+      logAction('ভূমিকা পরিবর্তন → ' + roleLabel(S.role));
+      toast('এখন আপনি ' + roleLabel(S.role));
+      render();
+    },
+    adminTab: el => { U.adminTab = el.dataset.t; render(); },
+    uStatus: el => {
+      S.userState[el.dataset.id] = el.dataset.v; save('userState');
+      const u = DB.users.find(x => x.id === el.dataset.id);
+      logAction((el.dataset.v === 'suspended' ? 'স্থগিত: ' : 'অনুমোদন: ') + (u ? u.name : ''));
+      chime(el.dataset.v === 'active' ? 'complete' : 'tick');
+      toast(el.dataset.v === 'suspended' ? 'ব্যবহারকারী স্থগিত করা হলো' : 'ব্যবহারকারী অনুমোদিত');
+      render();
+    },
+    appDecide: el => {
+      S.appState[el.dataset.id] = el.dataset.v; save('appState');
+      const a = DB.applications.find(x => x.id === el.dataset.id);
+      logAction((el.dataset.v === 'approved' ? 'আবেদন অনুমোদিত: ' : 'আবেদন বাতিল: ') + (a ? a.name : ''));
+      chime(el.dataset.v === 'approved' ? 'complete' : 'tick');
+      toast(el.dataset.v === 'approved' ? 'অনুমোদিত ✓ — প্রোফাইল প্রকাশ্যে এল' : 'আবেদন বাতিল হয়েছে');
+      render();
+    },
+    repDecide: el => {
+      S.reportState[el.dataset.id] = el.dataset.v; save('reportState');
+      logAction((el.dataset.v === 'actioned' ? 'কনটেন্ট সরানো: ' : 'রিপোর্ট খারিজ: ') + el.dataset.id);
+      toast(el.dataset.v === 'actioned' ? 'কনটেন্ট সরানো হয়েছে' : 'রিপোর্ট খারিজ');
+      render();
+    },
+    payoutAppr: el => {
+      const id = el.dataset.id;
+      const base = DB.payouts.find(p => p.id === id).approvals;
+      const cur = S.payoutAppr[id] !== undefined ? S.payoutAppr[id] : base;
+      S.payoutAppr[id] = Math.min(2, cur + 1); save('payoutAppr');
+      logAction('পেআউট অনুমোদন (' + S.payoutAppr[id] + '/২): ' + id);
+      S.payoutAppr[id] >= 2 ? chime('complete') : chime('soft');
+      toast(S.payoutAppr[id] >= 2 ? 'পেআউট রিলিজ হয়েছে ✓' : 'প্রথম অনুমোদন সম্পন্ন — আরও একজন দরকার');
+      render();
+    },
+    addChild: () => {
+      const n = prompt('সন্তানের নাম', ''); if (!n) return;
+      const cls = prompt('শ্রেণি', 'শ্রেণি ৪') || '—';
+      S.children.push({ n: n.trim(), cls: cls.trim(), pct: 0 });
+      save('children'); toast('সন্তান যোগ হয়েছে'); render();
+    },
+    reset: () => {
+      if (!confirm('সব ডেমো ডেটা (পাঠ, কুইজ, দান) রিসেট করবেন?')) return;
+      try { Object.keys(localStorage).filter(k => k.startsWith('svp_')).forEach(k => localStorage.removeItem(k)); } catch (e) { }
+      location.reload();
+    }
+  };
+
+  /* =====================================================================
+     BINDINGS
+     ===================================================================== */
+  document.addEventListener('click', e => {
+    const el = e.target.closest('[data-act]');
+    if (!el) return;
+    const fn = ACTIONS[el.dataset.act];
+    if (fn) { e.preventDefault(); fn(el, e); }
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const el = e.target.closest('[data-act][role="button"],[data-act][role="checkbox"]');
+    if (el) { e.preventDefault(); el.click(); }
+  });
+  document.addEventListener('input', e => {
+    if (e.target.id === 'libSearch') {
+      U.libQ = e.target.value;
+      const list = document.getElementById('libList');
+      if (list) list.innerHTML = bookCards();
+    }
+    if (e.target.dataset && e.target.dataset.field) {
+      const f = e.target.dataset.field;
+      const entry = entryFor(TODAY_KEY);
+      entry[f] = e.target.value;
+      save('daily');
+      return;
+    }
+    if (e.target.id === 'gitaSearch') {
+      U.gitaQ = e.target.value; render();
+      const gi = document.getElementById('gitaSearch');
+      if (gi) { gi.focus(); gi.setSelectionRange(gi.value.length, gi.value.length); }
+      return;
+    }
+    if (e.target.id === 'adminSearch') {
+      U.adminQ = e.target.value; render();
+      const inp = document.getElementById('adminSearch');
+      if (inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+    }
+    if (e.target.id === 'marketSearch') {
+      U.marketQ = e.target.value;
+      const list = document.getElementById('marketList');
+      if (list) list.innerHTML = providerCards();
+    }
+  });
+  window.addEventListener('hashchange', render);
+
+  /* =====================================================================
+     INIT
+     ===================================================================== */
+  function render() { route(); }
+
+  function init() {
+    document.body.insertAdjacentHTML('afterbegin', SPRITE);
+    document.documentElement.dataset.theme = S.theme;
+    document.documentElement.classList.toggle('no-motion', !S.motion);
+    if (!location.hash) location.hash = '#/home';
+    render();
+    setTimeout(() => {
+      if (!store.get('seen', false)) {
+        store.set('seen', true);
+        toast('স্বাগতম 🙏 ডেমো মোড — সব ডেটা আপনার ব্রাউজারেই থাকে');
+      }
+    }, 900);
+  }
+  init();
+})();

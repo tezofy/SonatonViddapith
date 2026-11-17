@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="bn" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>সনাতন বিদ্যাপীঠ — UI প্রিভিউ v2 (Pro)</title>
+<style>
+/* =====================================================================
+   SANATAN VIDYAPITH · DESIGN SYSTEM v2
+   tokens → primitives → components → screens
+   ===================================================================== */
+
+/* ---------- 1. TOKENS ---------- */
+:root{
+  /* brand */
+  --wine-950:#100102; --wine-900:#180304; --wine-850:#1f0406;
+  --wine-800:#290709; --wine-750:#32090c; --wine-700:#3c0e12; --wine-600:#4b1217;
+  --gold-100:#fbf0d4; --gold-200:#f5e0ac; --gold-300:#e8c274;
+  --gold-400:#d7a94f; --gold-500:#c2933a; --gold-600:#9d7527;
+  --ink:#fff8ec; --ink-2:#ead6cc; --ink-3:#c9aca6; --ink-4:#a2887f;
+  --ok:#63b58c; --ok-d:#2f7a58; --warn:#e39a52; --danger:#e0726a;
+
+  /* semantic */
+  --app-bg: radial-gradient(120% 90% at 10% -10%, #40101400 0%, transparent 60%),
+            linear-gradient(180deg,#2c0709 0%, #1c0405 45%, #150203 100%);
+  --surface-1: linear-gradient(160deg, #3b0e13 0%, #2a0709 72%);
+  --surface-2: linear-gradient(160deg, #451016 0%, #2d080b 70%);
+  --surface-flat:#2a0709;
+  --surface-glass: rgba(255,255,255,.045);
+  --card-border: rgba(215,169,79,.16);
+  --card-border-strong: rgba(215,169,79,.38);
+  --hairline: rgba(255,255,255,.06);
+  --gold-line: linear-gradient(90deg,transparent,rgba(215,169,79,.45),transparent);
+  --gold-fill: linear-gradient(180deg,#f8e3b3 0%, #d7a94f 52%, #b1842e 100%);
+  --hero-bg: radial-gradient(130% 120% at 18% 0%, #7d2027 0%, #561318 42%, #3a0b0f 78%, #2c0709 100%);
+  --appbar-fade: linear-gradient(180deg, rgba(31,4,6,.98) 0%, rgba(31,4,6,.92) 62%, rgba(31,4,6,0) 100%);
+  --tabbg: linear-gradient(180deg, rgba(21,2,3,.55) 0%, rgba(15,1,2,.98) 55%);
+  --shadow-lg: 0 30px 70px -20px rgba(0,0,0,.75), 0 8px 24px rgba(0,0,0,.35);
+  --shadow-sm: 0 8px 20px -8px rgba(0,0,0,.6);
+  --inner-top: inset 0 1px 0 rgba(255,255,255,.06);
+  --chip-bg: rgba(255,255,255,.045);
+  --track: rgba(255,255,255,.10);
+
+  /* type */
+  --f-ui:"Hind Siliguri","Noto Sans Bengali","Kalpurush","SolaimanLipi",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-dis:"Noto Serif Bengali","Hind Siliguri","Kalpurush",Georgia,serif;
+  --r-xs:8px; --r-sm:12px; --r-md:16px; --r-lg:22px; --r-xl:28px; --r-full:999px;
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:20px; --sp-6:24px; --sp-8:32px;
+}
+html[data-theme="light"]{
+  --ink:#2a1210; --ink-2:#4a2b26; --ink-3:#7a5c55; --ink-4:#9b7d75;
+  --app-bg: radial-gradient(120% 90% at 10% -10%, #fff3d6 0%, transparent 60%),
+            linear-gradient(180deg,#fdf7ec 0%, #fbf1e2 55%, #f7ebd8 100%);
+  --surface-1: linear-gradient(160deg,#fffdf8 0%, #fbf2e3 100%);
+  --surface-2: linear-gradient(160deg,#fffdf8 0%, #f7ecd9 100%);
+  --surface-flat:#fffdf8;
+  --surface-glass: rgba(42,18,16,.035);
+  --card-border: rgba(157,117,39,.20);
+  --card-border-strong: rgba(157,117,39,.45);
+  --hairline: rgba(42,18,16,.08);
+  --gold-fill: linear-gradient(180deg,#e9c97e 0%, #cf9f42 55%, #ab7c26 100%);
+  --hero-bg: radial-gradient(130% 120% at 18% 0%, #8d2a30 0%, #6b1c22 45%, #4c1116 100%);
+  --appbar-fade: linear-gradient(180deg, rgba(253,247,236,.98) 0%, rgba(253,247,236,.9) 62%, rgba(253,247,236,0) 100%);
+  --tabbg: linear-gradient(180deg, rgba(253,247,236,.5) 0%, rgba(251,241,226,.99) 55%);
+  --shadow-lg: 0 30px 70px -24px rgba(74,32,20,.28), 0 8px 22px rgba(74,32,20,.10);
+  --shadow-sm: 0 8px 20px -10px rgba(74,32,20,.22);
+  --inner-top: inset 0 1px 0 rgba(255,255,255,.9);
+  --chip-bg: rgba(42,18,16,.04);
+  --track: rgba(42,18,16,.10);
+}
+
+/* ---------- 2. RESET / STAGE ---------- */
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{
+  font-family:var(--f-ui); color:var(--ink); background:var(--app-bg);
+  display:flex; align-items:flex-start; justify-content:center; gap:44px;
+  padding:36px 24px 56px; flex-wrap:wrap; transition:background .35s,color .35s;
+}
+body::before{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:0; opacity:.5;
+  background-image:radial-gradient(circle at 20% 10%, rgba(215,169,79,.10), transparent 45%),
+                   radial-gradient(circle at 85% 85%, rgba(125,32,39,.16), transparent 50%);
+}
+svg{display:block}
+.ico{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round}
+.ico.sm{width:16px;height:16px;stroke-width:1.8}
+.ico.xs{width:13px;height:13px;stroke-width:2}
+
+/* ---------- 3. SPEC RAIL ---------- */
+.rail{width:326px; max-width:100%; position:relative; z-index:1}
+.mark{display:flex; align-items:center; gap:13px}
+.mark .seal{
+  width:56px;height:56px;border-radius:18px; display:grid; place-items:center; flex:0 0 auto;
+  background:radial-gradient(circle at 34% 28%, #7e2127, #3a0b0f 72%);
+  border:1px solid rgba(215,169,79,.45);
+  box-shadow:0 10px 26px -10px rgba(0,0,0,.7), inset 0 0 22px rgba(215,169,79,.22)}
+.mark h1{margin:0; font-family:var(--f-dis); font-size:21px; font-weight:700; letter-spacing:.2px; color:var(--ink)}
+.mark .eyebrow{font-size:9.5px; letter-spacing:2.4px; color:var(--gold-400); text-transform:uppercase; margin-top:3px}
+.rail .lede{font-size:12.5px; line-height:1.85; color:var(--ink-3); margin:20px 0 0}
+.spec{margin-top:26px}
+.spec h2{font-size:10px; letter-spacing:1.8px; text-transform:uppercase; color:var(--gold-400);
+  margin:0 0 12px; font-weight:700; display:flex; align-items:center; gap:8px}
+.spec h2::after{content:""; flex:1; height:1px; background:linear-gradient(90deg,rgba(215,169,79,.35),transparent)}
+.chips{display:flex; flex-wrap:wrap; gap:7px}
+.chip{
+  font-family:var(--f-ui); font-size:11.5px; padding:7px 12px; border-radius:var(--r-full); cursor:pointer;
+  border:1px solid var(--card-border); background:var(--chip-bg); color:var(--ink-2); transition:.18s; white-space:nowrap}
+.chip:hover{border-color:var(--card-border-strong); color:var(--ink); transform:translateY(-1px)}
+.chip.on{background:linear-gradient(180deg,rgba(215,169,79,.24),rgba(215,169,79,.08));
+  border-color:rgba(215,169,79,.62); color:var(--gold-200); box-shadow:inset 0 0 0 1px rgba(215,169,79,.18)}
+html[data-theme="light"] .chip.on{color:#7a5312}
+.scale{width:100%; border-collapse:collapse}
+.scale td{padding:5px 0; vertical-align:baseline; border-bottom:1px solid var(--hairline)}
+.scale td:last-child{text-align:right; font-size:10px; color:var(--ink-4); letter-spacing:.4px}
+.sw{display:flex; gap:9px; flex-wrap:wrap}
+.sw i{width:40px;height:30px;border-radius:9px; border:1px solid rgba(255,255,255,.14); box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}
+.swt{display:flex; align-items:center; gap:10px; margin-top:14px}
+.swt span{font-size:11.5px; color:var(--ink-3)}
+.toggle{width:46px;height:26px;border-radius:99px; border:1px solid var(--card-border-strong);
+  background:var(--chip-bg); position:relative; cursor:pointer; transition:.25s}
+.toggle::after{content:""; position:absolute; top:2px; left:2px; width:20px;height:20px;border-radius:50%;
+  background:var(--gold-fill); transition:.25s; box-shadow:0 2px 8px rgba(0,0,0,.4)}
+.toggle.light::after{transform:translateX(20px)}
+.note{font-size:11.5px; line-height:1.8; color:var(--ink-4); border-top:1px solid var(--hairline);
+  margin-top:24px; padding-top:14px}
+
+/* ---------- 4. DEVICE ---------- */
+.device{
+  position:relative; width:400px; height:838px; border-radius:56px; padding:11px; flex:0 0 auto;
+  background:linear-gradient(155deg,#2d0a0d 0%, #150203 48%, #2d0a0d 100%);
+  border:1px solid rgba(215,169,79,.32);
+  box-shadow:var(--shadow-lg), 0 0 120px -30px rgba(215,169,79,.22), inset 0 0 0 1px rgba(0,0,0,.7);
+  z-index:1}
+html[data-theme="light"] .device{
+  background:linear-gradient(155deg,#3a1114 0%, #1d0405 50%, #3a1114 100%);
+  box-shadow:0 34px 80px -26px rgba(74,32,20,.55), inset 0 0 0 1px rgba(0,0,0,.7)}
+.device::after{content:""; position:absolute; inset:11px; border-radius:45px;
+  border:1px solid rgba(215,169,79,.10); pointer-events:none; z-index:50}
+.screen{position:relative; width:100%; height:100%; border-radius:45px; overflow:hidden;
+  background:var(--app-bg); display:flex; flex-direction:column; isolation:isolate}
+.statusbar{height:40px; flex:0 0 auto; display:flex; align-items:center; justify-content:space-between;
+  padding:0 26px; font-size:11.5px; font-weight:600; letter-spacing:.3px; color:var(--ink-2);
+  position:relative; z-index:30}
+.statusbar .r{display:flex; align-items:center; gap:5px}
+.island{position:absolute; top:13px; left:50%; transform:translateX(-50%);
+  width:96px; height:24px; border-radius:99px; background:#0c0102; z-index:40;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.homebar{position:absolute; bottom:7px; left:50%; transform:translateX(-50%); width:120px; height:4px;
+  border-radius:99px; background:rgba(255,255,255,.28); z-index:45; pointer-events:none}
+html[data-theme="light"] .homebar{background:rgba(42,18,16,.28)}
+.scroll{flex:1 1 auto; overflow-y:auto; overflow-x:hidden; scrollbar-width:none; position:relative; scroll-behavior:smooth}
+.scroll::-webkit-scrollbar{display:none}
+.pad{padding:0 18px}
+.stack-4{margin-bottom:16px}
+.stack-3{margin-bottom:12px}
+
+/* view transitions */
+.view{display:none}
+.view.on{display:block; animation:viewIn .34s cubic-bezier(.22,.7,.3,1)}
+@keyframes viewIn{from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:none}}
+
+/* ---------- 5. APPBAR ---------- */
+.appbar{position:sticky; top:0; z-index:20; padding:6px 18px 14px; background:var(--appbar-fade);
+  backdrop-filter:blur(12px) saturate(120%)}
+.appbar .row{display:flex; align-items:center; gap:11px}
+.appbar h3{font-family:var(--f-dis); font-size:19px; font-weight:700; margin:0; letter-spacing:.1px; line-height:1.25}
+.appbar .sub{font-size:11px; color:var(--ink-4); margin-top:3px; letter-spacing:.2px; line-height:1.4}
+.appbar .eyebrow{font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--gold-400); font-weight:700}
+.spacer{flex:1}
+.iconbtn{width:36px;height:36px;border-radius:12px; display:grid;place-items:center; flex:0 0 auto; cursor:pointer;
+  border:1px solid var(--card-border); background:var(--chip-bg); color:var(--ink-2); transition:.16s; position:relative}
+.iconbtn:hover{color:var(--ink); border-color:var(--card-border-strong); background:rgba(215,169,79,.12)}
+.iconbtn:active{transform:scale(.96)}
+.dot{position:absolute; top:7px; right:8px; width:6px;height:6px;border-radius:50%; background:var(--danger);
+  box-shadow:0 0 0 2px var(--surface-flat)}
+
+/* ---------- 6. PRIMITIVES ---------- */
+.card{
+  position:relative; border-radius:var(--r-lg); border:1px solid var(--card-border); background:var(--surface-1);
+  box-shadow:var(--shadow-sm), var(--inner-top); overflow:hidden}
+.card.solid{background:var(--surface-2)}
+.card.oath{border-color:var(--card-border-strong); box-shadow:0 16px 40px -20px rgba(0,0,0,.8), inset 0 0 0 1px rgba(215,169,79,.10)}
+.card.pad{padding:15px}
+.btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; cursor:pointer; border:1px solid transparent;
+  font-family:var(--f-ui); font-size:13.5px; font-weight:600; border-radius:var(--r-md); padding:13px 18px;
+  letter-spacing:.2px; transition:.16s; line-height:1}
+.btn.gold{background:var(--gold-fill); color:#3a1a05; box-shadow:0 10px 26px -12px rgba(215,169,79,.85), inset 0 1px 0 rgba(255,255,255,.55)}
+.btn.gold:hover{filter:brightness(1.05)}
+.btn.ghost{background:var(--chip-bg); border-color:var(--card-border); color:var(--ink)}
+.btn.ghost:hover{border-color:var(--card-border-strong)}
+.btn.block{width:100%}
+.btn:active{transform:translateY(1px)}
+.btn.sm{padding:9px 13px; font-size:12px; border-radius:var(--r-sm)}
+.pill{display:inline-flex; align-items:center; gap:5px; font-size:10px; font-weight:600; letter-spacing:.4px;
+  padding:5px 9px; border-radius:var(--r-full); border:1px solid rgba(215,169,79,.32);
+  background:rgba(215,169,79,.10); color:var(--gold-300); white-space:nowrap}
+html[data-theme="light"] .pill{color:#8a5f16; background:rgba(176,130,44,.10); border-color:rgba(176,130,44,.28)}
+.pill.ok{color:#a9e3c6; background:rgba(99,181,140,.14); border-color:rgba(99,181,140,.34)}
+html[data-theme="light"] .pill.ok{color:#22684a; background:rgba(47,122,88,.10); border-color:rgba(47,122,88,.25)}
+.pill.flat{background:transparent; border-color:var(--card-border); color:var(--ink-3)}
+.muted{color:var(--ink-3)} .tiny{font-size:11px; letter-spacing:.2px} .mini{font-size:9.5px}
+.display{font-family:var(--f-dis); font-weight:700; letter-spacing:.1px}
+.orn{display:block; width:100%; height:16px; color:rgba(215,169,79,.5)}
+.sect{display:flex; align-items:center; gap:10px; margin:22px 0 11px}
+.sect h4{font-family:var(--f-dis); font-size:14.5px; margin:0; font-weight:700; letter-spacing:.1px}
+.sect .line{flex:1; height:1px; background:linear-gradient(90deg,rgba(215,169,79,.30),transparent)}
+.sect a{font-size:11px; color:var(--gold-300); cursor:pointer; letter-spacing:.2px}
+html[data-theme="light"] .sect a{color:#8a5f16}
+.bar{height:6px; border-radius:99px; background:var(--track); overflow:hidden}
+.bar > i{display:block; height:100%; border-radius:99px; background:var(--gold-fill); transition:width .6s cubic-bezier(.2,.7,.3,1)}
+.bar.thin{height:4px}
+.bar.dual > i.okpart{background:linear-gradient(90deg,#3f8d68,#8fd6b0)}
+.stars{color:var(--gold-300); font-size:10.5px; letter-spacing:1.4px}
+.av{width:42px;height:42px;border-radius:14px; flex:0 0 auto; display:grid;place-items:center;
+  font-family:var(--f-dis); font-size:16px; color:var(--gold-200);
+  background:radial-gradient(circle at 35% 28%, #7e2127, #3a0b0f 75%);
+  border:1px solid rgba(215,169,79,.34); box-shadow:inset 0 0 14px rgba(215,169,79,.14)}
+.av.round{border-radius:50%}
+.list{display:flex; flex-direction:column}
+.li{display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--hairline)}
+.li:last-child{border-bottom:none}
+.kv{display:flex; justify-content:space-between; align-items:baseline; gap:10px}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:9px}
+.grid3{display:grid; grid-template-columns:repeat(3,1fr); gap:9px}
+.stat{padding:10px 11px; border-radius:var(--r-sm); background:var(--surface-glass); border:1px solid var(--card-border)}
+.stat .k{font-size:9.5px; letter-spacing:.6px; color:var(--ink-4); margin-bottom:4px; text-transform:uppercase}
+.stat .v{font-size:12.5px; font-weight:600; color:var(--ink)}
+
+/* ---------- 7. TAB BAR ---------- */
+.tabbar{flex:0 0 auto; display:flex; padding:8px 10px 22px; gap:2px; background:var(--tabbg);
+  border-top:1px solid rgba(215,169,79,.20); backdrop-filter:blur(16px) saturate(130%); position:relative; z-index:25}
+.tab{flex:1; display:flex; flex-direction:column; align-items:center; gap:5px; padding:7px 0 4px; border:none;
+  background:none; color:var(--ink-4); font-family:var(--f-ui); font-size:9.5px; letter-spacing:.2px; cursor:pointer;
+  position:relative; transition:color .2s}
+.tab .ico{transition:transform .2s}
+.tab.on{color:var(--gold-300)}
+html[data-theme="light"] .tab.on{color:#8a5f16}
+.tab.on .ico{transform:translateY(-1px)}
+.tab .ind{position:absolute; top:0; width:18px; height:2px; border-radius:99px; background:var(--gold-fill); opacity:0; transition:.2s}
+.tab.on .ind{opacity:1}
+.screen.sub .tabbar{display:none}
+
+/* ---------- 8. HOME ---------- */
+.home-head{display:flex; align-items:center; gap:12px; padding:2px 18px 10px}
+.home-head .who{font-size:10px; letter-spacing:1.6px; text-transform:uppercase; color:var(--gold-400); font-weight:700}
+.home-head .nm{font-family:var(--f-dis); font-size:15px; font-weight:700; margin-top:2px}
+
+.hero{position:relative; margin:0 18px; border-radius:26px; padding:18px 18px 16px; overflow:hidden;
+  background:var(--hero-bg); border:1px solid rgba(215,169,79,.30);
+  box-shadow:0 18px 44px -22px rgba(0,0,0,.9), inset 0 0 0 1px rgba(255,255,255,.05)}
+.hero::before{content:""; position:absolute; right:-46px; top:-56px; width:190px;height:190px;border-radius:50%;
+  background:radial-gradient(circle, rgba(215,169,79,.26), transparent 66%)}
+.hero::after{content:""; position:absolute; left:0; right:0; bottom:0; height:1px; background:var(--gold-line)}
+.hero .wm{position:absolute; right:10px; bottom:-22px; opacity:.13; pointer-events:none}
+.hero .date{font-size:10.5px; letter-spacing:.8px; color:#f3dcc8; opacity:.9; display:flex; align-items:center; gap:6px}
+.hero h2{font-family:var(--f-dis); font-size:22px; line-height:1.42; margin:9px 0 14px; color:#fff6e6; font-weight:700}
+html[data-theme="light"] .hero h2{color:#fff8ec}
+.hero .meta{display:flex; gap:7px; flex-wrap:wrap; position:relative; z-index:2}
+.hero .meta span{font-size:10px; padding:5px 9px; border-radius:9px; color:#ffeccb;
+  background:rgba(0,0,0,.26); border:1px solid rgba(215,169,79,.28); letter-spacing:.2px}
+.hero .foot{display:flex; align-items:center; gap:13px; margin-top:16px; position:relative; z-index:2}
+.ring{width:56px;height:56px; border-radius:50%; display:grid; place-items:center; flex:0 0 auto; position:relative;
+  background:conic-gradient(#f8e3b3 0 var(--p,72%), rgba(255,255,255,.14) var(--p,72%) 100%)}
+.ring::before{content:""; position:absolute; inset:5px; border-radius:50%; background:#430d11}
+.ring .n{position:relative; font-family:var(--f-dis); font-size:15px; color:#ffe9bd; font-weight:700; line-height:1}
+.ring .u{position:relative; font-size:7.5px; letter-spacing:.6px; color:#e6c9b6; margin-top:2px}
+.hero .foot .txt{font-size:11px; line-height:1.6; color:#f0d8ca}
+.hero .foot .txt b{color:#ffe9bd}
+.segs{display:flex; gap:4px; margin-top:7px}
+.segs i{width:16px;height:4px;border-radius:99px; background:rgba(255,255,255,.22)}
+.segs i.on{background:var(--gold-fill)}
+
+.quick{display:grid; grid-template-columns:repeat(4,1fr); gap:9px; padding:16px 18px 0}
+.q{display:flex; flex-direction:column; align-items:center; gap:7px; cursor:pointer; padding:11px 4px 10px;
+  border-radius:17px; border:1px solid var(--card-border); background:var(--surface-glass);
+  color:var(--ink-2); font-family:var(--f-ui); font-size:10px; letter-spacing:.2px; transition:.18s}
+.q:hover{border-color:var(--card-border-strong); transform:translateY(-2px); box-shadow:var(--shadow-sm)}
+.q .qi{width:34px;height:34px;border-radius:12px; display:grid;place-items:center; color:var(--gold-300);
+  background:radial-gradient(circle at 38% 30%, #762026, #3a0b0f 78%); border:1px solid rgba(215,169,79,.32);
+  box-shadow:inset 0 0 12px rgba(215,169,79,.16)}
+html[data-theme="light"] .q .qi{color:#c2933a}
+
+.cover{width:54px;height:70px;border-radius:11px; flex:0 0 auto; display:grid; place-items:center; position:relative;
+  border:1px solid rgba(215,169,79,.40); overflow:hidden; box-shadow:0 6px 16px -8px rgba(0,0,0,.8)}
+.cover::after{content:""; position:absolute; inset:0; background:linear-gradient(120deg,rgba(255,255,255,.16),transparent 42%)}
+.cover .sym{font-family:var(--f-dis); font-size:19px; color:#ffe9bd; position:relative; z-index:2}
+.c1{background:linear-gradient(150deg,#942f2c,#3f0d11)} .c2{background:linear-gradient(150deg,#8a5a18,#3a2406)}
+.c3{background:linear-gradient(150deg,#2e6350,#0e2a20)} .c4{background:linear-gradient(150deg,#5d2f6a,#26102d)}
+
+.rowcard{display:flex; gap:13px; align-items:center; padding:12px}
+.rowcard .ttl{font-size:13px; font-weight:600; letter-spacing:.1px}
+.datebox{width:46px;height:52px;border-radius:13px; flex:0 0 auto; display:grid; place-items:center; text-align:center;
+  background:linear-gradient(180deg,#561318,#320a0d); border:1px solid rgba(215,169,79,.34)}
+html[data-theme="light"] .datebox{background:linear-gradient(180deg,#fdf1d8,#f4e2c2)}
+.datebox b{font-family:var(--f-dis); font-size:17px; line-height:1; color:var(--gold-200); display:block}
+html[data-theme="light"] .datebox b{color:#8a5f16}
+.datebox i{font-style:normal; font-size:9px; letter-spacing:.4px; color:var(--ink-4); display:block; margin-top:3px}
+
+.sevaband{margin:16px 18px 0; border-radius:20px; padding:15px; display:flex; align-items:center; gap:13px; cursor:pointer;
+  background:linear-gradient(115deg,#472c0e 0%, #2f1d07 70%); border:1px solid rgba(215,169,79,.34);
+  box-shadow:0 14px 34px -22px rgba(0,0,0,.9)}
+html[data-theme="light"] .sevaband{background:linear-gradient(115deg,#fdf0d3,#f6e3bd)}
+.sevaband h5{margin:0 0 4px; font-family:var(--f-dis); font-size:13.5px; color:#ffe9bd}
+html[data-theme="light"] .sevaband h5{color:#7a5312}
+.sevaband p{margin:0; font-size:10.5px; line-height:1.55; color:#e6cdb4}
+html[data-theme="light"] .sevaband p{color:#6d4f24}
+
+/* ---------- 9. LIBRARY ---------- */
+.search{display:flex; align-items:center; gap:9px; padding:11px 13px; border-radius:13px; margin-top:11px;
+  background:var(--surface-glass); border:1px solid var(--card-border); color:var(--ink-4); font-size:12px}
+.segment{display:flex; gap:4px; padding:4px; border-radius:12px; background:var(--surface-glass);
+  border:1px solid var(--card-border); margin-top:11px}
+.segment button{flex:1; padding:7px 0; border:none; border-radius:9px; background:none; cursor:pointer;
+  font-family:var(--f-ui); font-size:11px; color:var(--ink-3); letter-spacing:.2px}
+.segment button.on{background:linear-gradient(180deg,rgba(215,169,79,.26),rgba(215,169,79,.10));
+  color:var(--gold-200); box-shadow:inset 0 0 0 1px rgba(215,169,79,.30)}
+html[data-theme="light"] .segment button.on{color:#7a5312}
+.cats{display:flex; gap:7px; overflow-x:auto; padding:14px 18px 4px; scrollbar-width:none}
+.cats::-webkit-scrollbar{display:none}
+.cats .chip{flex:0 0 auto}
+
+/* ---------- 10. READER ---------- */
+.reader{padding:0 18px 24px}
+.prefbar{display:flex; align-items:center; gap:8px; padding:9px 11px; border-radius:13px; margin-bottom:14px;
+  background:var(--surface-glass); border:1px solid var(--card-border); font-size:11px; color:var(--ink-4)}
+.prefbar .grp{display:flex; gap:3px; padding:3px; border-radius:9px; background:rgba(0,0,0,.22)}
+html[data-theme="light"] .prefbar .grp{background:rgba(42,18,16,.05)}
+.prefbar .grp b{font-size:11px; font-weight:600; padding:3px 8px; border-radius:6px; color:var(--ink-3); cursor:pointer}
+.prefbar .grp b.on{background:rgba(215,169,79,.20); color:var(--gold-200)}
+html[data-theme="light"] .prefbar .grp b.on{color:#7a5312}
+.verse{padding:18px 16px 16px}
+.vnum{display:flex; align-items:center; gap:9px; justify-content:center; margin-bottom:14px}
+.vnum .l{height:1px; width:34px; background:linear-gradient(90deg,transparent,rgba(215,169,79,.5))}
+.vnum .l.r{background:linear-gradient(90deg,rgba(215,169,79,.5),transparent)}
+.vnum b{font-size:10px; letter-spacing:1.6px; color:var(--gold-400); font-weight:700}
+.sk{font-family:var(--f-dis); font-size:17px; line-height:2; color:var(--gold-100); text-align:center; letter-spacing:.2px}
+html[data-theme="light"] .sk{color:#6d4310}
+.bn{font-size:13.8px; line-height:2; color:var(--ink-2); margin-top:16px; padding-top:16px; border-top:1px solid var(--hairline)}
+.bn .lbl{display:inline-block; font-size:9.5px; letter-spacing:1.2px; color:var(--gold-400); font-weight:700; margin-bottom:6px}
+.arth{margin-top:12px; font-size:12px; line-height:1.95; color:var(--ink-3);
+  border-left:2px solid rgba(215,169,79,.42); padding:2px 0 2px 11px}
+.readeractions{display:flex; gap:9px; margin-top:16px}
+
+/* ---------- 11. COURSE ---------- */
+.timeline{position:relative; padding-left:34px}
+.timeline::before{content:""; position:absolute; left:13px; top:14px; bottom:14px; width:1px;
+  background:linear-gradient(180deg,rgba(215,169,79,.5),rgba(215,169,79,.12))}
+.tl{position:relative; padding:12px 13px; margin-bottom:9px}
+.tl .node{position:absolute; left:-34px; top:12px; width:27px;height:27px;border-radius:9px; display:grid;place-items:center;
+  font-size:11px; font-weight:700; background:linear-gradient(180deg,#561318,#330a0d); color:var(--gold-300);
+  border:1px solid rgba(215,169,79,.34); z-index:2}
+.tl.done .node{background:var(--gold-fill); color:#3a1a05; border-color:transparent}
+.tl.now{border-color:var(--card-border-strong); box-shadow:0 0 0 1px rgba(215,169,79,.20), var(--shadow-sm)}
+.tl.locked{opacity:.62}
+.tl h5{margin:0 0 3px; font-size:12.8px; font-weight:600; display:flex; align-items:center; gap:7px}
+.tl p{margin:0; font-size:11px; line-height:1.55; color:var(--ink-3)}
+
+/* ---------- 12. EXAM ---------- */
+.cd{display:flex; gap:8px; margin:13px 0 0}
+.cd div{flex:1; text-align:center; padding:10px 4px 8px; border-radius:12px;
+  background:rgba(0,0,0,.28); border:1px solid rgba(215,169,79,.26)}
+html[data-theme="light"] .cd div{background:rgba(255,255,255,.55)}
+.cd b{display:block; font-family:var(--f-dis); font-size:19px; color:var(--gold-100); line-height:1}
+html[data-theme="light"] .cd b{color:#7a5312}
+.cd i{font-style:normal; font-size:8.5px; letter-spacing:.8px; color:var(--ink-4)}
+.rankbox{width:26px;height:26px;border-radius:9px; display:grid;place-items:center; font-size:10.5px; font-weight:700;
+  flex:0 0 auto; background:var(--surface-glass); color:var(--ink-2); border:1px solid var(--card-border)}
+.rankbox.g1{background:var(--gold-fill); color:#3a1a05; border-color:transparent}
+.rankbox.g2{background:linear-gradient(180deg,#eceff1,#a9b0b4); color:#2b2b2b; border-color:transparent}
+.rankbox.g3{background:linear-gradient(180deg,#e6b486,#ab7239); color:#301503; border-color:transparent}
+.me-row{background:rgba(215,169,79,.10); border-radius:12px; padding:9px 10px; margin:0 -6px; border:1px solid rgba(215,169,79,.26)}
+
+/* ---------- 13. QUIZ ---------- */
+.qbar{display:flex; gap:4px; margin:10px 0 16px}
+.qbar i{flex:1; height:4px; border-radius:99px; background:var(--track)}
+.qbar i.on{background:var(--gold-fill)}
+.opt{display:flex; align-items:center; gap:11px; padding:13px; border-radius:14px; margin-bottom:8px; cursor:pointer;
+  border:1px solid var(--card-border); background:var(--surface-glass); font-size:12.8px; line-height:1.55;
+  transition:.15s; text-align:left; width:100%; font-family:var(--f-ui); color:var(--ink)}
+.opt:hover{border-color:var(--card-border-strong)}
+.opt .k{width:22px;height:22px;border-radius:8px; flex:0 0 auto; display:grid; place-items:center; font-size:10.5px;
+  font-weight:700; border:1px solid rgba(215,169,79,.38); color:var(--gold-300)}
+html[data-theme="light"] .opt .k{color:#8a5f16}
+.opt.sel{border-color:rgba(215,169,79,.62); background:rgba(215,169,79,.13); box-shadow:0 0 0 1px rgba(215,169,79,.22)}
+.opt.sel .k{background:var(--gold-fill); color:#3a1a05; border-color:transparent}
+.opt.right{border-color:rgba(99,181,140,.6); background:rgba(99,181,140,.12)}
+.opt.right .k{background:linear-gradient(180deg,#7fd0a8,#3f8d68); color:#08281a; border-color:transparent}
+
+/* ---------- 14. PUJA ---------- */
+.stepwrap{position:relative; padding-left:0}
+.step{display:flex; gap:12px; padding:13px; margin-bottom:9px; align-items:flex-start}
+.sno{width:28px;height:28px;border-radius:10px; flex:0 0 auto; display:grid;place-items:center; font-size:11.5px; font-weight:700;
+  background:linear-gradient(180deg,#561318,#320a0d); color:var(--gold-300); border:1px solid rgba(215,169,79,.34)}
+.step.now{border-color:var(--card-border-strong);box-shadow:0 0 0 1px rgba(215,169,79,.18),var(--shadow-sm)}
+.step.done .sno{background:var(--gold-fill); color:#3a1a05; border-color:transparent}
+.step h5{margin:0 0 3px; font-size:12.8px; font-weight:600}
+.step p{margin:0; font-size:11px; line-height:1.6; color:var(--ink-3)}
+.mantra{font-family:var(--f-dis); font-size:13px; line-height:1.9; color:var(--gold-100); text-align:center;
+  padding:11px; border-radius:11px; margin-top:9px; background:rgba(0,0,0,.22); border:1px dashed rgba(215,169,79,.30)}
+html[data-theme="light"] .mantra{color:#6d4310; background:rgba(255,255,255,.6)}
+.player{display:flex; align-items:center; gap:10px; margin-top:9px}
+.playbtn{width:32px;height:32px;border-radius:50%; display:grid;place-items:center; flex:0 0 auto;
+  background:var(--gold-fill); color:#3a1a05; border:none; cursor:pointer; box-shadow:0 6px 16px -8px rgba(215,169,79,.9)}
+.wave{display:flex; align-items:center; gap:3px; flex:1; height:22px}
+.wave i{width:3px; border-radius:99px; background:rgba(215,169,79,.45)}
+.wave i:nth-child(odd){background:rgba(215,169,79,.8)}
+.check{width:18px;height:18px;border-radius:6px; border:1.5px solid rgba(215,169,79,.45); display:grid;place-items:center; flex:0 0 auto}
+.check.on{background:var(--gold-fill); border-color:transparent; color:#3a1a05}
+
+/* ---------- 15. PANJIKA ---------- */
+.cal{display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-top:10px}
+.cal .h{font-size:9px; text-align:center; color:var(--ink-4); padding:5px 0; letter-spacing:.4px}
+.day{aspect-ratio:1; border-radius:10px; display:grid; place-items:center; font-size:11.5px; color:var(--ink-2);
+  position:relative; border:1px solid transparent; transition:.15s}
+.day.mut{color:var(--ink-4); opacity:.5}
+.day.ek{background:radial-gradient(circle at 40% 28%,#7e2127,#3a0b0f); border-color:rgba(215,169,79,.6); color:#ffe9bd; font-weight:600}
+.day.ek::after{content:""; position:absolute; bottom:4px; width:3px;height:3px;border-radius:50%; background:var(--gold-300)}
+.day.now{border-color:rgba(215,169,79,.35); background:rgba(215,169,79,.14); color:var(--ink); font-weight:700}
+.legend{display:flex; gap:14px; margin-top:11px; font-size:10px; color:var(--ink-4)}
+.legend span{display:flex; align-items:center; gap:5px}
+.legend i{width:7px;height:7px;border-radius:2px; display:inline-block}
+
+/* ---------- 16. SEVA ---------- */
+.campaign h5{margin:0 0 5px; font-family:var(--f-dis); font-size:13.5px; font-weight:700}
+.campaign p{margin:0 0 10px; font-size:11px; line-height:1.6; color:var(--ink-3)}
+.dualbar{display:flex; height:7px; border-radius:99px; overflow:hidden; background:var(--track)}
+.dualbar i{display:block; height:100%}
+.quote{font-family:var(--f-dis); font-size:12px; line-height:1.9; color:var(--ink-3); text-align:center;
+  padding:0 14px; font-style:italic}
+
+/* ---------- 17. MARKET ---------- */
+.provider{display:flex; gap:12px; padding:13px}
+.provider h5{margin:0; font-size:12.8px; font-weight:600; display:flex; align-items:center; gap:6px}
+.provider .role{font-size:10.5px; color:var(--ink-3); margin:3px 0 7px}
+.badge-v{display:inline-grid;place-items:center; width:14px;height:14px;border-radius:50%;
+  background:linear-gradient(180deg,#7fd0a8,#3f8d68); color:#08281a; flex:0 0 auto}
+
+/* ---------- 18. ME ---------- */
+.chart{display:flex; align-items:flex-end; gap:6px; height:78px; margin-top:6px}
+.chart .col{flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; height:100%}
+.chart .col .bwrap{flex:1; width:100%; display:flex; align-items:flex-end}
+.chart .col .b{width:100%; border-radius:7px 7px 3px 3px; background:var(--gold-fill); min-height:3px}
+.chart .col .b.empty{background:var(--track)}
+.chart .col .d{font-size:9px; color:var(--ink-4)}
+.ledger{font-size:11px; color:var(--ink-3); display:flex; justify-content:space-between; padding:7px 0;
+  border-bottom:1px dashed var(--hairline)}
+.ledger:last-child{border-bottom:none}
+
+/* ---------- 19. TOAST ---------- */
+.toast{position:absolute; bottom:96px; left:50%; transform:translateX(-50%) translateY(6px); z-index:60;
+  padding:10px 16px; border-radius:12px; font-size:11.5px; font-weight:600; letter-spacing:.2px;
+  background:rgba(14,1,2,.94); border:1px solid rgba(215,169,79,.4); color:var(--gold-100);
+  opacity:0; transition:.26s cubic-bezier(.2,.7,.3,1); pointer-events:none; white-space:nowrap;
+  box-shadow:0 16px 40px -16px rgba(0,0,0,.9)}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+
+@media (max-width:940px){
+  body{flex-direction:column; align-items:center; gap:28px; padding:22px 14px 48px}
+  .rail{width:100%; max-width:400px; order:2}
+  .scale{font-size:12px}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== ICON SPRITE ===== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 10.6 12 4l8 6.6V20h-5.2v-5.6H9.2V20H4z"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4.2 5.6c2.6-1 5-1 7.8.6v13c-2.8-1.6-5.2-1.6-7.8-.6z"/><path d="M19.8 5.6c-2.6-1-5-1-7.8.6v13c2.8-1.6 5.2-1.6 7.8-.6z"/></symbol>
+  <symbol id="i-exam" viewBox="0 0 24 24"><path d="M5.5 4.2h8.2l4.8 4.8v10.8H5.5z"/><path d="M13.7 4.2v4.8h4.8"/><path d="m8.9 14.6 1.9 1.9 3.7-3.7"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20.2s-7.2-4.4-7.2-9.5A4.1 4.1 0 0 1 12 7.4a4.1 4.1 0 0 1 7.2 3.3c0 5.1-7.2 9.5-7.2 9.5z"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8.4" r="3.6"/><path d="M5.2 20c1.3-3.6 3.8-5.3 6.8-5.3s5.5 1.7 6.8 5.3"/></symbol>
+  <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 3.2c1.3 1.7 2 3.2 2 4.5 0 1.6-1.1 2.6-2 3.4-.9-.8-2-1.8-2-3.4 0-1.3.7-2.8 2-4.5z"/><path d="M5.4 12.4h13.2L17.2 20H6.8z"/><path d="M12 12.4V20"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.8" y="5.2" width="16.4" height="15" rx="2.6"/><path d="M8.2 3.2v4M15.8 3.2v4M3.8 10h16.4"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.6"/><path d="M12 2.4v2.2M12 19.4v2.2M2.4 12h2.2M19.4 12h2.2"/></symbol>
+  <symbol id="i-bag" viewBox="0 0 24 24"><path d="M3.6 8.6h16.8L19 20.4H5z"/><path d="M8.6 8.6V7a3.4 3.4 0 0 1 6.8 0v1.6"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.4"/><path d="m15.8 15.8 4.2 4.2"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6.4 16.6V11a5.6 5.6 0 0 1 11.2 0v5.6l1.6 2H4.8z"/><path d="M10.2 20.2a2 2 0 0 0 3.6 0"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="m14.2 6-6 6 6 6"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M7 7l10 10M17 7 7 17"/></symbol>
+  <symbol id="i-mark" viewBox="0 0 24 24"><path d="M6.5 4.6h11v15.2l-5.5-3.8-5.5 3.8z"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8.4 5.6 18 12l-9.6 6.4z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5.4 12.6 4.4 4.4 8.8-9.4"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h13M12.6 6l6 6-6 6"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.2"/><path d="M12 7.6V12l3 2"/></symbol>
+  <symbol id="i-wallet" viewBox="0 0 24 24"><rect x="3.6" y="6" width="16.8" height="12.4" rx="2.6"/><path d="M3.6 10.4h16.8"/><circle cx="16.4" cy="14.6" r="1.2"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.4 5.4l1.6 1.6M17 17l1.6 1.6M18.6 5.4 17 7M7 17l-1.6 1.6"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3.4v2M12 18.6v2M3.4 12h2M18.6 12h2M5.8 5.8l1.4 1.4M16.8 16.8l1.4 1.4M18.2 5.8l-1.4 1.4M7.2 16.8l-1.4 1.4"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3.4 19 6v6c0 4.3-3 7.2-7 8.6-4-1.4-7-4.3-7-8.6V6z"/><path d="m9.2 12 2 2 3.6-3.8"/></symbol>
+  <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M7.6 4.6h8.8v4.2a4.4 4.4 0 0 1-8.8 0z"/><path d="M7.6 6H5a2.4 2.4 0 0 0 2.6 2.4M16.4 6H19a2.4 2.4 0 0 1-2.6 2.4M12 13.2V17M8.6 20h6.8"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h11"/></symbol>
+  <symbol id="i-om" viewBox="0 0 24 24"><path d="M7 17c-2.2 0-3.4-1.4-3.4-3.2 0-1.8 1.3-3 3-3"/><path d="M6.6 10.8c0-2.4 1.9-4.1 4.2-4.1 2 0 3.4 1.2 3.4 3 0 1.6-1 2.6-2.4 2.6"/><path d="M11.8 12.4c1.6 0 2.7 1.1 2.7 2.6 0 2-2 3.4-4.6 3.4-1.6 0-3-.4-4.1-1.1"/><path d="M7.6 6.3c.9-.6 2.3-.9 3.6-.6"/><path d="M14.6 7.6c1.6.5 2.6 1.8 2.6 3.4 0 1.4-.7 2.6-1.8 3.3"/></symbol>
+</svg>
+
+<!-- ================= SPEC RAIL ================= -->
+<aside class="rail">
+  <div class="mark">
+    <div class="seal"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f5e0ac" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><use href="#i-om"/></svg></div>
+    <div>
+      <h1>সনাতন বিদ্যাপীঠ</h1>
+      <div class="eyebrow">UI System · v2 Pro</div>
+    </div>
+  </div>
+  <p class="lede">ডার্ক-গোল্ড ভিজ্যুয়াল ভাষা, ৩ ধাপের টাইপ স্কেল ও একক সিদ্ধান্ত-কেন্দ্রিক স্ক্রিন। নিচের তালিকা থেকে যেকোনো স্ক্রিনে যান — সব ইন্টারঅ্যাকটিভ।</p>
+
+  <div class="spec">
+    <h2>স্ক্রিন (১১)</h2>
+    <div class="chips" id="nav">
+      <button class="chip on" data-go="home">হোম</button>
+      <button class="chip" data-go="library">লাইব্রেরি</button>
+      <button class="chip" data-go="reader">পাঠ-ভিউয়ার</button>
+      <button class="chip" data-go="course">কোর্স</button>
+      <button class="chip" data-go="exam">পরীক্ষা</button>
+      <button class="chip" data-go="quiz">কুইজ</button>
+      <button class="chip" data-go="puja">পূজা গাইড</button>
+      <button class="chip" data-go="panjika">পঞ্জিকা</button>
+      <button class="chip" data-go="seva">সেবা</button>
+      <button class="chip" data-go="market">মার্কেটপ্লেস</button>
+      <button class="chip" data-go="me">ড্যাশবোর্ড</button>
+    </div>
+  </div>
+
+  <div class="spec">
+    <h2>টাইপ স্কেল</h2>
+    <table class="scale">
+      <tr><td><span style="font-family:var(--f-dis);font-size:22px;font-weight:700">শাস্ত্রের আলোয়</span></td><td>DISPLAY 22 / 700</td></tr>
+      <tr><td><span style="font-family:var(--f-dis);font-size:16px;font-weight:700">অধ্যায় শিরোনাম</span></td><td>TITLE 16 / 700</td></tr>
+      <tr><td><span style="font-size:13px">কার্ড ও বডি টেক্সট</span></td><td>BODY 13 / 400</td></tr>
+      <tr><td><span style="font-size:11px">মেটা ও সাবটাইটেল</span></td><td>META 11 / 500</td></tr>
+      <tr><td><span style="font-size:9.5px;letter-spacing:1.6px">লেবেল · ক্যাপশন</span></td><td>CAP 9.5 / 700 · 1.6</td></tr>
+    </table>
+  </div>
+
+  <div class="spec">
+    <h2>কালার টোকেন</h2>
+    <div class="sw">
+      <i style="background:#100102" title="wine-950"></i>
+      <i style="background:#3c0e12" title="wine-700"></i>
+      <i style="background:#7d2027" title="wine-500"></i>
+      <i style="background:#9d7527" title="gold-600"></i>
+      <i style="background:#d7a94f" title="gold-400"></i>
+      <i style="background:#f5e0ac" title="gold-200"></i>
+    </div>
+    <div class="swt">
+      <button class="toggle" id="themeToggle" aria-label="থিম বদলান"></button>
+      <span>লাইট মোড / ডার্ক মোড</span>
+    </div>
+  </div>
+
+  <div class="spec">
+    <h2>কি বদলেছে (v1 → v2)</h2>
+    <table class="scale">
+      <tr><td>কাস্টম SVG আইকন সেট (২৮টি), ইমোজি প্রতিস্থাপিত</td><td>✓</td></tr>
+      <tr><td>২-লেয়ার সারফেস + হেয়ারলাইন বর্ডার সিস্টেম</td><td>✓</td></tr>
+      <tr><td>উঁচু-নিচু (elevation) ও রেডিয়াল গ্লো কারেকশন</td><td>✓</td></tr>
+      <tr><td>স্টেপ-টাইমলাইন, সেগমেন্টেড কন্ট্রোল</td><td>✓</td></tr>
+      <tr><td>ভিউ ট্রানজিশন ও ইন্টারঅ্যাকশন স্টেট</td><td>✓</td></tr>
+      <tr><td>লাইট থিম (লাইব্রেরিতে দিনের পড়ার জন্য)</td><td>✓</td></tr>
+    </table>
+  </div>
+
+  <p class="note">সব রিসোর্স ইনলাইন (SVG sprite + CSS টোকেন), তাই অফলাইনেও নিখুঁত রেন্ডার হয়। ফন্ট না থাকলে সিস্টেম বাংলা ফন্টে ফলব্যাক।</p>
+</aside>
+
+<!-- ================= DEVICE ================= -->
+<div class="device">
+  <div class="island"></div>
+  <div class="screen" id="screen">
+    <div class="statusbar">
+      <span>৯:৪১</span>
+      <span class="r">
+        <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><rect x="0" y="7" width="2.6" height="5" rx="1"/><rect x="4" y="5" width="2.6" height="7" rx="1"/><rect x="8" y="2.6" width="2.6" height="9.4" rx="1"/><rect x="12" y="0" width="2.6" height="12" rx="1"/></svg>
+        <svg width="15" height="12" viewBox="0 0 15 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M1 4.4a9 9 0 0 1 13 0"/><path d="M3.4 6.9a5.6 5.6 0 0 1 8.2 0"/><circle cx="7.5" cy="9.8" r="1.1" fill="currentColor" stroke="none"/></svg>
+        <svg width="22" height="11" viewBox="0 0 22 11" fill="none" stroke="currentColor" stroke-width="1.1"><rect x="0.6" y="0.6" width="18" height="9.8" rx="3"/><rect x="2.4" y="2.4" width="12" height="6.2" rx="1.6" fill="currentColor" stroke="none"/><path d="M20.4 4v3" stroke-linecap="round" stroke-width="1.6"/></svg>
+      </span>
+    </div>
+
+    <div class="scroll" id="stage">
+
+      <!-- ================= HOME ================= -->
+      <section class="view on" data-screen="home">
+        <div class="home-head">
+          <div class="av round"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#f5e0ac" stroke-width="1.5"><use href="#i-om"/></svg></div>
+          <div style="flex:1">
+            <div class="who">শুভ সন্ধ্যা</div>
+            <div class="nm">সৌরভ চক্রবর্তী</div>
+          </div>
+          <button class="iconbtn"><svg class="ico" viewBox="0 0 24 24"><use href="#i-bell"/></svg><span class="dot"></span></button>
+        </div>
+
+        <div class="hero">
+          <div class="wm"><svg width="150" height="150" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1"><use href="#i-om"/></svg></div>
+          <div class="date"><svg class="ico xs" viewBox="0 0 24 24"><use href="#i-cal"/></svg> সোমবার, ১৭ নভেম্বর ২০২৬ · অগ্রহায়ণ ২</div>
+          <h2>আজকের পাঠ শুরু করুন,<br/>শাস্ত্রের আলোয়</h2>
+          <div class="meta">
+            <span>তিথি · শুক্লা অষ্টমী</span><span>নক্ষত্র · রোহিণী</span><span>শুভ · ৯:১০–১০:৪০</span>
+          </div>
+          <div class="foot">
+            <div class="ring" style="--p:78%">
+              <div class="n">১১</div>
+              <div class="u">দিন</div>
+            </div>
+            <div style="flex:1">
+              <div class="txt">টানা <b>১১ দিন</b> সাধনা · আজকের লক্ষ্য <b>২/৩</b></div>
+              <div class="segs"><i class="on"></i><i class="on"></i><i></i></div>
+              <div class="txt" style="opacity:.8;margin-top:6px">শেষ পাঠ: ২ ঘণ্টা আগে</div>
+            </div>
+            <svg class="ico" viewBox="0 0 24 24" style="color:#ffe9bd;opacity:.7"><use href="#i-arrow"/></svg>
+          </div>
+        </div>
+
+        <div class="quick">
+          <button class="q" data-go="puja"><span class="qi"><svg class="ico" viewBox="0 0 24 24"><use href="#i-flame"/></svg></span>পূজা</button>
+          <button class="q" data-go="panjika"><span class="qi"><svg class="ico" viewBox="0 0 24 24"><use href="#i-cal"/></svg></span>পঞ্জিকা</button>
+          <button class="q" data-go="exam"><span class="qi"><svg class="ico" viewBox="0 0 24 24"><use href="#i-target"/></svg></span>কুইজ</button>
+          <button class="q" data-go="market"><span class="qi"><svg class="ico" viewBox="0 0 24 24"><use href="#i-bag"/></svg></span>কাজ</button>
+        </div>
+
+        <div class="pad">
+          <div class="sect"><h4>চলমান পাঠ</h4><div class="line"></div><a data-go="library">সব ›</a></div>
+          <div class="card oath rowcard" data-go="reader" style="cursor:pointer">
+            <div class="cover c1"><span class="sym">ॐ</span></div>
+            <div style="flex:1;min-width:0">
+              <div class="kv"><span class="ttl">শ্রীমদ্ভগবদ্গীতা</span><span class="pill">২.৪৭</span></div>
+              <div class="tiny muted" style="margin:4px 0 9px">“কর্মণ্যেবাধিকারস্তে…” · ৩ মিনিট বাকি</div>
+              <div class="bar thin"><i style="width:62%"></i></div>
+              <div class="mini muted" style="margin-top:6px">৬২% সম্পূর্ণ · ১৮টি শ্লোক পড়া হয়েছে</div>
+            </div>
+          </div>
+
+          <div class="sect"><h4>একাদশী ও উৎসব</h4><div class="line"></div><a data-go="panjika">পঞ্জিকা ›</a></div>
+          <div class="card rowcard">
+            <div class="datebox"><b>২৩</b><i>নভে</i></div>
+            <div style="flex:1">
+              <div class="kv"><span class="ttl">উত্থান একাদশী</span><span class="pill">ব্রত</span></div>
+              <div class="tiny muted" style="margin-top:5px">পারণ ২৪ নভে · সকাল ৬:১৫–৯:৪০</div>
+              <div class="tiny muted" style="margin-top:3px">মাহাত্ম্য ও বিধি পড়ুন ›</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sevaband" data-go="seva">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e8c274" stroke-width="1.5" stroke-linecap="round"><use href="#i-heart"/></svg>
+          <div style="flex:1">
+            <h5>শিশু আহার অভিযান</h5>
+            <p>৪২ শিশুর মধ্যে ৩১ জনের মাসিক আহার নিশ্চিত</p>
+          </div>
+          <span class="pill ok">৭৪%</span>
+        </div>
+        <div style="height:22px"></div>
+      </section>
+
+      <!-- ================= LIBRARY ================= -->
+      <section class="view" data-screen="library" hidden>
+        <div class="appbar">
+          <div class="row">
+            <div><div class="eyebrow">Digital Granthagar</div><h3>শাস্ত্র গ্রন্থাগার</h3>
+              <div class="sub">৩২টি গ্রন্থ · ৪,৮১২ শ্লোক · বাংলা অর্থসহ</div></div>
+            <div class="spacer"></div>
+            <button class="iconbtn"><svg class="ico" viewBox="0 0 24 24"><use href="#i-menu"/></svg></button>
+          </div>
+          <div class="search"><svg class="ico sm" viewBox="0 0 24 24"><use href="#i-search"/></svg> গ্রন্থ, শ্লোক বা শব্দ খুঁজুন…</div>
+          <div class="segment"><button class="on">গ্রন্থ</button><button>শ্লোক</button><button>অডিও</button></div>
+        </div>
+        <div class="cats">
+          <span class="chip on">সব</span><span class="chip">গীতা</span><span class="chip">উপনিষদ</span>
+          <span class="chip">পুরাণ</span><span class="chip">রামায়ণ</span><span class="chip">স্তোত্র</span><span class="chip">স্মৃতি</span>
+        </div>
+        <div class="pad" style="padding-top:14px">
+          <div class="card rowcard stack-3" data-go="reader" style="cursor:pointer">
+            <div class="cover c1"><span class="sym">ॐ</span></div>
+            <div style="flex:1;min-width:0">
+              <div class="kv"><span class="ttl">শ্রীমদ্ভগবদ্গীতা</span><span class="pill flat">চলমান</span></div>
+              <div class="mini muted" style="margin:4px 0 8px">১৮ অধ্যায় · ৭০০ শ্লোক · সংস্কৃত + বাংলা</div>
+              <div class="bar thin"><i style="width:62%"></i></div>
+              <div class="kv" style="margin-top:7px"><span class="mini muted">৬২% পড়া হয়েছে</span><span class="stars">★★★★★</span></div>
+            </div>
+          </div>
+          <div class="card rowcard stack-3">
+            <div class="cover c2"><span class="sym">卐</span></div>
+            <div style="flex:1;min-width:0">
+              <div class="kv"><span class="ttl">শিব পুরাণ</span><span class="pill">নতুন</span></div>
+              <div class="mini muted" style="margin:4px 0 8px">৭ সংহিতা · ২৪,০০০ শ্লোক</div>
+              <div class="kv"><span class="mini muted">অডিও পাঠ আছে</span><span class="mini muted">শুরু করুন ›</span></div>
+            </div>
+          </div>
+          <div class="card rowcard stack-3">
+            <div class="cover c3"><span class="sym">॥</span></div>
+            <div style="flex:1;min-width:0">
+              <div class="kv"><span class="ttl">ঈশোপনিষদ</span><span class="pill flat">সংক্ষিপ্ত</span></div>
+              <div class="mini muted" style="margin:4px 0 8px">১৮ শ্লোক · শঙ্কর ভাষ্য সার</div>
+              <div class="kv"><span class="mini muted">শুরু করুন ›</span><span class="stars">★★★☆☆</span></div>
+            </div>
+          </div>
+          <div class="card rowcard stack-3">
+            <div class="cover c4"><span class="sym">ह</span></div>
+            <div style="flex:1;min-width:0">
+              <div class="kv"><span class="ttl">হনুমান চালিসা সংকলন</span><span class="pill ok">মুখস্থ</span></div>
+              <div class="mini muted" style="margin:4px 0 8px">উচ্চারণ অডিও · অর্থ ও ফলা</div>
+              <div class="kv"><span class="mini muted">৪০ শ্লোক</span><span class="mini muted">শুরু করুন ›</span></div>
+            </div>
+          </div>
+          <div style="height:18px"></div>
+        </div>
+      </section>
+
+      <!-- ================= READER ================= -->
+      <section class="view" data-screen="reader" hidden>
+        <div class="appbar">
+          <div class="row">
+            <button class="iconbtn" data-go="library"><svg class="ico" viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+            <div><div class="eyebrow">অধ্যায় ২ · সাংখ্য যোগ</div><h3 style="font-size:17px">শ্রীমদ্ভগবদ্গীতা</h3></div>
+            <div class="spacer"></div>
+            <button class="iconbtn"><svg class="ico" viewBox="0 0 24 24"><use href="#i-mark"/></svg></button>
+          </div>
+        </div>
+        <div class="reader">
+          <div class="prefbar">
+            <span>ফন্ট</span>
+            <div class="grp"><b>অ−</b><b class="on">অ</b><b>অ+</b></div>
+            <div style="flex:1"></div>
+            <div class="grp"><b class="on">সেপিয়া</b><b>ডার্ক</b></div>
+          </div>
+
+          <div class="card oath verse">
+            <div class="vnum"><span class="l"></span><b>শ্লোক ২.৪৭</b><span class="l r"></span></div>
+            <div class="sk">कर्मण्येवाधिकारस्ते<br/>मा फलेषु कदाचन ।<br/>मा कर्मफलहेतुर्भूर्मा<br/>ते सङ्गोऽस्त्वकर्मणि ॥</div>
+            <div class="bn"><span class="lbl">বাংলা অনুবাদ</span><br/>
+              তোমার অধিকার কেবল কর্মে, ফলের মধ্যে নয়। ফলের আকাঙ্ক্ষাই তোমাকে কর্মে প্রবৃত্ত করুক না, আবার কর্মে অকর্মণ্যতাও তোমার লক্ষ্য হোক না।</div>
+            <div class="arth"><b style="color:var(--gold-300);font-size:11px">সহজ অর্থ ·</b> কাজ করার দায়িত্ব তোমার, ফলাফল নিয়ে দুশ্চিন্তা নয় — এতে মন শান্ত থাকে ও কর্ম নিষ্ঠার সঙ্গে সম্পন্ন হয়।</div>
+          </div>
+
+          <div class="card pad" style="margin-top:11px;display:flex;gap:10px;align-items:center">
+            <span class="pill">পাদটীকা</span>
+            <div class="tiny muted" style="flex:1;line-height:1.6">‘অধিকার’ এখানে কর্তব্য-ক্ষেত্র বোঝাচ্ছে, ক্ষমতা নয়।</div>
+            <svg class="ico sm" viewBox="0 0 24 24" style="color:var(--ink-4)"><use href="#i-arrow"/></svg>
+          </div>
+
+          <div class="readeractions">
+            <button class="btn ghost" style="flex:1">আগের শ্লোক</button>
+            <button class="btn gold" style="flex:1.4" onclick="toast('শ্লোক ২.৪৮ খোলা হচ্ছে')">পরের শ্লোক</button>
+          </div>
+          <div style="height:20px"></div>
+        </div>
+      </section>
+
+      <!-- ================= COURSE ================= -->
+      <section class="view" data-screen="course" hidden>
+        <div class="appbar">
+          <div class="row">
+            <button class="iconbtn" data-go="home"><svg class="ico" viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+            <div><div class="eyebrow">লেভেল ২ · প্রশিক্ষক যাচাইকৃত</div><h3 style="font-size:17px">নিত্যকর্ম পদ্ধতি</h3></div>
+          </div>
+        </div>
+        <div class="pad">
+          <div class="card oath pad" style="margin-top:2px">
+            <div class="kv">
+              <div><div class="mini muted">কোর্স অগ্রগতি</div><div class="display" style="font-size:15px;margin-top:3px">সন্ধ্যা-আরতি ও নিত্য পূজা</div></div>
+              <div class="ring" style="--p:45%;width:48px;height:48px"><div class="n" style="font-size:13px">৪৫%</div></div>
+            </div>
+            <div class="grid3" style="margin-top:13px">
+              <div class="stat"><div class="k">মডিউল</div><div class="v">৬</div></div>
+              <div class="stat"><div class="k">লেসন</div><div class="v">৪/৯</div></div>
+              <div class="stat"><div class="k">কুইজ</div><div class="v">৩</div></div>
+            </div>
+          </div>
+
+          <div class="sect"><h4>সিলেবাস</h4><div class="line"></div><span class="mini muted">৬ ঘণ্টা</span></div>
+          <div class="timeline">
+            <div class="card tl done"><div class="node"><svg class="ico xs" viewBox="0 0 24 24"><use href="#i-check"/></svg></div>
+              <h5>১. শুদ্ধি ও সংকল্প</h5><p>স্নান, আচমন, তিলক · ৬ মিনিট</p></div>
+            <div class="card tl done"><div class="node"><svg class="ico xs" viewBox="0 0 24 24"><use href="#i-check"/></svg></div>
+              <h5>২. গুরু-বন্দনা</h5><p>মন্ত্র উচ্চারণসহ · ৪ মিনিট</p></div>
+            <div class="card tl done"><div class="node"><svg class="ico xs" viewBox="0 0 24 24"><use href="#i-check"/></svg></div>
+              <h5>৩. সন্ধ্যা-বন্দনা</h5><p>অর্ঘ্য, গায়ত্রী · ৮ মিনিট</p></div>
+            <div class="card tl now"><div class="node">৪</div>
+              <h5>৪. দীপ প্রজ্বলন ও ধূপ <span class="pill">এখনই</span></h5><p>ব্যবহারিক ভিডিও · ৭ মিনিট · শেষে কুইজ</p></div>
+            <div class="card tl locked"><div class="node">৫</div>
+              <h5>৫. আরতি ও প্রণাম</h5><p>৫ মিনিট</p></div>
+            <div class="card tl locked"><div class="node">৬</div>
+              <h5>৬. ক্ষমা প্রার্থনা ও সমাপন</h5><p>৩ মিনিট</p></div>
+          </div>
+
+          <button class="btn gold block" style="margin-top:6px" data-go="quiz">লেসন শুরু করুন · ৭ মিনিট</button>
+          <div style="height:22px"></div>
+        </div>
+      </section>
+
+      <!-- ================= EXAM ================= -->
+      <section class="view" data-screen="exam" hidden>
+        <div class="appbar">
+          <div class="row">
+            <div><div class="eyebrow">Pariksha Kendra</div><h3>পরীক্ষা ও কুইজ</h3>
+              <div class="sub">সাপ্তাহিক · মাসিক · বার্ষিক · সার্টিফিকেট</div></div>
+            <div class="spacer"></div>
+            <button class="iconbtn"><svg class="ico" viewBox="0 0 24 24"><use href="#i-trophy"/></svg></button>
+          </div>
+        </div>
+        <div class="pad" style="padding-top:2px">
+          <div class="card oath pad">
+            <div class="kv" style="align-items:flex-start">
+              <div>
+                <span class="pill">সাপ্তাহিক কুইজ · ৪৭তম</span>
+                <div class="display" style="font-size:16px;margin-top:9px">গীতা অধ্যায় ২</div>
+                <div class="mini muted" style="margin-top:4px">১০টি প্রশ্ন · ১০ মিনিট · নেগেটিভ মার্কিং নেই</div>
+              </div>
+              <div style="text-align:center">
+                <div class="mini muted">পুরস্কার</div>
+                <div style="font-size:16px;margin-top:4px">🥇</div>
+                <div class="mini" style="color:var(--gold-300);margin-top:2px">স্বর্ণ পদক</div>
+              </div>
+            </div>
+            <div class="cd"><div><b>০০</b><i>দিন</i></div><div><b>০৪</b><i>ঘণ্টা</i></div><div><b>১৭</b><i>মিনিট</i></div></div>
+            <button class="btn gold block" style="margin-top:13px" data-go="quiz">এখনই অংশ নিন</button>
+          </div>
+
+          <div class="grid3" style="margin-top:11px">
+            <div class="card pad" style="text-align:center;padding:12px 6px">
+              <div style="color:var(--gold-300);display:grid;place-items:center"><svg class="ico" viewBox="0 0 24 24"><use href="#i-cal"/></svg></div>
+              <div class="mini" style="margin-top:7px">মাসিক</div></div>
+            <div class="card pad" style="text-align:center;padding:12px 6px">
+              <div style="color:var(--gold-300);display:grid;place-items:center"><svg class="ico" viewBox="0 0 24 24"><use href="#i-trophy"/></svg></div>
+              <div class="mini" style="margin-top:7px">বার্ষিক</div></div>
+            <div class="card pad" style="text-align:center;padding:12px 6px">
+              <div style="color:var(--gold-300);display:grid;place-items:center"><svg class="ico" viewBox="0 0 24 24"><use href="#i-shield"/></svg></div>
+              <div class="mini" style="margin-top:7px">সার্টিফিকেট</div></div>
+          </div>
+
+          <div class="sect"><h4>সাপ্তাহিক লিডারবোর্ড</h4><div class="line"></div><span class="mini muted">৪৭তম সপ্তাহ</span></div>
+          <div class="card pad" style="padding:6px 13px">
+            <div class="li"><span class="rankbox g1">১</span><div class="av round" style="width:30px;height:30px;font-size:12px">অ</div>
+              <div style="flex:1"><div style="font-size:12.5px;font-weight:600">অনিকেত চক্রবর্তী</div><div class="mini muted">খুলনা · ৯৮</div></div><span class="pill">🥇</span></div>
+            <div class="li"><span class="rankbox g2">২</span><div class="av round" style="width:30px;height:30px;font-size:12px">স</div>
+              <div style="flex:1"><div style="font-size:12.5px;font-weight:600">সুপ্রিয়া দেবী</div><div class="mini muted">ঢাকা · ৯৫</div></div><span class="pill flat">🥈</span></div>
+            <div class="li"><span class="rankbox g3">৩</span><div class="av round" style="width:30px;height:30px;font-size:12px">র</div>
+              <div style="flex:1"><div style="font-size:12.5px;font-weight:600">রাহুল ভট্টাচার্য</div><div class="mini muted">চট্টগ্রাম · ৯২</div></div><span class="pill flat">🥉</span></div>
+            <div class="me-row li" style="border-bottom:none">
+              <span class="rankbox">৪২</span><div class="av round" style="width:30px;height:30px;font-size:12px;border-color:var(--gold-400)">আ</div>
+              <div style="flex:1"><div style="font-size:12.5px;font-weight:600">আপনি</div><div class="mini muted">ঢাকা · ৬৪ · +৬ ধাপ</div></div>
+              <span class="mini" style="color:var(--ok)">▲</span>
+            </div>
+          </div>
+
+          <div class="sect"><h4>আগের ফলাফল</h4><div class="line"></div><a>সব ›</a></div>
+          <div class="card rowcard">
+            <div class="datebox" style="width:44px;height:48px"><b>৮.৪</b><i>নম্বর</i></div>
+            <div style="flex:1"><div class="ttl">সাপ্তাহিক কুইজ · ৪৬</div>
+              <div class="mini muted" style="margin-top:4px">১০-এর মধ্যে ৮.৪ · শীর্ষ ১৮%</div></div>
+            <span class="pill ok">উত্তীর্ণ</span>
+          </div>
+          <div style="height:20px"></div>
+        </div>
+      </section>
+
+      <!-- ================= QUIZ ================= -->
+      <section class="view" data-screen="quiz" hidden>
+        <div class="appbar">
+          <div class="row">
+            <button class="iconbtn" data-go="exam"><svg class="ico" viewBox="0 0 24 24"><use href="#i-close"/></svg></button>
+            <div><div class="eyebrow">গীতা অধ্যায় ২</div><h3 style="font-size:15px">প্রশ্ন ৩ / ১০</h3></div>
+            <div class="spacer"></div>
+            <span class="pill"><svg class="ico xs" viewBox="0 0 24 24"><use href="#i-clock"/></svg>০৭:১২</span>
+          </div>
+        </div>
+        <div class="pad">
+          <div class="qbar"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="card pad" style="margin-bottom:15px;padding:16px">
+            <div class="mini muted" style="margin-bottom:9px;letter-spacing:.6px">শ্লোক ২.৪৭ অনুসারে</div>
+            <div style="font-size:14px;line-height:1.75">“কর্মণ্যেবাধিকারস্তে” — এই শ্লোকে মানুষের অধিকার কোথায় বলা হয়েছে?</div>
+          </div>
+          <button class="opt" onclick="pick(this)"><span class="k">ক</span>শুধু কর্মে, ফলের মধ্যে নয়</button>
+          <button class="opt" onclick="pick(this)"><span class="k">খ</span>কর্ম ও ফল — উভয়েই সমান</button>
+          <button class="opt" onclick="pick(this)"><span class="k">গ</span>কেবল ফলের মধ্যে</button>
+          <button class="opt" onclick="pick(this)"><span class="k">ঘ</span>কোনোটিই নয়</button>
+          <div style="display:flex;gap:9px;margin-top:16px">
+            <button class="btn ghost" style="flex:1">এড়িয়ে যান</button>
+            <button class="btn gold" style="flex:1.5" onclick="toast('উত্তর সংরক্ষিত ✓')">উত্তর দিন</button>
+          </div>
+          <div class="mini muted" style="text-align:center;margin-top:14px">প্রশ্নে সমস্যা? রিপোর্ট করুন ›</div>
+          <div style="height:20px"></div>
+        </div>
+      </section>
+
+      <!-- ================= PUJA ================= -->
+      <section class="view" data-screen="puja" hidden>
+        <div class="appbar">
+          <div class="row">
+            <button class="iconbtn" data-go="home"><svg class="ico" viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+            <div><div class="eyebrow">গাইডেড পূজা · ধাপ ৪ / ৭</div><h3 style="font-size:17px">সন্ধ্যা আরতি</h3></div>
+            <div class="spacer"></div>
+            <button class="iconbtn"><svg class="ico" viewBox="0 0 24 24"><use href="#i-mark"/></svg></button>
+          </div>
+        </div>
+        <div class="pad">
+          <div class="card oath pad" style="margin-top:2px">
+            <div class="kv"><div><div class="mini muted">সামগ্রী</div><div style="font-size:12.5px;font-weight:600;margin-top:4px">দীপ · ঘৃত · ধূপ · পুষ্প · জলপাত্র</div></div>
+              <span class="pill ok">৫/৫ প্রস্তুত</span></div>
+            <div class="bar thin" style="margin-top:10px"><i style="width:100%"></i></div>
+          </div>
+
+          <div class="sect"><h4>পূজা ক্রম</h4><div class="line"></div><span class="mini muted">≈ ১১ মিনিট</span></div>
+          <div class="card step done"><div class="sno"><svg class="ico xs" viewBox="0 0 24 24"><use href="#i-check"/></svg></div>
+            <div><h5>১. আচমন ও শুদ্ধি</h5><p>তিনবার জলপান করে সংকল্প করুন</p></div></div>
+          <div class="card step done"><div class="sno"><svg class="ico xs" viewBox="0 0 24 24"><use href="#i-check"/></svg></div>
+            <div><h5>২. দীপ প্রজ্বলন</h5><p>সূর্যদেব ও গুরুকে প্রণাম</p></div></div>
+          <div class="card step done"><div class="sno"><svg class="ico xs" viewBox="0 0 24 24"><use href="#i-check"/></svg></div>
+            <div><h5>৩. পুষ্পাঞ্জলি</h5><p>পুষ্প নিবেদন করে মন্ত্র বলুন</p></div></div>
+          <div class="card step now oath">
+            <div class="sno">৪</div>
+            <div style="flex:1">
+              <h5>৪. আরতি নিবেদন <span class="pill">চলছে</span></h5>
+              <p>উচ্চারণ শুনে সঙ্গে বলুন</p>
+              <div class="mantra">ॐ জয় জগদীশ হরে<br/>আরতি নিবেদন করি</div>
+              <div class="player">
+                <button class="playbtn" onclick="toast('অডিও চালু হচ্ছে…')"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><use href="#i-play"/></svg></button>
+                <div class="wave">
+                  <i style="height:8px"></i><i style="height:14px"></i><i style="height:20px"></i><i style="height:11px"></i>
+                  <i style="height:17px"></i><i style="height:22px"></i><i style="height:9px"></i><i style="height:15px"></i>
+                  <i style="height:19px"></i><i style="height:12px"></i><i style="height:18px"></i><i style="height:7px"></i>
+                  <i style="height:13px"></i><i style="height:20px"></i><i style="height:10px"></i>
+                </div>
+                <span class="mini muted">০:০০</span>
+              </div>
+            </div>
+          </div>
+          <div class="card step locked" style="opacity:.66"><div class="sno">৫</div>
+            <div><h5>৫. প্রণাম ও ক্ষমা প্রার্থনা</h5><p>তিনবার প্রণাম</p></div></div>
+
+          <button class="btn gold block" style="margin-top:4px" onclick="toast('ধাপ ৪ সম্পন্ন ✓')">ধাপ সম্পন্ন করুন</button>
+          <button class="btn ghost block" style="margin-top:8px" data-go="panjika">আজকের শুভ সময়</button>
+          <div style="height:22px"></div>
+        </div>
+      </section>
+
+      <!-- ================= PANJIKA ================= -->
+      <section class="view" data-screen="panjika" hidden>
+        <div class="appbar">
+          <div class="row">
+            <button class="iconbtn" data-go="home"><svg class="ico" viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+            <div><div class="eyebrow">অগ্রহায়ণ ১৪৩৩ · নভেম্বর ২০২৬</div><h3 style="font-size:17px">পঞ্জিকা</h3></div>
+            <div class="spacer"></div>
+            <button class="iconbtn"><svg class="ico" viewBox="0 0 24 24"><use href="#i-cal"/></svg></button>
+          </div>
+        </div>
+        <div class="pad">
+          <div class="card oath pad">
+            <div class="kv"><div><div class="mini muted">আজ · ১৭ নভেম্বর</div>
+              <div class="display" style="font-size:17px;margin-top:4px">শুক্লা অষ্টমী</div></div>
+              <span class="pill">রোহিণী</span></div>
+            <div class="grid2" style="margin-top:12px">
+              <div class="stat"><div class="k">শুভ সময়</div><div class="v" style="color:var(--ok)">৯:১০ – ১০:৪০</div></div>
+              <div class="stat"><div class="k">রাহুকাল</div><div class="v" style="color:var(--danger)">১৫:০০ – ১৬:৩০</div></div>
+              <div class="stat"><div class="k">সূর্যোদয়</div><div class="v">৬:১৪</div></div>
+              <div class="stat"><div class="k">সূর্যাস্ত</div><div class="v">৫:২১</div></div>
+            </div>
+          </div>
+
+          <div class="sect"><h4>নভেম্বর ২০২৬</h4><div class="line"></div><span class="mini muted">তিথি অনুযায়ী</span></div>
+          <div class="cal">
+            <div class="h">রবি</div><div class="h">সোম</div><div class="h">মঙ্গল</div><div class="h">বুধ</div><div class="h">বৃহঃ</div><div class="h">শুক্র</div><div class="h">শনি</div>
+            <div class="day mut">১</div><div class="day">২</div><div class="day">৩</div><div class="day">৪</div><div class="day">৫</div><div class="day">৬</div><div class="day">৭</div>
+            <div class="day">৮</div><div class="day">৯</div><div class="day ek">১০</div><div class="day">১১</div><div class="day">১২</div><div class="day">১৩</div><div class="day">১৪</div>
+            <div class="day">১৫</div><div class="day">১৬</div><div class="day now">১৭</div><div class="day">১৮</div><div class="day">১৯</div><div class="day">২০</div><div class="day">২১</div>
+            <div class="day">২২</div><div class="day ek">২৩</div><div class="day">২৪</div><div class="day">২৫</div><div class="day">২৬</div><div class="day">২৭</div><div class="day">২৮</div>
+            <div class="day">২৯</div><div class="day">৩০</div><div class="day mut">১</div><div class="day mut">২</div><div class="day mut">৩</div><div class="day mut">৪</div><div class="day mut">৫</div>
+          </div>
+          <div class="legend"><span><i style="background:#7e2127;border:1px solid #d7a94f"></i>একাদশী</span>
+            <span><i style="background:rgba(215,169,79,.5)"></i>আজ</span></div>
+
+          <div class="sect"><h4>আসন্ন ব্রত</h4><div class="line"></div><a>ক্যালেন্ডার ›</a></div>
+          <div class="card rowcard stack-3">
+            <div class="datebox"><b>২৩</b><i>নভে</i></div>
+            <div style="flex:1"><div class="kv"><span class="ttl">উত্থান একাদশী</span><span class="pill">৬ দিন</span></div>
+              <div class="mini muted" style="margin-top:5px">পারণ ২৪ নভে · ৬:১৫–৯:৪০ · বিষ্ণু স্মরণ</div></div>
+          </div>
+          <div class="card rowcard">
+            <div class="datebox"><b>২৬</b><i>নভে</i></div>
+            <div style="flex:1"><div class="ttl">রাস পূর্ণিমা</div>
+              <div class="mini muted" style="margin-top:5px">সন্ধ্যা আরতি ও কীর্তন · স্থানীয় তালিকা</div></div>
+          </div>
+          <div style="height:20px"></div>
+        </div>
+      </section>
+
+      <!-- ================= SEVA ================= -->
+      <section class="view" data-screen="seva" hidden>
+        <div class="appbar">
+          <div class="row">
+            <div><div class="eyebrow">Seva · স্বচ্ছ দান</div><h3>সেবা ও সহায়তা</h3>
+              <div class="sub">প্রতিটি লেনদেনের রিসিট ও অডিট পাবলিক</div></div>
+            <div class="spacer"></div>
+            <button class="iconbtn"><svg class="ico" viewBox="0 0 24 24"><use href="#i-heart"/></svg></button>
+          </div>
+        </div>
+        <div class="pad">
+          <div class="card oath pad">
+            <div class="kv">
+              <div><div class="mini muted">এই মাসে সংগ্রহ</div><div class="display" style="font-size:20px;color:var(--gold-200);margin-top:3px">৳ ১,৮৪,৫০০</div></div>
+              <div style="text-align:right"><div class="mini muted">সেবায় ব্যয়</div><div class="display" style="font-size:20px;color:var(--ok);margin-top:3px">৳ ১,৭২,৩০০</div></div>
+            </div>
+            <div class="dualbar" style="margin-top:13px"><i style="width:93%;background:linear-gradient(90deg,#3f8d68,#8fd6b0)"></i><i style="width:7%;background:rgba(215,169,79,.6)"></i></div>
+            <div class="kv" style="margin-top:8px"><span class="mini muted">৯৩% সরাসরি সেবা</span><span class="mini muted">৭% অপারেশনাল (ঘোষিত)</span></div>
+          </div>
+
+          <div class="sect"><h4>চলমান অভিযান</h4><div class="line"></div><a>রিপোর্ট ›</a></div>
+          <div class="card campaign pad stack-3">
+            <div class="kv"><h5>শিশু আহার — দুপুরের খাবার</h5><span class="pill ok">৭৪%</span></div>
+            <p>৪২ শিশুর মধ্যে ৩১ জনের মাসিক আহার নিশ্চিত হয়েছে</p>
+            <div class="kv mini muted"><span>৳ ১,৩৯,০০০ সংগ্রহ</span><span>লক্ষ্য ৳ ১,৮৬,০০০</span></div>
+            <div class="bar" style="margin-top:7px"><i style="width:74%"></i></div>
+            <button class="btn gold block sm" style="margin-top:11px" onclick="toast('৳৫০০ দানের পেজ খুলছে')">৳ ৫০০ — ১ শিশুর আহার</button>
+          </div>
+          <div class="card campaign pad">
+            <div class="kv"><h5>শীতে বস্ত্রদান</h5><span class="pill flat">শুরু হচ্ছে</span></div>
+            <p>উত্তরবঙ্গের ৩০০ পরিবারের জন্য কম্বল</p>
+            <div class="kv mini muted"><span>৳ ১৮,০০০ সংগ্রহ</span><span>লক্ষ্য ৳ ১,৫০,০০০</span></div>
+            <div class="bar" style="margin-top:7px"><i style="width:12%"></i></div>
+          </div>
+
+          <p class="quote" style="margin:18px 0">“দানং পরমং ধর্মঃ” — প্রতিটি রিসিট ও ব্যয়ের প্রমাণ প্রকাশ্যে।</p>
+
+          <div class="card rowcard">
+            <div class="datebox" style="width:44px;height:48px"><b>০৫</b><i>ডিসে</i></div>
+            <div style="flex:1"><div class="ttl">বিনামূল্যে শাস্ত্র বিতরণ</div>
+              <div class="mini muted" style="margin-top:4px">ঢাকা · ২০ জন স্বেচ্ছাসেবক দরকার</div></div>
+            <span class="pill">যোগ দিন</span>
+          </div>
+          <div style="height:20px"></div>
+        </div>
+      </section>
+
+      <!-- ================= MARKET ================= -->
+      <section class="view" data-screen="market" hidden>
+        <div class="appbar">
+          <div class="row">
+            <div><div class="eyebrow">Skills · Income</div><h3>সেবা ও কাজ</h3>
+              <div class="sub">ভেরিফায়েড শিক্ষক · ১২% প্লাটফর্ম ফি · এসক্রো সুরক্ষা</div></div>
+            <div class="spacer"></div>
+            <button class="iconbtn"><svg class="ico" viewBox="0 0 24 24"><use href="#i-plus"/></svg></button>
+          </div>
+          <div class="search"><svg class="ico sm" viewBox="0 0 24 24"><use href="#i-search"/></svg> টিউটর, পুরোহিত, ডিজাইনার…</div>
+        </div>
+        <div class="cats">
+          <span class="chip on">সব</span><span class="chip">টিউটর</span><span class="chip">পুরোহিত</span>
+          <span class="chip">গ্রাফিক্স</span><span class="chip">লেখালেখি</span><span class="chip">কথক</span>
+        </div>
+        <div class="pad" style="padding-top:14px">
+          <div class="card provider stack-3">
+            <div class="av">সু</div>
+            <div style="flex:1;min-width:0">
+              <h5>সুমন ভট্টাচার্য <span class="badge-v"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#08281a" stroke-width="3"><use href="#i-check"/></svg></span></h5>
+              <div class="role">শাস্ত্র টিউটর · সংস্কৃত ও গীতা · ঢাকা</div>
+              <div class="kv"><span class="stars">★★★★★ <span class="mini muted">৪.৯ (৮৪)</span></span>
+                <b style="font-size:12.5px;color:var(--gold-200)">৳৪০০/ঘণ্টা</b></div>
+            </div>
+          </div>
+          <div class="card provider stack-3">
+            <div class="av">ম</div>
+            <div style="flex:1;min-width:0">
+              <h5>মিতালী রায় <span class="badge-v"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#08281a" stroke-width="3"><use href="#i-check"/></svg></span></h5>
+              <div class="role">গ্রাফিক্স ডিজাইনার · পোস্টার ও লোগো · অনলাইন</div>
+              <div class="kv"><span class="stars">★★★★☆ <span class="mini muted">৪.৭ (৩৯)</span></span>
+                <b style="font-size:12.5px;color:var(--gold-200)">৳১,২০০/কাজ</b></div>
+            </div>
+          </div>
+          <div class="card provider stack-3">
+            <div class="av">প</div>
+            <div style="flex:1;min-width:0">
+              <h5>পণ্ডিত রঘুনাথ শাস্ত্রী <span class="badge-v"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#08281a" stroke-width="3"><use href="#i-check"/></svg></span></h5>
+              <div class="role">পুরোহিত · গৃহপ্রবেশ, সত্যনারায়ণ · অনলাইন</div>
+              <div class="kv"><span class="stars">★★★★★ <span class="mini muted">৫.০ (১১৭)</span></span>
+                <b style="font-size:12.5px;color:var(--gold-200)">৳৩,৫০০</b></div>
+            </div>
+          </div>
+
+          <div class="card oath pad">
+            <div class="kv"><b style="font-size:12.8px">আপনার দক্ষতা দিয়ে আয় করুন</b>
+              <svg class="ico sm" viewBox="0 0 24 24" style="color:var(--gold-300)"><use href="#i-wallet"/></svg></div>
+            <p class="mini muted" style="margin:7px 0 11px;line-height:1.65">শিক্ষক, ডিজাইনার, লেখক, কথক — প্রোফাইল খুলে কাজ নিন। পেআউট প্রতি রবিবার, ৮৫% আপনার শেয়ার।</p>
+            <button class="btn gold block sm">প্রোফাইল খুলুন</button>
+          </div>
+          <div style="height:20px"></div>
+        </div>
+      </section>
+
+      <!-- ================= ME ================= -->
+      <section class="view" data-screen="me" hidden>
+        <div class="appbar">
+          <div class="row">
+            <div><div class="eyebrow">আমার অগ্রগতি</div><h3>ড্যাশবোর্ড</h3></div>
+            <div class="spacer"></div>
+            <button class="iconbtn"><svg class="ico" viewBox="0 0 24 24"><use href="#i-gear"/></svg></button>
+          </div>
+        </div>
+        <div class="pad" style="padding-top:2px">
+          <div class="card oath pad">
+            <div style="display:flex;gap:14px;align-items:center">
+              <div class="av round" style="width:56px;height:56px;font-size:19px">সৌ</div>
+              <div style="flex:1">
+                <div class="display" style="font-size:15px">সৌরভ চক্রবর্তী</div>
+                <div class="mini muted" style="margin-top:4px">শিক্ষার্থী · স্তর ২ · যোগ দিয়েছেন জুন ২০২৬</div>
+                <div style="display:flex;gap:6px;margin-top:9px;flex-wrap:wrap">
+                  <span class="pill">🔥 ১১ দিন</span><span class="pill">১৪ পাঠ</span><span class="pill ok">৩ ব্যাজ</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="sect"><h4>এই সপ্তাহ</h4><div class="line"></div><span class="mini muted">৫/৭ দিন</span></div>
+          <div class="card pad">
+            <div class="chart">
+              <div class="col"><div class="bwrap"><div class="b" style="height:42%"></div></div><div class="d">শনি</div></div>
+              <div class="col"><div class="bwrap"><div class="b" style="height:68%"></div></div><div class="d">রবি</div></div>
+              <div class="col"><div class="bwrap"><div class="b" style="height:100%"></div></div><div class="d">সোম</div></div>
+              <div class="col"><div class="bwrap"><div class="b" style="height:55%"></div></div><div class="d">মঙ্গল</div></div>
+              <div class="col"><div class="bwrap"><div class="b" style="height:26%"></div></div><div class="d">বুধ</div></div>
+              <div class="col"><div class="bwrap"><div class="b empty" style="height:6%"></div></div><div class="d">বৃহঃ</div></div>
+              <div class="col"><div class="bwrap"><div class="b empty" style="height:6%"></div></div><div class="d">শুক্র</div></div>
+            </div>
+            <div class="kv" style="margin-top:13px;padding-top:11px;border-top:1px solid var(--hairline)">
+              <span class="mini muted">দৈনিক লক্ষ্য ২৫ মিনিট</span><span class="mini" style="color:var(--ok)">গড় ৩৯ মিনিট ✓</span></div>
+          </div>
+
+          <div class="sect"><h4>আমার আয় (শিক্ষক মোড)</h4><div class="line"></div><span class="pill ok">সক্রিয়</span></div>
+          <div class="card pad">
+            <div class="kv">
+              <div><div class="mini muted">এ মাসে</div><div class="display" style="font-size:21px;color:var(--gold-200);margin-top:3px">৳ ১২,৪৫০</div></div>
+              <div style="text-align:right"><div class="mini muted">পরবর্তী পেআউট</div>
+                <div style="font-size:12.5px;font-weight:600;margin-top:5px">রবিবার · ৳৩,২০০</div></div>
+            </div>
+            <div style="margin-top:12px">
+              <div class="ledger"><span>৮টি অর্ডার × ৮৫% শেয়ার</span><span>৳ ১৪,২১০</span></div>
+              <div class="ledger"><span>প্লাটফর্ম ফি ১২%</span><span style="color:var(--danger)">− ৳১,৭৬০</span></div>
+            </div>
+            <button class="btn ghost block sm" style="margin-top:12px">লেনদেনের বিবরণ</button>
+          </div>
+
+          <div class="sect"><h4>পছন্দ ও সেটিংস</h4><div class="line"></div></div>
+          <div class="card pad" style="padding:4px 14px">
+            <div class="li"><span style="color:var(--gold-300)"><svg class="ico sm" viewBox="0 0 24 24"><use href="#i-sun"/></svg></span>
+              <div style="flex:1;font-size:12.5px">পড়ার থিম</div><span class="pill">সেপিয়া</span></div>
+            <div class="li"><span style="color:var(--gold-300)"><svg class="ico sm" viewBox="0 0 24 24"><use href="#i-bell"/></svg></span>
+              <div style="flex:1;font-size:12.5px">পূজা ও পাঠের রিমাইন্ডার</div><span class="mini muted">চালু ›</span></div>
+            <div class="li"><span style="color:var(--gold-300)"><svg class="ico sm" viewBox="0 0 24 24"><use href="#i-shield"/></svg></span>
+              <div style="flex:1;font-size:12.5px">গোপনীয়তা ও নিরাপত্তা</div><span class="mini muted">›</span></div>
+          </div>
+          <div style="height:22px"></div>
+        </div>
+      </section>
+
+    </div><!-- /scroll -->
+
+    <nav class="tabbar" id="tabbar">
+      <button class="tab on" data-tab="home" data-go="home"><span class="ind"></span>
+        <svg class="ico" viewBox="0 0 24 24"><use href="#i-home"/></svg>হোম</button>
+      <button class="tab" data-tab="library" data-go="library"><span class="ind"></span>
+        <svg class="ico" viewBox="0 0 24 24"><use href="#i-book"/></svg>লাইব্রেরি</button>
+      <button class="tab" data-tab="exam" data-go="exam"><span class="ind"></span>
+        <svg class="ico" viewBox="0 0 24 24"><use href="#i-exam"/></svg>পরীক্ষা</button>
+      <button class="tab" data-tab="seva" data-go="seva"><span class="ind"></span>
+        <svg class="ico" viewBox="0 0 24 24"><use href="#i-heart"/></svg>সেবা</button>
+      <button class="tab" data-tab="me" data-go="me"><span class="ind"></span>
+        <svg class="ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>আমি</button>
+    </nav>
+
+    <div class="homebar"></div>
+    <div class="toast" id="toast"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const ROOT = ['home','library','exam','seva','me'];
+  const stage  = document.getElementById('stage');
+  const screen = document.getElementById('screen');
+  const views  = [...stage.querySelectorAll('.view')];
+  const tabs   = [...document.querySelectorAll('.tab')];
+  const chips  = [...document.querySelectorAll('#nav .chip')];
+
+  views.forEach(v => v.hidden = false);
+
+  function go(id){
+    views.forEach(v => v.classList.toggle('on', v.dataset.screen === id));
+    stage.scrollTop = 0;
+    screen.classList.toggle('sub', !ROOT.includes(id));
+    tabs.forEach(t => t.classList.toggle('on', t.dataset.tab === id));
+    chips.forEach(c => c.classList.toggle('on', c.dataset.go === id));
+  }
+  document.addEventListener('click', e => {
+    const el = e.target.closest('[data-go]');
+    if (el) go(el.dataset.go);
+  });
+
+  // theme
+  const tg = document.getElementById('themeToggle');
+  tg.addEventListener('click', ev => {
+    ev.stopPropagation();
+    const light = document.documentElement.dataset.theme !== 'light';
+    document.documentElement.dataset.theme = light ? 'light' : 'dark';
+    tg.classList.toggle('light', light);
+  });
+
+  // quiz option
+  window.pick = function(el){
+    el.parentElement.querySelectorAll('.opt').forEach(o => o.classList.remove('sel'));
+    el.classList.add('sel');
+  };
+
+  // toast
+  let t;
+  window.toast = function(msg){
+    const el = document.getElementById('toast');
+    el.textContent = msg; el.classList.add('show');
+    clearTimeout(t); t = setTimeout(() => el.classList.remove('show'), 1900);
+  };
+
+  // keyboard: ← → between root tabs
+  document.addEventListener('keydown', e => {
+    const order = ['home','library','exam','seva','me'];
+    const cur = tabs.findIndex(x => x.classList.contains('on'));
+    if (e.key === 'ArrowRight' && cur > -1) go(order[Math.min(cur+1, 4)]);
+    if (e.key === 'ArrowLeft'  && cur > -1) go(order[Math.max(cur-1, 0)]);
+  });
+})();
+</script>
+</body>
+</html>
