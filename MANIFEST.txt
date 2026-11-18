@@ -1,17 +1,16 @@
-সনাতন বিদ্যাপীঠ — রিপো প্যাকেজ v36
+সনাতন বিদ্যাপীঠ — রিপো প্যাকেজ v47
 তারিখ: ১৮ নভেম্বর ২০২৬
-কমিট: 760c0a0
+কমিট: 17e2664
 --------------------------------------------------------------------
-নতুন তিন বিভাগ: পঞ্জিকা পাতা → উপরে “নতুন যোগ হয়েছে — জ্যোতিষ” কার্ড
-  • #/panjika/bibaho (বিয়ে-শুভদিন · বিবাহ লগ্ন)
-  • #/panjika/mritdosh (মৃতদোষ · ৩৬৫ দিন যাচাইকৃত)
-  • #/panjika/rashi (রাশি নির্ণয় · নবাংশ D9 + লগ্ন-নিশ্চয়তা)
-  • ইঞ্জিন: app/js/jyotish.js · যাচাই: docs/guide/JYOTISH-VERIFY.md
+নতুন: অডিও প্লেয়ারের নতুন ডিজাইন — গ্লো ব্যাকড্রপ, ইকুয়ালাইজার, গোল্ড সিক-বার, গতি ১×/১.২৫×/১.৫×/০.৭৫×
+লাইব্রেরি → অডিও: যথার্থ গীতার ১৯টি বাংলা অডিও (oEmbed-যাচাইকৃত)
+রিলস: ১১৩৫টি শর্টস · ৪৪৬ চ্যানেল · অটো প্লে (শব্দসহ)
+পঞ্জিকা: বিয়ে-শুভদিন · মৃতদোষ · রাশি নির্ণয়
 
 ফাইল-তালিকা:
     4.0K  sanatana-biddapith/.github/workflows/deploy-pages.yml
     4.0K  sanatana-biddapith/.gitignore
-     36K  sanatana-biddapith/CHANGELOG.md
+     52K  sanatana-biddapith/CHANGELOG.md
     8.0K  sanatana-biddapith/CONTRIBUTING.md
      12K  sanatana-biddapith/GITHUB-PUSH-GUIDE.md
     4.0K  sanatana-biddapith/LICENSE
@@ -19,7 +18,7 @@
      24K  sanatana-biddapith/README.md
        0  sanatana-biddapith/app/.nojekyll
      12K  sanatana-biddapith/app/README.md
-     52K  sanatana-biddapith/app/css/app.css
+     64K  sanatana-biddapith/app/css/app.css
      12K  sanatana-biddapith/app/icons/ai/chats-dark.png
      12K  sanatana-biddapith/app/icons/ai/chats-light.png
      12K  sanatana-biddapith/app/icons/ai/exam-dark.png
@@ -61,8 +60,8 @@
      24K  sanatana-biddapith/app/img/bg-dark.webp
      24K  sanatana-biddapith/app/img/bg-light.webp
     4.0K  sanatana-biddapith/app/index.html
-    240K  sanatana-biddapith/app/js/app.js
-    108K  sanatana-biddapith/app/js/data.js
+    280K  sanatana-biddapith/app/js/app.js
+    320K  sanatana-biddapith/app/js/data.js
     296K  sanatana-biddapith/app/js/gita-bn.js
     1.4M  sanatana-biddapith/app/js/gita-katha.js
      20K  sanatana-biddapith/app/js/gita-speaker.js
@@ -111,6 +110,7 @@
     124K  sanatana-biddapith/docs/design/ui-preview-v3.html
      68K  sanatana-biddapith/docs/design/ui-preview.html
      68K  sanatana-biddapith/docs/guide/00-MASTER-GUIDE.md
+     12K  sanatana-biddapith/docs/guide/GITA-AUDIO.md
      12K  sanatana-biddapith/docs/guide/GITA-VERIFICATION.md
     8.0K  sanatana-biddapith/docs/guide/ICON-SET.md
      16K  sanatana-biddapith/docs/guide/JYOTISH-VERIFY.md
@@ -121,6 +121,7 @@
      16K  sanatana-biddapith/docs/guide/PANJIKA-1434.md
     8.0K  sanatana-biddapith/docs/guide/PANJIKA-ACCURACY.md
     8.0K  sanatana-biddapith/docs/guide/PANJIKA-SECTIONS.md
+     12K  sanatana-biddapith/docs/guide/REELS.md
     8.0K  sanatana-biddapith/docs/guide/SHUBHO-KARMA.md
      12K  sanatana-biddapith/docs/guide/UPGRADE-IDEAS.md
     8.0K  sanatana-biddapith/docs/guide/background-preview.html
