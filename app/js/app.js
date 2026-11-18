@@ -39,6 +39,9 @@
     motion: store.get('motion', true),
     font: store.get('font', 17),
     streak: store.get('streak', 11),
+    savedReels: store.get('savedReels', {}),
+    audioVol: store.get('audioVol', 80),
+    reelMute: store.get('reelMute', false),
     rituals: store.get('rituals', {}),
     read: store.get('read', {}),
     lastVerse: store.get('lastVerse', { book: 'gita', idx: 2 }),
@@ -389,16 +392,17 @@
     </div>
 
     <div class="pad">
-      <div class="mt" data-act="nav" data-to="#/track" role="button" tabindex="0" style="cursor:pointer">
-        <div class="card oath pad" style="display:flex;align-items:center;gap:13px">
-          <div class="ring" style="--p:${scoreOf(entryFor(TODAY_KEY), todayAuto()).total}%;width:52px;height:52px">
-            <div><div class="n" style="font-size:13px">${bn(scoreOf(entryFor(TODAY_KEY), todayAuto()).total)}</div><div class="u">স্কোর</div></div></div>
-          <div style="flex:1">
-            <div class="kv"><b style="font-size:12.8px">আজকের হিসাব</b><span class="pill ${entryFor(TODAY_KEY).done ? 'ok' : ''}">${entryFor(TODAY_KEY).done ? 'সম্পন্ন' : 'লিখুন'}</span></div>
-            <div class="mini muted" style="margin-top:4px">পূজা · জপ · ধ্যান · পাঠ · দান · কর্ম · সত্য — এক জায়গায়</div>
-          </div>${ico('arrow', 'sm')}
-        </div>
-      </div>
+      <div class="sect" style="margin-top:6px"><h4>রিলস</h4><div class="line"></div>
+        <button class="act" data-act="nav" data-to="#/reels">সব ›</button></div>
+      ${(() => {
+        const rl = bpOrdered();
+        if (!rl.length) return '';
+        const day = Math.floor(new Date(TODAY_KEY + 'T00:00:00') / DAY_MS);
+        const show = [];
+        for (let k = 0; k < 10 && k < rl.length; k++) show.push(reelAt(rl, (day * 7 + k * 37) % rl.length));
+        return `<div class="reelrail">${show.map(r => bpReelCard(r)).join('')}</div>
+        <div class="mini muted" style="margin:-2px 0 2px">হিন্দু ধর্মীয় ও ভক্তিমূলক চ্যানেলের ${bn(rl.length)}+ রিলস · প্রতিদিন নতুন বাছাই — অ্যাপের ভেতরেই</div>`;
+      })()}
 
       <div class="sect"><h4>সাধনা</h4><div class="line"></div><button class="act" data-act="nav" data-to="#/sadhana">সব ›</button></div>
       <div class="grid3">
@@ -492,6 +496,246 @@
     }).join('');
   }
 
+  /* ============ গ্লোবাল অডিও প্লেয়ার (YouTube IFrame API) ============
+     প্লেয়ার একবারই তৈরি হয় ও পর্দার বাইরে থাকে; পাতা বদলালেও গান চলতে থাকে। */
+  const AP = { player: null, api: false, ready: false, pending: null, timer: null, id: null, dur: 0, rate: 1 };
+  function apLoadApi() {
+    if (AP.api) return;
+    if (document.getElementById('ytApiScript')) return;
+    const sc = document.createElement('script');
+    sc.id = 'ytApiScript'; sc.src = 'https://www.youtube.com/iframe_api';
+    document.head.appendChild(sc);
+    window.onYouTubeIframeAPIReady = () => { AP.api = true; if (AP.pending) { const p = AP.pending; AP.pending = null; apStart(p); } };
+  }
+  function apStart(id) {
+    const item = (DB.gitaAudio || []).find(x => x.id === id);
+    AP.id = id; AP.dur = 0;
+    apLoadApi();
+    if (!AP.api) {
+      AP.pending = id;
+      apRender();
+      toast('অডিও প্লেয়ার তৈরি হচ্ছে…');
+      setTimeout(() => {
+        if (!AP.api && AP.id === id) toast('প্লেয়ার লোড হয়নি — ইন্টারনেট দেখুন বা “ইউটিউবে ↗” চাপুন');
+      }, 6000);
+      return;
+    }
+    if (AP.player && AP.player.loadVideoById) { AP.player.loadVideoById(id); apRender(); apTick(); return; }
+    let host = document.getElementById('ytHost');
+    if (!host) {
+      host = document.createElement('div');
+      host.id = 'ytHost';
+      host.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;overflow:hidden';
+      document.body.appendChild(host);
+    }
+    host.innerHTML = '<div id="ytFrame"></div>';
+    try {
+      AP.player = new window.YT.Player('ytFrame', {
+        videoId: id,
+        playerVars: { autoplay: 1, playsinline: 1, controls: 0, rel: 0, modestbranding: 1 },
+        events: {
+          onReady: () => {
+            AP.ready = true;
+            try {
+              AP.player.setVolume(S.audioVol == null ? 80 : S.audioVol);
+              if (AP.player.unMute) AP.player.unMute();
+              if (AP.player.setPlaybackRate && (AP.rate || 1) !== 1) AP.player.setPlaybackRate(AP.rate);
+            } catch (e) {}
+            if (item) toast('অডিও চালু: ' + item.name);
+            apRender(); apTick();
+          },
+          onStateChange: () => apRender(),
+          onError: () => toast('এই অডিওটি চালানো যাচ্ছে না — ইন্টারনেট দেখুন')
+        }
+      });
+    } catch (e) { toast('প্লেয়ার তৈরি করা গেল না'); }
+    apRender(); apTick();
+  }
+  function apFillPct(el, pct) {
+    if (el && el.style) el.style.setProperty('--p', Math.max(0, Math.min(100, +pct || 0)) + '%');
+  }
+  const AP_RATES = [1, 1.25, 1.5, 0.75];
+  const AP_RATE_TXT = { '1': '১×', '1.25': '১.২৫×', '1.5': '১.৫×', '0.75': '০.৭৫×' };
+  const apRateTxt = () => AP_RATE_TXT[String(AP.rate || 1)] || '১×';
+  function apSpeed() {
+    const i = AP_RATES.indexOf(AP.rate || 1);
+    AP.rate = AP_RATES[(i + 1) % AP_RATES.length];
+    if (AP.player && AP.player.setPlaybackRate) { try { AP.player.setPlaybackRate(AP.rate); } catch (e) {} }
+    toast('গতি: ' + apRateTxt());
+    apRender();
+  }
+  const apTime = t => {
+    t = Math.max(0, Math.floor(t || 0));
+    const h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), sec = t % 60;
+    const p2 = n => (n < 10 ? '0' : '') + n;
+    return h ? bn(h) + ':' + bn(p2(m)) + ':' + bn(p2(sec)) : bn(m) + ':' + bn(p2(sec));
+  };
+  function apState() {
+    try { return AP.player && AP.player.getPlayerState ? AP.player.getPlayerState() : -1; } catch (e) { return -1; }
+  }
+  const apPlaying = () => apState() === 1;
+  function apToggle() {
+    if (!AP.player) return;
+    if (apPlaying()) AP.player.pauseVideo(); else AP.player.playVideo();
+    setTimeout(apRender, 150);
+  }
+  function apSeek(frac) {
+    if (!AP.player || !AP.player.getDuration) return;
+    const d = AP.player.getDuration() || 0;
+    AP.player.seekTo(Math.max(0, Math.min(0.999, frac)) * d, true);
+  }
+  function apJump(sec) {
+    if (!AP.player || !AP.player.getCurrentTime) return;
+    AP.player.seekTo((AP.player.getCurrentTime() || 0) + sec, true);
+  }
+  function apStep(dir) {
+    const list = DB.gitaAudio || [];
+    if (!list.length) return;
+    let i = list.findIndex(x => x.id === AP.id);
+    if (i < 0) i = 0;
+    i = (i + dir + list.length) % list.length;
+    apStart(list[i].id);
+  }
+  function apSetVol(v) {
+    if (AP.player && AP.player.setVolume) AP.player.setVolume(v);
+    if (v > 0 && AP.player && AP.player.unMute) AP.player.unMute();
+    S.audioVol = v; save('audioVol');
+  }
+  /* মিনি-বার (সব পর্দায় দেখা যায়) */
+  function apBarHTML() {
+    const item = (DB.gitaAudio || []).find(x => x.id === AP.id);
+    if (!item) return '';
+    const btn = 'width:34px;height:34px;border-radius:50%;border:1px solid rgba(215,169,79,.32);background:rgba(215,169,79,.12);color:inherit;display:grid;place-items:center;cursor:pointer;flex:0 0 auto;font-size:13px;padding:0;font-family:inherit';
+    return `<div class="apseek" style="position:absolute;left:0;right:0;top:0;height:3px;background:rgba(215,169,79,.18);border-radius:3px 3px 0 0;overflow:hidden"><i id="apFill" style="display:block;height:100%;width:0%;background:#d7a94f"></i></div>
+      <img src="https://i.ytimg.com/vi/${item.id}/mqdefault.jpg" alt="" style="width:38px;height:38px;border-radius:9px;object-fit:cover;flex:0 0 auto;box-shadow:0 0 0 1px rgba(215,169,79,.35)">
+      <div style="flex:1 1 auto;min-width:0">
+        <div class="apt" style="font-size:11.6px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc((item.ch === 0 ? 'উপসংহার · ' : BN_CH[item.ch] + ' অধ্যায় · ') + item.name)}</div>
+        <div class="aps" style="font-size:9.6px;opacity:.72;margin-top:2px;font-variant-numeric:tabular-nums"><span id="apCur">০:০০</span> / <span id="apDur">${bn(item.dur)}</span></div></div>
+      <button style="${btn}" data-act="apPrev" aria-label="আগের">◀</button>
+      <button style="${btn};background:#d7a94f;color:#2a0b0d;border-color:transparent;box-shadow:0 8px 18px -10px rgba(215,169,79,.95)" data-act="apToggle" id="apBtn" aria-label="চালান/থামান">${apPlaying() ? '❚❚' : '▶'}</button>
+      <button style="${btn}" data-act="apNext" aria-label="পরের">▶</button>
+      <button style="${btn}" data-act="apStop" aria-label="বন্ধ">✕</button>`;
+  }
+  function apRender() {
+    let bar = document.getElementById('apbar');
+    const item = (DB.gitaAudio || []).find(x => x.id === AP.id);
+    if (!item) { if (bar) { bar.style.display = 'none'; bar.innerHTML = ''; } document.body.classList.remove('has-audio'); return; }
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'apbar'; bar.className = 'apbar';
+      /* inline styles: CSS পুরোনো ক্যাশে থাকলেও লেআউট ভাঙবে না */
+      bar.style.cssText = 'position:fixed;left:0;right:0;bottom:calc(78px + env(safe-area-inset-bottom));z-index:60;'
+        + 'margin:0 10px;display:none;align-items:center;gap:10px;padding:11px 11px 10px;border-radius:17px;'
+        + 'background:var(--surface-1,#1b1410);border:1px solid var(--card-border,rgba(215,169,79,.35));'
+        + 'box-shadow:0 16px 34px -18px rgba(0,0,0,.8);color:inherit;backdrop-filter:blur(10px)';
+      document.body.appendChild(bar);
+    }
+    bar.innerHTML = apBarHTML();
+    bar.style.display = 'flex';
+    bar.classList.add('on');
+    document.body.classList.add('has-audio');
+    const b = document.getElementById('apBtn');
+    if (b) b.textContent = apPlaying() ? '❚❚' : '▶';
+    const big = document.getElementById('apBigBtn');
+    if (big) big.textContent = apPlaying() ? '❚❚' : '▶';
+    const card = document.getElementById('apCard'); if (card) card.classList.toggle('playing', apPlaying());
+    const live = document.querySelector('#apCard .apl-live'); if (live) live.style.display = apPlaying() ? 'inline' : 'none';
+    const sp = document.getElementById('apSpeedBtn'); if (sp) sp.textContent = apRateTxt();
+    const vol = document.getElementById('apVol'); if (vol) apFillPct(vol, S.audioVol == null ? 80 : S.audioVol);
+    const durB = document.getElementById('apDurBig');
+    const it = (DB.gitaAudio || []).find(x => x.id === AP.id); if (durB && it) durB.textContent = bn(it.dur);
+  }
+  function apTick() {
+    clearInterval(AP.timer);
+    const paint = () => {
+      const cur = AP.player && AP.player.getCurrentTime ? (AP.player.getCurrentTime() || 0) : 0;
+      const dur = AP.player && AP.player.getDuration ? (AP.player.getDuration() || 0) : 0;
+      const cc = document.getElementById('apCur'); if (cc) cc.textContent = apTime(cur);
+      const dd = document.getElementById('apDur'); if (dd && dur) dd.textContent = apTime(dur);
+      const fill = document.getElementById('apFill'); if (fill && dur) fill.style.width = Math.min(100, cur / dur * 100) + '%';
+      const seek = document.getElementById('apSeekBig');
+      if (seek && dur) {
+        seek.max = String(Math.floor(dur)); seek.value = String(Math.floor(cur));
+        if (!seek.dataset.drag) apFillPct(seek, cur / dur * 100);
+      }
+      const tcur = document.getElementById('apTimeBig'); if (tcur) tcur.textContent = apTime(cur);
+      const tdur = document.getElementById('apDurBig'); if (tdur && dur) tdur.textContent = apTime(dur);
+      const b = document.getElementById('apBtn'); if (b) b.textContent = apPlaying() ? '❚❚' : '▶';
+      const big = document.getElementById('apBigBtn'); if (big) big.textContent = apPlaying() ? '❚❚' : '▶';
+      const card = document.getElementById('apCard'); if (card) card.classList.toggle('playing', apPlaying());
+    };
+    paint();
+    AP.timer = setInterval(paint, 800);
+  }
+  function apStop() {
+    try { AP.player && AP.player.stopVideo && AP.player.stopVideo(); } catch (e) {}
+    AP.id = null; clearInterval(AP.timer); AP.timer = null;
+    const bar = document.getElementById('apbar'); if (bar) { bar.classList.remove('on'); bar.style.display = 'none'; bar.innerHTML = ''; }
+    document.body.classList.remove('has-audio');
+    render();
+  }
+
+  /* ============ গীতার বাংলা অডিও পাঠ (যথার্থ গীতা · ১৮ অধ্যায়) ============ */
+  const BN_CH = ['', 'প্রথম', 'দ্বিতীয়', 'তৃতীয়', 'চতুর্থ', 'পঞ্চম', 'ষষ্ঠ', 'সপ্তম', 'অষ্টম', 'নবম', 'দশম',
+    'একাদশ', 'দ্বাদশ', 'ত্রয়োদশ', 'চতুর্দশ', 'পঞ্চদশ', 'ষোড়শ', 'সপ্তদশ', 'অষ্টাদশ'];
+  const audioChLabel = x => x.ch === 0 ? 'উপসংহার' : BN_CH[x.ch] + ' অধ্যায়';
+  function gitaAudioScreen() {
+    const list = DB.gitaAudio || [];
+    const cat = U.audioCat || 'all';
+    const inCat = x => cat === 'all' ? true
+      : cat === 'c' ? x.ch === 0
+        : cat === '1' ? (x.ch >= 1 && x.ch <= 6)
+          : cat === '2' ? (x.ch >= 7 && x.ch <= 12) : (x.ch >= 13 && x.ch <= 18);
+    const cur = U.audioId ? list.find(x => x.id === U.audioId) : null;
+    const idx = cur ? list.indexOf(cur) : -1;
+    const playing = cur && AP.id === cur.id;
+    const player = cur ? `<div class="apl" id="apCard">
+        <div class="apl-glow" style="background-image:url('https://i.ytimg.com/vi/${cur.id}/mqdefault.jpg')"></div>
+        <div class="apl-top">
+          <div class="apl-art">
+            <img src="https://i.ytimg.com/vi/${cur.id}/mqdefault.jpg" alt="">
+            <span class="apl-eq"><i></i><i></i><i></i><i></i><i></i></span>
+          </div>
+          <div class="apl-meta">
+            <div class="apl-kicker">অডিও পাঠ · যথার্থ গীতা</div>
+            <div class="apl-title">${esc(cur.name)}</div>
+            <div class="apl-sub"><span>${audioChLabel(cur)}</span><span>·</span><span>⏱ ${bn(cur.dur)}</span>
+              <span class="apl-dot"></span><span class="apl-live" style="display:none">চলছে</span></div>
+          </div>
+          <button class="apl-play" id="apBigBtn" data-act="apToggle" aria-label="চালান/থামান">${playing && apPlaying() ? '❚❚' : '▶'}</button>
+        </div>
+        <div class="apl-seek">
+          <input class="aplrange" id="apSeekBig" type="range" min="0" max="100" value="0" step="1" aria-label="সময়">
+          <div class="apl-time"><span id="apTimeBig">০:০০</span><span id="apDurBig">${bn(cur.dur)}</span></div>
+        </div>
+        <div class="apl-ctl">
+          <button class="apl-btn" data-act="apJump" data-s="-15" aria-label="১৫ সেকেন্ড পিছনে">↺<b>১৫</b></button>
+          <button class="apl-btn" data-act="apPrev" aria-label="আগের অধ্যায়">◀◀</button>
+          <button class="apl-btn" data-act="apNext" aria-label="পরের অধ্যায়">▶▶</button>
+          <button class="apl-btn" data-act="apJump" data-s="15" aria-label="১৫ সেকেন্ড সামনে"><b>১৫</b>↻</button>
+          <button class="apl-btn speed" id="apSpeedBtn" data-act="apSpeed" aria-label="গতির হার">${apRateTxt()}</button>
+        </div>
+        <div class="apl-vol">
+          <span class="apl-vico">🔊</span>
+          <input class="aplrange sm" id="apVol" type="range" min="0" max="100" value="${S.audioVol == null ? 80 : S.audioVol}" step="1" style="flex:1 1 auto" aria-label="ভলিউম">
+          <a href="https://www.youtube.com/watch?v=${cur.id}" target="_blank" rel="noopener noreferrer">ইউটিউবে ↗</a>
+        </div>
+      </div>` : '';
+    const rows = list.filter(inCat).map(x => {
+      const on = cur && cur.id === x.id;
+      return `<button class="card rowcard" data-act="audioPlay" data-id="${x.id}" style="width:100%;text-align:left;cursor:pointer;margin-bottom:7px;${on ? 'border-color:var(--gold-400)' : ''}">
+        <div class="datebox" style="min-width:44px"><b style="font-size:13px">${x.ch === 0 ? '॥' : bn(x.ch)}</b><i>${x.ch === 0 ? 'শেষ' : 'অধ্যায়'}</i></div>
+        <div style="flex:1;min-width:0">
+          <div class="ttl" style="font-size:.9rem;line-height:1.5">${esc(x.name)}</div>
+          <div class="mini muted" style="margin-top:3px">${audioChLabel(x)} · ${bn(x.dur)}</div></div>
+        <span class="pill ${on ? 'ok' : ''}">${on ? '▶ চলছে' : '▶'}</span></button>`;
+    }).join('');
+    return `<p class="mini muted" style="margin:0 0 10px;line-height:1.75"><b>গীতার সম্পূর্ণ বাংলা অডিও পাঠ</b> — ১৮টি অধ্যায় ও উপসংহার, স্বামী অদ্গদানন্দজীর যথার্থ গীতা থেকে। ▶ চাপলেই <b>অডিও প্লেয়ার</b> চালু হয় (প্লে/পজ, সময়, সিক-বার, ভলিউম, ১৫ সেকেন্ড আগে-পরে, আগের/পরের অধ্যায়) — পাতা বদলালেও অডিও চলতে থাকে (নিচে মিনি-প্লেয়ার)।</p>
+      ${player}
+      ${rows}
+      <p class="mini muted" style="margin-top:10px;line-height:1.7">উৎস: <a href="https://www.youtube.com/@yatharthgeeta-official" target="_blank" rel="noopener noreferrer" style="color:var(--gold-300)">@yatharthgeeta-official</a> — YouTube চ্যানেলের বাংলা অডিও। লিংক অ্যাপের ভেতরে সাজানো; ভিডিও ফাইল অ্যাপে ডাউনলোড করা হয় না।</p>`;
+  }
+
   function libraryScreen() {
     const cats = ['সব', 'চলমান', 'নতুন', 'মুখস্থ', 'সংক্ষিপ্ত'];
     return `${appbar('শাস্ত্র গ্রন্থাগার', 'Digital Granthagar', undefined, true)}
@@ -502,11 +746,12 @@
           `<button class="${U.libSeg === k ? 'on' : ''}" data-act="seg" data-s="${k}">${l}</button>`).join('')}
       </div>
     </div>
-    <div class="cats">${cats.map(c => `<button class="chip ${U.libCat === c ? 'on' : ''}" data-act="cat" data-c="${c}">${c}</button>`).join('')}</div>
+    <div class="cats">${U.libSeg === 'audio'
+      ? [['all', 'সব ১৮'], ['1', 'অধ্যায় ১–৬'], ['2', 'অধ্যায় ৭–১২'], ['3', 'অধ্যায় ১৩–১৮'], ['c', 'উপসংহার']]
+          .map(([k, l]) => `<button class="chip ${(U.audioCat || 'all') === k ? 'on' : ''}" data-act="audioCat" data-c="${k}">${l}</button>`).join('')
+      : cats.map(c => `<button class="chip ${U.libCat === c ? 'on' : ''}" data-act="cat" data-c="${c}">${c}</button>`).join('')}</div>
     <div class="pad" style="padding-top:12px">
-      ${U.libSeg === 'audio' ? `<div class="card empty"><div class="illu">${ico('flame')}</div>
-          <h5>অডিও পাঠ শীঘ্রই আসছে</h5><p>শিক্ষকের কণ্ঠে উচ্চারণসহ স্তোত্র শোনা যাবে।<br/>আপাতত লিখিত পাঠ ও বাংলা অর্থ ব্যবহার করুন।</p>
-          <button class="btn ghost sm" data-act="seg" data-s="books">লিখিত পাঠে যান</button></div>`
+      ${U.libSeg === 'audio' ? gitaAudioScreen()
         : U.libSeg === 'verse' ? `<div class="card pad"><div class="mini muted" style="margin-bottom:8px">শ্লোক অনুসন্ধান — বাংলা বা শব্দ দিয়ে</div>
             <div class="mini muted">সার্চ বক্সে লিখে গ্রন্থ খুঁজুন, তারপর গ্রন্থ খুলে শ্লোক বেছে নিন।</div></div>`
           : `<div class="card oath pad" style="margin-bottom:12px">
@@ -919,6 +1164,222 @@
         </div>`).join('')}
       <button class="btn ghost block" data-act="nav" data-to="#/panjika">আজকের শুভ সময় দেখুন</button>
     </div><div style="height:20px"></div>`;
+  }
+
+  /* ============ ইউটিউব রিলস (বাংলা পঞ্জিকা) ============ */
+  const bpList = () => {
+    const p = (DB.panjika || {});
+    return (p.reelsBP || []).concat(p.reelsDev || []);
+  };
+  const bpChans = () => (DB.panjika && DB.panjika.reelsCh) || [];
+  const chOf = r => { const c = bpChans(); return (r && r[2] >= 0 && c[r[2]]) ? c[r[2]] : null; };
+  /* রিলস কখনো শেষ না হয়: তালিকা পার হলে প্রাইম-স্ট্রাইডে নতুন ক্রমে ঘুরতে থাকে */
+  const reelAt = (pool, i) => pool[i < pool.length ? i : (i * 7919) % pool.length];
+  /* চ্যানেল-মিশ্র ক্রম: প্রতি রাউন্ডে একটি করে রিলস প্রতিটি চ্যানেল থেকে (round-robin),
+     তাই প্রথম পাতাতেই সব চ্যানেলের রিলস আসে — শুধু বাংলা পঞ্জিকা নয়। ক্রমটি স্থির (seeded)। */
+  let _bpOrder = null, _bpLen = 0;
+  function bpOrdered() {
+    const all = bpList();
+    if (_bpOrder && _bpLen === all.length) return _bpOrder;
+    const groups = new Map();
+    all.forEach(r => {
+      const k = r[2] >= 0 ? r[2] : -1;
+      if (!groups.has(k)) groups.set(k, []);
+      groups.get(k).push(r);
+    });
+    let seed = (U.reelSeed || 20261118) % 2147483647;
+    if (seed <= 0) seed = 20261118;
+    const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
+    const keys = Array.from(groups.keys());
+    for (let i = keys.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); const t = keys[i]; keys[i] = keys[j]; keys[j] = t; }
+    keys.forEach(k => {
+      const a = groups.get(k);
+      for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; }
+    });
+    let maxLen = 0; keys.forEach(k => { if (groups.get(k).length > maxLen) maxLen = groups.get(k).length; });
+    const out = [];
+    for (let round = 0; round < maxLen; round++) keys.forEach(k => { const a = groups.get(k); if (round < a.length) out.push(a[round]); });
+    _bpOrder = out; _bpLen = all.length;
+    return out;
+  }
+  const BP_YT = id => 'https://www.youtube.com/shorts/' + id;
+  const BP_THUMB = id => 'https://i.ytimg.com/vi/' + id + '/oar2.jpg';
+  const bpReelCard = r => `<button class="reel" data-act="bpOpen" data-id="${r[0]}" style="--tint:#3a1b1b">
+      <img class="rthumb" src="${BP_THUMB(r[0])}" alt="" loading="lazy" referrerpolicy="no-referrer"
+        onerror="this.onerror=null;this.src='https://i.ytimg.com/vi/${r[0]}/hqdefault.jpg'">
+      <span class="rbgtint"></span>
+      <span class="rl-ico">${vico('play', 'sm')}</span>
+      <span class="rl-txt"><b>${esc(r[1])}</b><i>${esc((chOf(r) || ['রিলস'])[0].trim())}</i></span></button>`;
+  function reelsScreen() {
+    const all = bpOrdered();
+    const chans = bpChans();
+    const selCh = (U.reelCh == null) ? -1 : U.reelCh;
+    const pool = selCh >= 0 ? all.filter(r => r[2] === selCh) : all;
+    const n = U.reelsN || 30;
+    const shown = [];
+    for (let i = 0; i < Math.min(n, selCh >= 0 ? pool.length : n); i++) shown.push(reelAt(pool, i));
+    const topIdx = chans.map((c, i) => i).filter(i => chans[i][2] > 1).slice(0, 16);
+    const chips = `<div class="cats" style="padding:0 0 10px">
+        <button class="chip ${selCh < 0 ? 'on' : ''}" data-act="reelCh" data-i="-1">সব · ${bn(all.length)}</button>
+        ${topIdx.map(i => `<button class="chip ${selCh === i ? 'on' : ''}" data-act="reelCh" data-i="${i}">${esc(chans[i][0].trim())} · ${bn(chans[i][2])}</button>`).join('')}
+        <button class="chip" data-act="nav" data-to="#/reelsch">সব চ্যানেল (${bn(chans.length)}) ›</button>
+        <button class="chip" data-act="reelsShuffle">🔀 অন্য ক্রমে</button>
+      </div>`;
+    const headNote = selCh >= 0
+      ? `<b>${esc(chans[selCh][0].trim())}</b> চ্যানেলের <b>${bn(pool.length)}টি</b> রিলস${chans[selCh][1] ? ` · <a href="${chans[selCh][1]}" target="_blank" rel="noopener noreferrer" style="color:var(--gold-300)">চ্যানেল দেখুন</a>` : ''}`
+      : `<b>${bn(all.length)}টি রিলস</b>, <b>${bn(chans.length)}টি</b> হিন্দু ধর্মীয় ও ভক্তিমূলক চ্যানেল — কৃষ্ণকীর্তন, শিব-দুর্গা-কালী ভজন, মন্ত্র ও আরতি। নিচে স্ক্রল করলে <b>নতুন রিলস আসতেই থাকবে</b>।`;
+    return `${appbar('রিলস', 'Reels · হিন্দু ধর্মীয় ও ভক্তিমূলক', '#/home')}
+    <div class="pad" style="padding-top:0">
+      <p class="mini muted" style="margin:0 0 10px;line-height:1.75">${headNote}</p>
+      ${chips}
+      <div class="rgrid" id="reelGrid">${shown.map(r => bpReelCard(r)).join('')}</div>
+      <div id="reelSentinel" style="height:8px"></div>
+      <button class="btn ghost block mt" data-act="reelsMore" id="reelsMoreBtn">আরও ${bn(30)}টি দেখুন</button>
+      <div style="height:16px"></div></div>`;
+  }
+  /* চ্যানেল-তালিকা: কে কোন চ্যানেল, কতগুলো রিলস */
+  function chanListScreen() {
+    const chans = bpChans();
+    const rows = chans.map((c, i) => `<div class="card rowcard stack" style="margin-bottom:7px">
+        <div style="flex:1;min-width:0">
+          <div class="kv"><span class="ttl" style="font-size:.92rem">${esc(c[0].trim())}</span>
+            <span class="pill">${bn(c[2])}টি</span></div>
+          <div class="kv" style="margin-top:6px;gap:8px">
+            <button class="act" data-act="reelCh" data-i="${i}">রিলস দেখুন</button>
+            ${c[1] ? `<a class="act" href="${c[1]}" target="_blank" rel="noopener noreferrer">চ্যানেল ↗</a>` : ''}
+          </div></div></div>`).join('');
+    return `${appbar('চ্যানেল', 'Channels · '+chans.length, '#/reels')}
+    <div class="pad" style="padding-top:0">
+      <p class="mini muted" style="margin:0 0 12px;line-height:1.75">যেসব ইউটিউব চ্যানেল থেকে রিলসগুলো নেওয়া হয়েছে — <b>${bn(chans.length)}টি চ্যানেল</b>, সবই হিন্দু ধর্মীয় বা ভক্তিমূলক। রিলসের সংখ্যা অনুযায়ী সাজানো।</p>
+      ${rows}
+      <div style="height:16px"></div></div>`;
+  }
+  /* নিচে পৌঁছালেই স্বয়ংক্রিয়ভাবে আরও রিলস জুড়ে যায় */
+  function attachReelScroll() {
+    const sent = document.getElementById('reelSentinel');
+    if (!sent || typeof IntersectionObserver === 'undefined') return;
+    if (U.reelObs) { try { U.reelObs.disconnect(); } catch (e) {} }
+    U.reelObs = new IntersectionObserver(es => {
+      if (es.some(e => e.isIntersecting)) ACTIONS.reelsMore();
+    }, { root: document.getElementById('view'), rootMargin: '600px' });
+    U.reelObs.observe(sent);
+  }
+  /* ---- রিলস ফিড: উপর-নিচ সোয়াইপ, অটো-প্লে, অনন্ত ---- */
+  const reelSoundOn = () => S.reelMute !== true;
+  const posterInner = id => `<img class="rthumb" src="${BP_THUMB(id)}" alt="" loading="lazy" referrerpolicy="no-referrer"
+      onerror="this.onerror=null;this.src='https://i.ytimg.com/vi/${id}/hqdefault.jpg'">
+      <span class="rshade"></span>
+      <button class="rplay" data-act="reelPlay2" data-id="${id}" aria-label="শব্দ নিয়ে চালান">${vico('play', 'sm')}</button>`;
+  /* পর্দায় যে রিলসটি সবচেয়ে বেশি দেখা যাচ্ছে সেটিই নিজে থেকে চলে, বাকিগুলো থেমে যায় */
+  function activateFeedSection(sec) {
+    if (!sec || sec.dataset.playing === '1') return;
+    const id = sec.dataset.id, box = sec.querySelector('.rvp');
+    if (!box) return;
+    document.querySelectorAll('#rfeed .rsec').forEach(o => {
+      if (o !== sec && o.dataset.playing === '1') {
+        o.dataset.playing = '0';
+        const b = o.querySelector('.rvp');
+        if (b) b.innerHTML = posterInner(o.dataset.id);
+      }
+    });
+    const mute = reelSoundOn() ? 0 : 1;
+    box.innerHTML = `<iframe src="https://www.youtube.com/embed/${id}?autoplay=1&mute=${mute}&playsinline=1&rel=0&modestbranding=1&loop=1&playlist=${id}"
+      title="রিলস" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`;
+    sec.dataset.playing = '1';
+  }
+  function attachFeedPlay() {
+    const box = document.getElementById('rfeed');
+    if (!box || typeof IntersectionObserver === 'undefined') return;
+    if (U.playObs) { try { U.playObs.disconnect(); } catch (e) {} }
+    U.playObs = new IntersectionObserver(es => {
+      es.forEach(e => { if (e.isIntersecting) activateFeedSection(e.target); });
+    }, { root: box, rootMargin: '-45% 0px -45% 0px', threshold: 0 });
+    box.querySelectorAll('.rsec').forEach(sc => U.playObs.observe(sc));
+  }
+  const FEED_PAGE = 12;
+  function feedItemHTML(r, abs) {
+    const ch = chOf(r);
+    const saved = !!(S.savedReels && S.savedReels[r[0]]);
+    return `<section class="rsec" data-abs="${abs}" data-id="${r[0]}">
+      <div class="rvp" data-id="${r[0]}">${posterInner(r[0])}</div>
+      <div class="rmeta">
+        <div class="rt">${esc(r[1])}</div>
+        <div class="rc">${ch ? esc(ch[0].trim()) : 'রিলস'}${ch && ch[1] ? ` · <a href="${ch[1]}" target="_blank" rel="noopener noreferrer" style="color:var(--gold-300)">চ্যানেল ↗</a>` : ''}</div>
+        <div class="racts">
+          <button class="ract ${saved ? 'on' : ''}" data-act="reelSave" data-id="${r[0]}">${saved ? '✓ সেভ হয়েছে' : '⤓ সেভ করুন'}</button>
+          <button class="ract" data-act="reelThumb" data-id="${r[0]}">ছবি ডাউনলোড ⤓</button>
+          <button class="ract" data-act="reelCopy" data-id="${r[0]}">লিংক কপি</button>
+          <a class="ract" href="${BP_YT(r[0])}" target="_blank" rel="noopener noreferrer">ইউটিউবে ↗</a>
+        </div>
+      </div>
+    </section>`;
+  }
+  function reelVideoScreen(id) {
+    const pool = bpOrdered();
+    const start = Math.max(0, pool.findIndex(x => x[0] === id));
+    U.reelAbs = start;
+    const rows = [];
+    for (let k = 0; k < FEED_PAGE; k++) rows.push(feedItemHTML(reelAt(pool, start + k), start + k));
+    const savedN = Object.keys(S.savedReels || {}).length;
+    return `${appbar('রিলস', 'সোয়াইপ করে উপর-নিচ', '#/reels')}
+    <div class="pad" style="padding-top:0">
+      <div class="rhead mini muted"><span>▲ নিচে সোয়াইপ = পরের রিলস · অটো প্লে · ${bn(start + 1)}/${bn(pool.length)}</span>
+        <span style="display:flex;gap:6px">
+          <button class="ract" data-act="reelSound">${reelSoundOn() ? '🔊 শব্দ চালু' : '🔇 নীরব'}</button>
+          <button class="ract" data-act="nav" data-to="#/reelssaved">সেভ (${bn(savedN)})</button>
+        </span></div>
+      <div class="rfeed" id="rfeed">${rows.join('')}<div id="rfeedEnd" style="height:1px"></div></div>
+      <div class="mini muted" style="margin-top:8px;line-height:1.7">▶ <b>অটো প্লে</b> — স্ক্রল করলেই দেখানো রিলস <b>শব্দ নিয়ে</b> নিজে থেকে চলে; নীরব করতে চাইলে উপরে <b>🔊 শব্দ চালু</b> বাটনে চেপে মিউট করুন (পছন্দ মনে রাখা হয়)। ⤓ <b>সেভ করুন</b> — রিলসটি তালিকায় জমা থাকে ও ইন্টারনেট ছাড়াই তালিকা দেখা যায়। <b>ছবি ডাউনলোড</b> — থাম্বনেইল ছবি ফাইল হিসেবে সেভ হয়। ইউটিউব ভিডিও ফাইল সরাসরি ডাউনলোড করতে দেয় না, তাই ভিডিওর জন্য “ইউটিউবে ↗” বাটন।</div>
+    </div>`;
+  }
+  function savedReelsScreen() {
+    const all = bpList();
+    const saved = S.savedReels || {};
+    const ids = Object.keys(saved).sort((a, b) => (saved[b].ts || 0) - (saved[a].ts || 0));
+    const rows = ids.map(id => {
+      const r = all.find(x => x[0] === id);
+      const s0 = saved[id];
+      return `<div class="card rowcard stack" style="margin-bottom:8px">
+        <img src="${BP_THUMB(id)}" alt="" style="width:52px;height:92px;object-fit:cover;border-radius:10px" loading="lazy" referrerpolicy="no-referrer">
+        <div style="flex:1;min-width:0">
+          <div class="ttl" style="font-size:.9rem;line-height:1.5">${esc(r ? r[1] : (s0.t || 'রিলস'))}</div>
+          <div class="mini muted" style="margin-top:4px">${esc(s0.ch || (r && chOf(r) ? chOf(r)[0] : 'রিলস'))}</div>
+          <div class="racts">
+            <button class="ract" data-act="nav" data-to="#/reels/${id}">চালান</button>
+            <a class="ract" href="${BP_YT(id)}" target="_blank" rel="noopener noreferrer">ইউটিউবে ↗</a>
+            <button class="ract" data-act="reelUnsave" data-id="${id}">মুছুন</button>
+          </div></div></div>`;
+    }).join('');
+    return `${appbar('সেভ করা রিলস', 'Saved · '+ids.length, '#/reels')}
+    <div class="pad" style="padding-top:0">
+      <p class="mini muted" style="margin:0 0 12px;line-height:1.75">সেভ করা রিলস এখানে জমা থাকে — ইন্টারনেট ছাড়াও তালিকা ও ছবি দেখা যায়। ভিডিও চালাতে ইন্টারনেট লাগবে।</p>
+      ${rows || '<div class="card empty"><h5>এখনো কিছু সেভ করা হয়নি</h5><p>রিলস ফিডে “⤓ সেভ করুন” চাপলে এখানে জমা হবে।</p></div>'}
+      <div style="height:16px"></div></div>`;
+  }
+  /* ফিডের শেষে পৌঁছালে আরও রিলস জুড়ে দেওয়া হয় (স্ক্রল থামে না) */
+  function attachFeedScroll() {
+    const box = document.getElementById('rfeed');
+    if (!box || typeof IntersectionObserver === 'undefined') return;
+    if (U.feedObs) { try { U.feedObs.disconnect(); } catch (e) {} }
+    const pool = bpOrdered();
+    U.feedObs = new IntersectionObserver(es => {
+      if (!es.some(e => e.isIntersecting)) return;
+      const end = document.getElementById('rfeedEnd');
+      if (!end) return;
+      let html = '';
+      for (let k = 0; k < 6; k++) {
+        const abs = (U.reelAbs || 0) + 1 + k;
+        html += feedItemHTML(reelAt(pool, abs), abs);
+      }
+      U.reelAbs = (U.reelAbs || 0) + 6;
+      end.insertAdjacentHTML('beforebegin', html);
+      U.feedObs.disconnect();
+      attachFeedScroll();
+      attachFeedPlay();
+    }, { root: box, rootMargin: '900px' });
+    const end = document.getElementById('rfeedEnd');
+    if (end) U.feedObs.observe(end);
   }
 
   /* ---------------------------------------------------------- 9. panjika */
@@ -2686,6 +3147,9 @@
         if (a === 'reel') { html = reelScreen(b); tab = 'feed'; }
         else { html = feedScreen(a === 'chat' ? b : null); tab = 'feed'; root = !a; }
         break;
+      case 'reels': html = a ? reelVideoScreen(a) : reelsScreen(); tab = 'home'; root = !a; break;
+      case 'reelsch': html = chanListScreen(); tab = 'home'; break;
+      case 'reelssaved': html = savedReelsScreen(); tab = 'home'; break;
       case 'notes': html = notesScreen(); tab = 'home'; break;
       case 'note': html = noteComposerScreen(); tab = 'home'; break;
       case 'seva': html = sevaScreen(); tab = 'seva'; root = true; break;
@@ -2708,6 +3172,8 @@
     view.scrollTop = 0;
     document.querySelector('.shell').classList.toggle('sub', !root);
     renderTabbar(tab);
+    if (name === 'reels' && !a) attachReelScroll();
+    if (name === 'reels' && a) { attachFeedScroll(); attachFeedPlay(); }
     if (name === 'quiz' && U.quiz) startQuizTimer();
     if (name === 'sadhana' && a !== 'seq' && U.sadhanaTab === 'dhyana' && U.med.running) medStart();
     if (name === 'sadhana' && a === 'seq' && U.seq.running) seqStart();
@@ -2845,6 +3311,77 @@
       (S.chatMsgs[id] = S.chatMsgs[id] || []).push({ me: true, t: v });
       save('chatMsgs'); U.chatDraft = ''; render(); toast('বার্তা পাঠানো হলো');
     },
+    bpOpen: el => { location.hash = '#/reels/' + el.dataset.id; },
+    reelsMore: () => { U.reelsN = (U.reelsN || 30) + 30; render(); },
+    reelSound: el => {
+      S.reelMute = !S.reelMute; save('reelMute');
+      el.textContent = reelSoundOn() ? '🔊 শব্দ চালু' : '🔇 নীরব';
+      const sec = document.querySelector('#rfeed .rsec[data-playing="1"]');
+      if (sec) { sec.dataset.playing = '0'; activateFeedSection(sec); }
+      toast(reelSoundOn() ? 'শব্দ চালু হয়েছে 🔊' : 'নীরব মোড 🔇');
+    },
+    reelPlay2: el => {
+      const id = el.dataset.id;
+      const box = el.closest('.rvp');
+      if (!box) return;
+      const sec0 = el.closest('.rsec');
+      S.reelMute = false; save('reelMute');
+      if (sec0) { const b = el.closest('.rsec'); b.dataset.playing = '0'; activateFeedSection(b); }
+      else {
+        box.innerHTML = `<iframe src="https://www.youtube.com/embed/${id}?autoplay=1&playsinline=1&rel=0&modestbranding=1"
+          title="রিলস" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`;
+      }
+    },
+    reelSave: el => {
+      const id = el.dataset.id;
+      const all = bpList();
+      const r = all.find(x => x[0] === id) || [];
+      S.savedReels = S.savedReels || {};
+      const ch = chOf(r);
+      S.savedReels[id] = { t: r[1] || 'রিলস', ch: ch ? ch[0].trim() : 'রিলস', ts: Date.now() };
+      save('savedReels');
+      el.classList.add('on'); el.textContent = '✓ সেভ হয়েছে';
+      toast('রিলস সেভ হয়েছে — “সেভ করা” তালিকায় পাবেন');
+    },
+    reelUnsave: el => {
+      const id = el.dataset.id;
+      if (S.savedReels) { delete S.savedReels[id]; save('savedReels'); }
+      toast('তালিকা থেকে মুছে ফেলা হলো'); render();
+    },
+    reelThumb: el => {
+      const id = el.dataset.id;
+      const a = document.createElement('a');
+      a.href = 'https://i.ytimg.com/vi/' + id + '/oar2.jpg';
+      a.download = 'reel-' + id + '.jpg';
+      a.target = '_blank'; a.rel = 'noopener';
+      fetch(a.href, { mode: 'cors' }).then(res => {
+        if (!res.ok) throw new Error('x');
+        return res.blob();
+      }).then(blob => {
+        const url = URL.createObjectURL(blob);
+        a.href = url; a.target = '';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+        toast('ছবি ডাউনলোড হচ্ছে ⤓');
+      }).catch(() => {
+        document.body.appendChild(a); a.click(); a.remove();
+        toast('ছবিটি নতুন ট্যাবে খুলছে — চেপে ধরে সেভ করুন');
+      });
+    },
+    reelCopy: el => {
+      const id = el.dataset.id, url = BP_YT(id);
+      const done = () => toast('লিংক কপি হয়েছে');
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done, () => toast(url));
+        else { toast(url); }
+      } catch (e) { toast(url); }
+    },
+    reelsShuffle: () => { U.reelSeed = Math.floor(Math.random() * 1e9) + 1; _bpOrder = null; _bpLen = 0; U.reelsN = 30; render(); },
+    reelCh: el => {
+      U.reelCh = +el.dataset.i; U.reelsN = 30;
+      if (location.hash !== '#/reels') location.hash = '#/reels'; else render();
+    },
     sheetOpen: () => openSheet(),
     sheetClose: () => closeSheet(),
     /* ---- নোট ---- */
@@ -2924,6 +3461,23 @@
       render();
     },
     seg: el => { U.libSeg = el.dataset.s; render(); },
+    audioCat: el => { U.audioCat = el.dataset.c; render(); },
+    audioPlay: el => { U.audioId = el.dataset.id; apStart(el.dataset.id); render(); },
+    audioStop: () => { U.audioId = null; apStop(); },
+    apToggle: () => { apToggle(); },
+    apJump: el => { apJump(+el.dataset.s); },
+    apNext: () => { apStep(1); },
+    apPrev: () => { apStep(-1); },
+    apStop: () => apStop(),
+    apSpeed: () => apSpeed(),
+    audioStep: el => {
+      const list = DB.gitaAudio || [];
+      if (!AP.id) { if (list[0]) { U.audioId = list[0].id; apStart(list[0].id); render(); } return; }
+      let i = list.findIndex(x => x.id === AP.id);
+      if (i < 0) i = 0;
+      i = (i + (+el.dataset.d) + list.length) % list.length;
+      U.audioId = list[i].id; apStart(list[i].id); render();
+    },
     cat: el => { U.libCat = el.dataset.c; render(); },
     mcat: el => { U.marketCat = el.dataset.c; render(); },
     chapter: el => {
@@ -3240,6 +3794,13 @@
       save('daily');
       return;
     }
+    if (e.target.id === 'apSeekBig') {
+      const v = +e.target.value, d = (AP.player && AP.player.getDuration) ? AP.player.getDuration() : 0;
+      if (d) { AP.player.seekTo(v, true); apFillPct(e.target, v / d * 100); }
+      const t = document.getElementById('apTimeBig'); if (t) t.textContent = apTime(v);
+      return;
+    }
+    if (e.target.id === 'apVol') { apSetVol(+e.target.value); apFillPct(e.target, +e.target.value); return; }
     if (e.target.id === 'jyDate' || e.target.id === 'jyTime' || e.target.id === 'jyCity') {
       const st = jyState();
       if (e.target.id === 'jyDate') st.date = e.target.value;
