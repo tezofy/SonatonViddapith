@@ -1,7 +1,7 @@
 /* সনাতন বিদ্যাপীঠ — অফলাইন service worker
    কৌশল: cache-first + background refresh. অ্যাপের সব ফাইল প্রথম দেখাতেই ক্যাশ হয়,
    তাই নেট না থাকলেও অ্যাপ পুরোপুরি চলে। */
-const CACHE = 'sanatana-v44';
+const CACHE = 'sanatana-v51';
 
 self.addEventListener('install', () => self.skipWaiting());
 
@@ -18,6 +18,15 @@ self.addEventListener('activate', event => {
    • ছবি/ফন্ট — cache-first (দ্রুত, অফলাইনেও চলে)
    • নেট না থাকলে সব ক্ষেত্রেই ক্যাশ থেকে */
 const NET_FIRST_EXT = ['/', '.html', '.htm', '.js', '.css', '.json', '.webmanifest'];
+
+/* ক্যাশে পড়া তবেই কাজে লাগাই যখন সেটি সফল (৪০৪ ক্যাশ হয়ে ছবি আটকে থাকবে না) */
+async function matchOk(cache, req) {
+  for (const opt of [{}, { ignoreSearch: true }]) {
+    const hit = await cache.match(req, opt);
+    if (hit && hit.ok) return hit;
+  }
+  return null;
+}
 
 function isNetworkFirst(url) {
   if (url.pathname.endsWith('/')) return true;
@@ -37,14 +46,14 @@ self.addEventListener('fetch', event => {
     const offline = async () => {
       const hit = await cache.match(req, { ignoreSearch: true });
       if (hit) return hit;
-      const shell = await cache.match('./index.html') || await cache.match('./');
+      const shell = (await cache.match('./index.html')) || (await cache.match('./'));
       return shell || new Response('অফলাইন — ফাইলটি এখনো ক্যাশ হয়নি।', {
         status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' }
       });
     };
 
     if (!isNetworkFirst(url)) {
-      const hit = await cache.match(req, { ignoreSearch: true });
+      const hit = await matchOk(cache, req);
       if (hit) {
         fetch(req).then(res => { if (res && res.ok) cache.put(req, res.clone()); }).catch(() => {});
         return hit;

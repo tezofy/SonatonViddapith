@@ -1333,7 +1333,12 @@
      ================================================================= */
   const DEVA = (typeof DARPAN_DEVAS !== 'undefined') ? DARPAN_DEVAS : [];
   const UPK = (typeof DARPAN_UPOKARAN !== 'undefined') ? DARPAN_UPOKARAN : {};
-  const ART_Q = '?v=79';                 /* ছবির ক্যাশ-বাস্ট */
+  const AAR = (typeof AARTI !== 'undefined') ? AARTI : {};
+  const NADS = (typeof NAD !== 'undefined') ? NAD : {};
+  const NENG = (typeof NAD_ENGINE !== 'undefined') ? NAD_ENGINE : null;
+  const NPLR = (typeof NAD_PLAYER !== 'undefined') ? NAD_PLAYER : null;
+  const AENG = (typeof AARTI_ENGINE !== 'undefined') ? AARTI_ENGINE : null;
+  const ART_Q = '?v=86';                 /* ছবির ক্যাশ-বাস্ট */
   const artSrc = (kind, name) => `icons/${kind}/${name}.png${ART_Q}`;
   const ART_LOAD = 'this.parentNode.classList.add(\'has-art\')';
   const ART_FAIL = "this.remove()";
@@ -1373,6 +1378,226 @@
     }).join('')}</div>`;
   }
 
+  /* ---------------------------------------------------------------
+     আরতি — প্রতিটি দেবতার নিজের আরতির কথা + অ্যাপের ভেতরেই তৈরি সুর
+     (তানপুরা · মঞ্জীরা · ঢোল · হারমোনিয়াম; কোনো বাইরের অডিও ফাইল নেই)
+     --------------------------------------------------------------- */
+  /* পূজার নাদ — শঙ্খ · উলুধ্বনি · ঢাক · কাঁসর (ছবি + ধ্বনি দুটোই) */
+  const nadOn = k => !!(NPLR && NPLR.isOn(k));
+
+  function nadChip(k) {
+    const o = NADS[k] || { n: k, t: '', g: '•' };
+    const on = nadOn(k);
+    return `<button class="nad-chip${on ? ' on' : ''}" data-act="nad" data-k="${k}" aria-pressed="${on ? 'true' : 'false'}"
+        aria-label="${esc(o.n)} — ${on ? 'বন্ধ করুন' : 'চালু করুন'}" title="${esc(o.n)} · ${esc(o.t)} (চাপ দিলে চালু/বন্ধ)">
+      <span class="nad-ic" data-artbox>
+        <img class="artimg" src="icons/nad/${k}.png${ART_Q}" alt="" loading="lazy" onload="${ART_LOAD}" onerror="${ART_FAIL}"/>
+        <span class="fallback">${esc(o.g || '•')}</span>
+      </span>
+      <b>${esc(o.n)}</b>
+    </button>`;
+  }
+  /* বাঁয়ে শঙ্খ · উলু, ডানে ঢাক · কাঁসর — ঘণ্টা ও “সব বন্ধ” নিচে এক লাইনে */
+  const NAD_LINKS = ['shankha', 'ulu', 'dhak', 'kashar', 'ganti'];
+  const NAD_YT = (typeof window !== 'undefined' && window.NAD_YT) || {
+    shankha: '7JLJPuSDuVM', ulu: 'PvzGO7b-VTM', dhak: '6eZ-3e5KbZo',
+    kashar: 'FXKJQakZJMs', ganti: 'FYYBqNV9res'
+  };
+  const NAD_LEFT = ['shankha', 'ulu'];
+  const NAD_RIGHT = ['dhak', 'kashar'];
+
+  function nadRow(keys) {
+    return `<div class="nad-row">${keys.map(nadChip).join('')}</div>`;
+  }
+
+  /* নিচের সারি — ঘণ্টা · সব বন্ধ (একই লাইনে, দুইটি ছবি সহ) */
+  function nadFoot() {
+    return `<div class="nad-foot">
+      ${nadChip('ganti')}
+      <button class="nad-chip nad-stop" data-act="nadStop" aria-label="সব নাদ বন্ধ করুন" title="সব নাদ বন্ধ — এক চাপে সব ধ্বনি থামবে">
+        <span class="nad-ic" data-artbox>
+          <img class="artimg" src="icons/nad/stop.png${ART_Q}" alt="" loading="lazy" onload="${ART_LOAD}" onerror="${ART_FAIL}"/>
+          <span class="fallback">✕</span>
+        </span>
+        <b>সব বন্ধ</b>
+      </button>
+    </div>
+    <p class="nad-note"></p>
+    <p class="nad-links">ইউটিউবে শুনুন: ${NAD_LINKS.map(k => `<a href="https://youtu.be/${NAD_YT[k]}" target="_blank" rel="noopener noreferrer">${esc((NADS[k] || {}).n || k)}</a>`).join(' · ')}</p>`;
+  }
+
+  function nadNoteText() {
+    const on = (NPLR && NPLR.active) ? NPLR.active() : [];
+    if (!on.length) return 'নাদ বন্ধ — যেটি চালু করবেন, সেটি বাজতেই থাকবে';
+    const nm = ks => ks.map(k => (NADS[k] || {}).n).join(' · ');
+    const yt = on.filter(k => NPLR.mode(k) === 'yt');
+    const sy = on.filter(k => NPLR.mode(k) === 'synth');
+    const pd = on.filter(k => NPLR.mode(k) === 'pending');
+    const parts = [];
+    if (yt.length) parts.push('ইউটিউবে বাজছে: ' + nm(yt));
+    if (sy.length) parts.push('অ্যাপের ধ্বনি: ' + nm(sy));
+    if (pd.length) parts.push('লোড হচ্ছে: ' + nm(pd));
+    const bl = on.filter(k => NPLR.blocked && NPLR.blocked(k));
+    if (bl.length) parts.push('ইউটিউব আটকাচ্ছে (' + nm(bl) + ') — নিচের লিংক থেকে শুনুন');
+    return parts.join(' · ');
+  }
+
+  /* সব নাদ-চিপের অবস্থা বাইরের সত্য (NAD_PLAYER) থেকে মিলিয়ে দেওয়া */
+  function syncNadUI() {
+    document.querySelectorAll('.nad-chip[data-k]').forEach(el => {
+      const on = nadOn(el.dataset.k);
+      el.classList.toggle('on', on);
+      el.setAttribute('aria-pressed', on ? 'true' : 'false');
+      const nm = (NADS[el.dataset.k] || {}).n || '';
+      el.setAttribute('aria-label', nm + ' — ' + (on ? 'বন্ধ করুন' : 'চালু করুন'));
+      el.classList.toggle('synth', on && !!(NPLR && NPLR.mode(el.dataset.k) === 'synth'));
+      el.classList.toggle('pending', on && !!(NPLR && NPLR.mode(el.dataset.k) === 'pending'));
+    });
+    document.querySelectorAll('.nad-note').forEach(n => { n.textContent = nadNoteText(); });
+  }
+
+  /* চাপ = চালু/বন্ধ; চালু থাকলে বাজতেই থাকে; একসঙ্গে সবগুলোও চলে */
+  function toggleNad(el, k) {
+    if (!NPLR || !NENG) { toast('এই ব্রাউজারে নাদ বাজানো যাচ্ছে না'); return; }
+    /* চাপের মুহূর্তেই অডিও-কনটেক্সট চালু (iOS/Chrome-এর নিয়ম) */
+    try { if (NENG.prime) NENG.prime(); } catch (e) { }
+    const nowOn = NPLR.toggle(k);
+    if (!S.sound) { S.sound = true; save('sound'); }
+    syncNadUI();
+    if (el && nowOn) { el.classList.remove('kick'); void el.offsetWidth; el.classList.add('kick'); }
+    toast((NADS[k] || {}).n + (nowOn ? ' চালু — বাজছে ✓' : ' বন্ধ'));
+  }
+
+  function nadStopAll() {
+    if (NPLR) NPLR.stopAll();
+    syncNadUI();
+    toast('সব নাদ বন্ধ হলো');
+  }
+
+  const aartiOf = id => AAR[id] || null;
+  const aartiYT = t => 'https://www.youtube.com/results?search_query=' + encodeURIComponent(t + ' আরতি');
+
+  function aartiState() {
+    return AENG ? AENG.state() : { playing: false, id: null, line: 0, elapsed: 0, total: 0 };
+  }
+
+  /* চলমান আরতির সঙ্গে সব আরতি-কার্ড ও ওভারলে মিলিয়ে দেওয়া */
+  function syncAartiUI() {
+    const st = aartiState();
+    document.querySelectorAll('[data-aarti]').forEach(box => {
+      const on = st.playing && st.id === box.dataset.aarti;
+      box.classList.toggle('playing', !!on);
+      box.classList.toggle('paused', !on && st.id === box.dataset.aarti && st.line > 0);
+      const btn = box.querySelector('[data-act="aartiPlay"]');
+      if (btn) btn.innerHTML = on ? '⏸ থামান' : (st.id === box.dataset.aarti && st.elapsed > 0 ? '▶ আবার সুর' : '▶ অ্যাপের সুর');
+      const bar = box.querySelector('.ar-bar > i');
+      if (bar) bar.style.width = (on && st.total ? Math.round(st.elapsed / st.total * 100) : 0) + '%';
+      const cur = box.querySelector('.ar-cur');
+      if (cur) {
+        const line = on ? ((AAR[st.id] || {}).lines || [])[st.line] : '';
+        cur.textContent = line ? '“' + line + '”' : '';
+      }
+      box.querySelectorAll('.ar-line').forEach(el => {
+        const i = +el.dataset.i;
+        el.classList.toggle('on', on && i === st.line);
+        el.classList.toggle('past', on && i < st.line);
+      });
+    });
+  }
+
+  /* পঙক্তি বদলালে চলমান লাইনটি চোখের সামনে আনা */
+  function aartiFocusLine(i) {
+    const box = document.querySelector('.dv-aarti');
+    if (!box || !S.motion) return;
+    const el = box.querySelector('.ar-line[data-i="' + i + '"]');
+    if (!el) return;
+    try {
+      const r = el.getBoundingClientRect(), br = box.getBoundingClientRect();
+      if (r.top < br.top + 30 || r.bottom > br.bottom - 30) {
+        window.scrollTo({ top: window.scrollY + r.top - br.top - 60, behavior: 'smooth' });
+      }
+    } catch (e) { }
+  }
+
+  /* ইউটিউবে গাওয়া আরতি — চাপ দিলেই লোড হয় (আগে থেকে iframe নয়) */
+  function openYt(id) {
+    const a = aartiOf(id);
+    if (!a || !a.yt) { if (a) window.open(aartiYT(a.t), '_blank', 'noopener'); return; }
+    if (AENG && aartiState().playing) { AENG.stop(); syncAartiUI(); }
+    document.querySelectorAll('.yt-slot').forEach(slot => {
+      if (slot.dataset.for !== id) slot.innerHTML = '';
+    });
+    const slot = document.querySelector('.dv-aarti .yt-slot') || document.querySelector('.aarti .yt-slot');
+    if (!slot) return;
+    slot.dataset.for = id;
+    slot.innerHTML = `<div class="yt-frame">
+        <iframe src="https://www.youtube-nocookie.com/embed/${a.yt}?autoplay=1&rel=0&modestbranding=1&playsinline=1"
+          title="${esc(a.t)} — ইউটিউব" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+      </div>
+      <div class="yt-bar"><span>ইউটিউব থেকে বাজছে · ${esc(a.t)}</span>
+        <button class="cbtn" data-act="ytClose">বন্ধ করুন</button></div>`;
+    toast('ইউটিউবে গাওয়া আরতি চালু হলো');
+  }
+
+  function closeYt() {
+    document.querySelectorAll('.yt-slot').forEach(slot => { slot.innerHTML = ''; delete slot.dataset.for; });
+  }
+
+  function startAarti(id) {
+    closeYt();                         /* দুটো একসঙ্গে নয় */
+    const a = aartiOf(id);
+    if (!a) { toast('এই দেবতার আরতি এখনো যোগ হয়নি'); return; }
+    if (!AENG) { toast('এই ব্রাউজারে সুর বাজানো যাচ্ছে না'); return; }
+    if (!S.sound) { S.sound = true; save('sound'); }   /* নিজে চাপ দিলে শব্দ চালু */
+    AENG.play(id, {
+      onLine: i => { syncAartiUI(); aartiFocusLine(i); },
+      onTick: () => syncAartiUI(),
+      onEnd: () => { syncAartiUI(); bellTone(.7); toast(a.t + ' — আরতি সম্পূর্ণ 🌸'); }
+    });
+    syncAartiUI();
+  }
+
+  function aartiToggle(id) {
+    const st = aartiState();
+    if (st.playing && st.id === id) { AENG.stop(); syncAartiUI(); toast('আরতি থামানো হলো'); return; }
+    startAarti(id);
+  }
+
+  /* পূজার পাতায় আরতি-কার্ড */
+  function aartiCard(id) {
+    const a = aartiOf(id);
+    if (!a) return '';
+    const st = aartiState();
+    const on = st.playing && st.id === id;
+    return `<div class="card pad dv-aarti${on ? ' playing' : ''}" data-aarti="${id}">
+      <div class="ar-head">
+        <span class="ar-ico" aria-hidden="true">${FLAME(18, 26)}</span>
+        <span class="ar-htx">
+          <b>আরতি · ${esc(a.t)}</b>
+          <i>${esc(a.src)} · ${bn(a.lines.length)} পঙক্তি · ${bn(Math.round(a.bpm))} মাত্রা/মিনিট</i>
+        </span>
+        <span class="ar-eq" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+      </div>
+      <div class="ar-lines">${a.lines.map((ln, i) =>
+        `<p class="ar-line${on && st.line === i ? ' on' : ''}" data-i="${i}">${esc(ln)}</p>`).join('')}</div>
+      <div class="ar-bar"><i style="width:${on && st.total ? Math.round(st.elapsed / st.total * 100) : 0}%"></i></div>
+      <div class="ar-acts">
+        <button class="btn gold sm ar-play" data-act="aartiPlay" data-id="${id}">${on ? '⏸ থামান' : '▶ অ্যাপের সুর'}</button>
+        ${a.yt
+          ? `<button class="btn maroon sm ar-ytb" data-act="ytPlay" data-id="${id}">▶ ইউটিউবে গান</button>`
+          : `<a class="btn maroon sm ar-ytb" href="${aartiYT(a.t)}" target="_blank" rel="noopener">▶ ইউটিউবে খুঁজুন</a>`}
+        <button class="cbtn cbtn-ico" data-act="bellRing"><img class="cbtn-art" src="icons/nad/ganti.png${ART_Q}" alt="" aria-hidden="true"/>ঘণ্টা</button>
+        <a class="cbtn ar-yt" href="${aartiYT(a.t)}" target="_blank" rel="noopener">অন্য সংস্করণ</a>
+      </div>
+      <div class="yt-slot"></div>
+      <p class="ar-note">${a.yt
+        ? 'ইউটিউবে গাওয়া আরতি — চাপ দিলেই এখানেই বাজবে। '
+        : 'এই দেবতার যাচাই করা ভিডিও এখনো যোগ করা হয়নি — সার্চ-লিংক কাজ করবে। '}
+        “অ্যাপের সুর” নেট ছাড়াও বাজে (তানপুরা · মঞ্জীরা · ঢোল · হারমোনিয়াম)। ${a.own ? 'কথা প্রচলিত আরতি।' : 'কথা এই দেবের নামে রচিত নাম-আরতি।'}</p>
+    </div>`;
+  }
+
   /* ---- পুরোহিতের হাত: ঘণ্টা, আরতি, অর্পণ ---- */
   function bellTone(vol) {
     try {
@@ -1398,6 +1623,7 @@
   function openAarti(id) {
     const d = DEVA.find(x => x.id === id) || DEVA[0];
     if (!d) return;
+    const a = aartiOf(d.id);
     let ov = document.getElementById('aarti');
     if (!ov) {
       ov = document.createElement('div');
@@ -1415,18 +1641,32 @@
         </div>
       </div>
       <div class="aarti-ttl">${esc(d.n)} — আরতি</div>
-      <div class="aarti-note">প্রদীপ ঘুরছে — ঘণ্টা বাজিয়ে “জয় ${esc(d.n)}” বলুন</div>
+      ${a ? `<div class="aarti-lyr" data-aarti="${d.id}">
+        <div class="ar-head">
+          <span class="ar-htx"><b>${esc(a.t)}</b><i>${esc(a.src)} · ${bn(a.lines.length)} পঙক্তি</i></span>
+          <span class="ar-eq" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+        </div>
+        <div class="ar-lines">${a.lines.map((ln, i) => `<p class="ar-line" data-i="${i}">${esc(ln)}</p>`).join('')}</div>
+        <div class="ar-bar"><i style="width:0%"></i></div>
+      </div>` : `<div class="aarti-note">এই দেবতার আরতির কথা এখনো যোগ হয়নি</div>`}
+      <div class="aarti-note">প্রদীপ ঘুরছে — ঘণ্টা বাজিয়ে সঙ্গে গাইতে পারেন</div>
+      ${a ? `<div class="yt-slot"></div>` : ''}
       <div class="aarti-acts">
-        <button class="btn gold sm" data-act="bellRing">ঘণ্টা বাজান</button>
+        ${a ? `<button class="btn gold sm" data-act="aartiPlay" data-id="${d.id}">▶ অ্যাপের সুর</button>` : ''}
+        ${a && a.yt ? `<button class="btn maroon sm" data-act="ytPlay" data-id="${d.id}">▶ ইউটিউবে গান</button>` : ''}
+        ${a && !a.yt ? `<a class="btn maroon sm" href="${aartiYT(a.t)}" target="_blank" rel="noopener">▶ ইউটিউবে খুঁজুন</a>` : ''}
+        <button class="btn ghost sm cbtn-ico" data-act="bellRing"><img class="cbtn-art" src="icons/nad/ganti.png${ART_Q}" alt="" aria-hidden="true"/>ঘণ্টা বাজান</button>
         <button class="btn ghost sm" data-act="aartiClose">থামান</button>
       </div>
     </div>`;
     try { hydrateArt(); } catch (e) {}
-    requestAnimationFrame(() => ov.classList.add('on'));
+    requestAnimationFrame(() => { ov.classList.add('on'); syncAartiUI(); });
     bellTone(.9);
   }
 
   function closeAarti() {
+    if (AENG && aartiState().playing) { AENG.stop(); syncAartiUI(); }
+    closeYt();
     const ov = document.getElementById('aarti');
     if (!ov) return;
     ov.classList.remove('on');
@@ -1646,7 +1886,7 @@
           <button class="btn gold sm cmd-go" data-act="devaOffer" data-id="${d.id}" data-k="${cur.k}">
             ${esc((UPK[cur.k] || {}).n || '')} দিন</button>
           <button class="cbtn" data-act="speak" data-text="${esc(cur.m)}">উচ্চারণ</button>
-          <button class="cbtn" data-act="bellRing">ঘণ্টা</button>
+          <button class="cbtn cbtn-ico" data-act="bellRing"><img class="cbtn-art" src="icons/nad/ganti.png${ART_Q}" alt="" aria-hidden="true"/>ঘণ্টা</button>
           <button class="cbtn" data-act="pujaAarti" data-id="${d.id}">আরতি</button>
         </div>
       </div>`;
@@ -1672,7 +1912,7 @@
         </div>
 
         <div class="tpl">
-          <div class="tside left" aria-label="প্রথমার্ধের উপকরণ">${leftRows}</div>
+          <div class="tside left" aria-label="প্রথমার্ধের উপকরণ">${leftRows}${nadRow(NAD_LEFT)}</div>
 
           <div class="tcore" data-artbox>
             <div class="tc-halo" aria-hidden="true"></div>
@@ -1689,8 +1929,10 @@
             <div class="tc-pct">${finished ? 'সম্পূর্ণ 🌸' : `${bn(pct)}% · ধাপ ${bn(i + 1)}/${bn(steps.length)}`}</div>
           </div>
 
-          <div class="tside right" aria-label="দ্বিতীয়ার্ধের উপকরণ">${rightRows}</div>
+          <div class="tside right" aria-label="দ্বিতীয়ার্ধের উপকরণ">${rightRows}${nadRow(NAD_RIGHT)}</div>
         </div>
+
+        ${nadFoot()}
 
         <div class="m-wide">${wideRow}</div>
 
@@ -1702,7 +1944,9 @@
         <div class="m-foot"><span>সনাতন বিদ্যাপীঠ</span><i>যেখানে প্রতিটি আরতির একটি কারণ আছে</i></div>
       </div>
 
-      <p class="m-hint">সোনালি রিং-এ যে উপকরণ, <b>সেটি আঙুলে ধরে মাঝের মূর্তির দিকে টেনে ছেড়ে দিন</b> — অর্পণ হয়ে যাবে। চাইলে কার্ডে ট্যাপও করতে পারেন। বাঁ দিকের উপকরণ উপর থেকে নিচে, তারপর ডান দিক।</p>
+      <p class="m-hint">সোনালি রিং-এ যে উপকরণ, <b>সেটি আঙুলে ধরে মাঝের মূর্তির দিকে টেনে ছেড়ে দিন</b> — অর্পণ হয়ে যাবে। চাইলে কার্ডে ট্যাপও করতে পারেন। বাঁ দিকের উপকরণ উপর থেকে নিচে, তারপর ডান দিক। দুই পাশের নাদ-বাটনে চাপ দিলে সেটি <b>চালু হয়ে বাজতেই থাকে</b> — আবার চাপে বন্ধ; একসঙ্গে সবগুলোও চালু রাখা যায়।</p>
+
+      ${aartiCard(d.id)}
 
       <div class="sect"><h4>এই পূজার মন্ত্র</h4><div class="line"></div>
         <span class="mini muted">${bn(d.mantras.length)}টি</span></div>
@@ -4252,11 +4496,19 @@
       render();
       toast('পূজা তালিকায় ফেরা হলো');
     },
-    bellRing: el => {
+    bellRing: () => {
+      /* বাটন নিজে নড়ে না — মন্দিরের ঝোলানো ঘণ্টা দুটোই দোলে */
       bellTone(1);
-      if (el) { el.classList.remove('ring'); void el.offsetWidth; el.classList.add('ring'); }
+      document.querySelectorAll('.m-bell').forEach(b => {
+        b.classList.remove('ring'); void b.offsetWidth; b.classList.add('ring');
+      });
     },
+    nad: el => toggleNad(el, el.dataset.k),
+    nadStop: () => nadStopAll(),
+    ytPlay: el => openYt(el.dataset.id || el.closest('[data-aarti]').dataset.aarti),
+    ytClose: () => { closeYt(); toast('ইউটিউব প্লেয়ার বন্ধ'); },
     pujaAarti: el => openAarti(el.dataset.id),
+    aartiPlay: el => aartiToggle(el.dataset.id || el.closest('[data-aarti]').dataset.aarti),
     aartiClose: () => { closeAarti(); toast('আরতি শেষ — জয় মা'); },
     devaReset: el => {
       S.deva[devaKey(el.dataset.id)] = []; save('deva');
@@ -4753,6 +5005,22 @@
   });
   window.addEventListener('hashchange', render);
   initDragEngine();
+  /* প্রতি রেন্ডারের পরে কমান্ড-বার ঠিক মাপে বসাই (ছোট ফোনে সরু) */
+  const _renderOld = render;
+  render = function () {
+    const r = _renderOld.apply(this, arguments);
+    try { if (window.__cmdSlim) window.__cmdSlim(); } catch (e) { }
+    /* নাদ-সারি চোখের সামনে এলে পাঁচটি প্লেয়ার নীরব অবস্থায় তৈরি করে রাখি */
+    setTimeout(function () {
+      try {
+        if (!document.querySelector('.nad-foot') || !NPLR || !NPLR.warm) return;
+        if (window.__nadWarmed) return;
+        window.__nadWarmed = true;
+        NPLR.warm();
+      } catch (e) { }
+    }, 500);
+    return r;
+  };
 
   /* =====================================================================
      INIT
@@ -4877,9 +5145,17 @@
     }, slow ? 14000 : 6500);
   }
 
-  function render() { route(); hdrInit(); hdrUpdate(); appbarTicker(); if (document.getElementById('brandline')) brandTicker();
+  function render() {
+    /* অন্য পাতায় চলে গেলে আরতি থেমে যাবে */
+    const ast = aartiState();
+    if (ast.playing && location.hash.indexOf('#/puja/deva/' + ast.id) !== 0) {
+      AENG.stop(); setTimeout(syncAartiUI, 0);
+    }
+    route(); hdrInit(); hdrUpdate(); appbarTicker(); if (document.getElementById('brandline')) brandTicker();
     if (document.getElementById('heroRot')) heroTicker();
-    refreshSetPop(); }
+    refreshSetPop();
+    setTimeout(syncAartiUI, 0);
+    setTimeout(syncNadUI, 0); }
 
   function init() {
     /* ডিফল্ট থিম এখন লাইট — পুরনো সেভ করা 'dark' একবার বদলে দেওয়া হয় */
@@ -4891,6 +5167,26 @@
     document.documentElement.dataset.theme = S.theme;
     applyBg();
     document.documentElement.classList.toggle('no-motion', !S.motion);
+    /* নিচের কমান্ড-বার ছোট হয়ে যায় — পোস্টারের নিচের বাটনগুলো ঢাকা না পড়ে */
+    let _cmdMin = null;
+    const cmdSlim = () => {
+      const bar = document.querySelector('.cmdbar');
+      if (!bar) { _cmdMin = null; return; }
+      /* স্ক্রল হয় ভেতরের .view-তে, window-এ নয় */
+      const view = document.querySelector('.view');
+      const sy = Math.max(window.scrollY || 0, view ? view.scrollTop : 0);
+      const min = sy > 60 || window.innerHeight < 700;
+      if (min !== _cmdMin) { _cmdMin = min; bar.classList.toggle('min', min); }
+    };
+    window.__cmdSlim = cmdSlim;
+    window.addEventListener('scroll', cmdSlim, { passive: true });
+    document.addEventListener('scroll', cmdSlim, { passive: true, capture: true });
+    setTimeout(cmdSlim, 0); setTimeout(cmdSlim, 300);
+    try { if (NPLR && NPLR.preload) NPLR.preload(); } catch (e) { }
+    document.addEventListener('click', function () { try { if (NPLR && NPLR.preload) NPLR.preload(); } catch (e) { } }, { once: true, capture: true });
+    window.addEventListener('resize', cmdSlim, { passive: true });
+    if (NPLR) NPLR.onChange = () => { try { syncNadUI(); } catch (e) { } };
+    if (NPLR) NPLR.onNote = msg => { try { toast(msg); } catch (e) { } };
     if (!location.hash) location.hash = '#/home';
     render();
     setTimeout(maybeNotify, 2500);
