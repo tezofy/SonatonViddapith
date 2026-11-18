@@ -1,19 +1,139 @@
-সনাতন বিদ্যাপীঠ — রিলিজ ম্যানিফেস্ট
-তারিখ: ১৭ নভেম্বর ২০২৬
-=====================================
-সর্বশেষ কমিট : 87510d3
-ফাইল-ভার্সন  : app.js v19 · app.css v17 · gita-katha.js v29 · gita-speaker.js v1
-গীতা কথা      : ৭০১/৭০১ শ্লোক
-বক্তা-তথ্য    : ৭০১ (কৃষ্ণ ৫৭৪ · অর্জুন ৮৬ · সঞ্জয় ৪০ · ধৃতরাষ্ট্র ১)
-থিম           : ডিফল্ট লাইট (পাটা)
+সনাতন বিদ্যাপীঠ — রিপো প্যাকেজ v36
+তারিখ: ১৮ নভেম্বর ২০২৬
+কমিট: 760c0a0
+--------------------------------------------------------------------
+নতুন তিন বিভাগ: পঞ্জিকা পাতা → উপরে “নতুন যোগ হয়েছে — জ্যোতিষ” কার্ড
+  • #/panjika/bibaho (বিয়ে-শুভদিন · বিবাহ লগ্ন)
+  • #/panjika/mritdosh (মৃতদোষ · ৩৬৫ দিন যাচাইকৃত)
+  • #/panjika/rashi (রাশি নির্ণয় · নবাংশ D9 + লগ্ন-নিশ্চয়তা)
+  • ইঞ্জিন: app/js/jyotish.js · যাচাই: docs/guide/JYOTISH-VERIFY.md
 
-চেনার উপায় (পুরনো ফাইল নয় কি না):
-- app/index.html-এ data-theme="light" এবং app.js?v=19 লেখা থাকবে
-- নেভিগেশন-বারের বাইরে ডান দিকে সোনালি + বাটন থাকবে
-- + চাপলে "আজকের হিসাব" প্যানেল (পয়েন্ট /১০০) খুলবে
-- পাঠ-পৃষ্ঠায় শ্লোকের নিচে "শ্রীভগবান উবাচ" ধাঁচের লাইন থাকবে
-
-GitHub-এ তোলা:
-1) এই zip extract করুন -> sanatana-biddapith/ ফোল্ডারটি রিপোতে দিন
-2) GitHub Pages চালু করুন (ওয়ার্কফ্লো আগেই আছে: .github/workflows/deploy-pages.yml)
-3) সাইটের ঠিকানা: https://<ব্যবহারকারী>.github.io/<রিপো>/app/
+ফাইল-তালিকা:
+    4.0K  sanatana-biddapith/.github/workflows/deploy-pages.yml
+    4.0K  sanatana-biddapith/.gitignore
+     36K  sanatana-biddapith/CHANGELOG.md
+    8.0K  sanatana-biddapith/CONTRIBUTING.md
+     12K  sanatana-biddapith/GITHUB-PUSH-GUIDE.md
+    4.0K  sanatana-biddapith/LICENSE
+    4.0K  sanatana-biddapith/MANIFEST.txt
+     24K  sanatana-biddapith/README.md
+       0  sanatana-biddapith/app/.nojekyll
+     12K  sanatana-biddapith/app/README.md
+     52K  sanatana-biddapith/app/css/app.css
+     12K  sanatana-biddapith/app/icons/ai/chats-dark.png
+     12K  sanatana-biddapith/app/icons/ai/chats-light.png
+     12K  sanatana-biddapith/app/icons/ai/exam-dark.png
+     12K  sanatana-biddapith/app/icons/ai/exam-light.png
+     20K  sanatana-biddapith/app/icons/ai/feed-dark.png
+     20K  sanatana-biddapith/app/icons/ai/feed-light.png
+     16K  sanatana-biddapith/app/icons/ai/gita-dark.png
+     16K  sanatana-biddapith/app/icons/ai/gita-light.png
+     12K  sanatana-biddapith/app/icons/ai/home-dark.png
+     12K  sanatana-biddapith/app/icons/ai/home-light.png
+     12K  sanatana-biddapith/app/icons/ai/library-dark.png
+     12K  sanatana-biddapith/app/icons/ai/library-light.png
+     12K  sanatana-biddapith/app/icons/ai/market-dark.png
+     12K  sanatana-biddapith/app/icons/ai/market-light.png
+     16K  sanatana-biddapith/app/icons/ai/me-dark.png
+     16K  sanatana-biddapith/app/icons/ai/me-light.png
+    8.0K  sanatana-biddapith/app/icons/ai/notes-dark.png
+    8.0K  sanatana-biddapith/app/icons/ai/notes-light.png
+     20K  sanatana-biddapith/app/icons/ai/om-dark.png
+     20K  sanatana-biddapith/app/icons/ai/om-light.png
+     12K  sanatana-biddapith/app/icons/ai/panjika-dark.png
+     12K  sanatana-biddapith/app/icons/ai/panjika-light.png
+    8.0K  sanatana-biddapith/app/icons/ai/posts-dark.png
+    8.0K  sanatana-biddapith/app/icons/ai/posts-light.png
+     16K  sanatana-biddapith/app/icons/ai/puja-dark.png
+     16K  sanatana-biddapith/app/icons/ai/puja-light.png
+     20K  sanatana-biddapith/app/icons/ai/quiz-dark.png
+     20K  sanatana-biddapith/app/icons/ai/quiz-light.png
+     20K  sanatana-biddapith/app/icons/ai/reels-dark.png
+     20K  sanatana-biddapith/app/icons/ai/reels-light.png
+     16K  sanatana-biddapith/app/icons/ai/seva-dark.png
+     16K  sanatana-biddapith/app/icons/ai/seva-light.png
+     16K  sanatana-biddapith/app/icons/ai/track-dark.png
+     16K  sanatana-biddapith/app/icons/ai/track-light.png
+    8.0K  sanatana-biddapith/app/icons/icon-dark-192.png
+     36K  sanatana-biddapith/app/icons/icon-dark-512.png
+    8.0K  sanatana-biddapith/app/icons/icon-light-192.png
+     28K  sanatana-biddapith/app/icons/icon-light-512.png
+     24K  sanatana-biddapith/app/img/bg-dark.webp
+     24K  sanatana-biddapith/app/img/bg-light.webp
+    4.0K  sanatana-biddapith/app/index.html
+    240K  sanatana-biddapith/app/js/app.js
+    108K  sanatana-biddapith/app/js/data.js
+    296K  sanatana-biddapith/app/js/gita-bn.js
+    1.4M  sanatana-biddapith/app/js/gita-katha.js
+     20K  sanatana-biddapith/app/js/gita-speaker.js
+    356K  sanatana-biddapith/app/js/gita.js
+     12K  sanatana-biddapith/app/js/jyotish.js
+    4.0K  sanatana-biddapith/app/manifest.webmanifest
+    4.0K  sanatana-biddapith/app/server.py
+    4.0K  sanatana-biddapith/app/sw.js
+     24K  sanatana-biddapith/content/gita-bn/ch01.part.js
+     36K  sanatana-biddapith/content/gita-bn/ch02.part.js
+     20K  sanatana-biddapith/content/gita-bn/ch03.part.js
+     20K  sanatana-biddapith/content/gita-bn/ch04.part.js
+     16K  sanatana-biddapith/content/gita-bn/ch05.part.js
+     20K  sanatana-biddapith/content/gita-bn/ch06.part.js
+     12K  sanatana-biddapith/content/gita-bn/ch07.part.js
+     12K  sanatana-biddapith/content/gita-bn/ch08.part.js
+     16K  sanatana-biddapith/content/gita-bn/ch09.part.js
+     16K  sanatana-biddapith/content/gita-bn/ch10.part.js
+     28K  sanatana-biddapith/content/gita-bn/ch11.part.js
+     12K  sanatana-biddapith/content/gita-bn/ch12.part.js
+     16K  sanatana-biddapith/content/gita-bn/ch13.part.js
+     12K  sanatana-biddapith/content/gita-bn/ch14.part.js
+     12K  sanatana-biddapith/content/gita-bn/ch15.part.js
+     12K  sanatana-biddapith/content/gita-bn/ch16.part.js
+     12K  sanatana-biddapith/content/gita-bn/ch17.part.js
+     32K  sanatana-biddapith/content/gita-bn/ch18.part.js
+     92K  sanatana-biddapith/content/gita-katha/ch01.part.js
+    136K  sanatana-biddapith/content/gita-katha/ch02.part.js
+     84K  sanatana-biddapith/content/gita-katha/ch03.part.js
+     80K  sanatana-biddapith/content/gita-katha/ch04.part.js
+     60K  sanatana-biddapith/content/gita-katha/ch05.part.js
+    104K  sanatana-biddapith/content/gita-katha/ch06.part.js
+     64K  sanatana-biddapith/content/gita-katha/ch07.part.js
+     60K  sanatana-biddapith/content/gita-katha/ch08.part.js
+     76K  sanatana-biddapith/content/gita-katha/ch09.part.js
+     88K  sanatana-biddapith/content/gita-katha/ch10.part.js
+    116K  sanatana-biddapith/content/gita-katha/ch11.part.js
+     44K  sanatana-biddapith/content/gita-katha/ch12.part.js
+     76K  sanatana-biddapith/content/gita-katha/ch13.part.js
+     60K  sanatana-biddapith/content/gita-katha/ch14.part.js
+     44K  sanatana-biddapith/content/gita-katha/ch15.part.js
+     52K  sanatana-biddapith/content/gita-katha/ch16.part.js
+     60K  sanatana-biddapith/content/gita-katha/ch17.part.js
+    164K  sanatana-biddapith/content/gita-katha/ch18.part.js
+     88K  sanatana-biddapith/docs/design/ui-preview-v2.html
+    124K  sanatana-biddapith/docs/design/ui-preview-v3.html
+     68K  sanatana-biddapith/docs/design/ui-preview.html
+     68K  sanatana-biddapith/docs/guide/00-MASTER-GUIDE.md
+     12K  sanatana-biddapith/docs/guide/GITA-VERIFICATION.md
+    8.0K  sanatana-biddapith/docs/guide/ICON-SET.md
+     16K  sanatana-biddapith/docs/guide/JYOTISH-VERIFY.md
+     88K  sanatana-biddapith/docs/guide/KATHA-AUDIT.md
+     16K  sanatana-biddapith/docs/guide/KATHA-SAMPLE.md
+    8.0K  sanatana-biddapith/docs/guide/NOTES.md
+     24K  sanatana-biddapith/docs/guide/PANJIKA-1433.md
+     16K  sanatana-biddapith/docs/guide/PANJIKA-1434.md
+    8.0K  sanatana-biddapith/docs/guide/PANJIKA-ACCURACY.md
+    8.0K  sanatana-biddapith/docs/guide/PANJIKA-SECTIONS.md
+    8.0K  sanatana-biddapith/docs/guide/SHUBHO-KARMA.md
+     12K  sanatana-biddapith/docs/guide/UPGRADE-IDEAS.md
+    8.0K  sanatana-biddapith/docs/guide/background-preview.html
+    232K  sanatana-biddapith/docs/guide/icon-set-dark.png
+     16K  sanatana-biddapith/docs/guide/icon-set-dark.svg
+    228K  sanatana-biddapith/docs/guide/icon-set-light.png
+     16K  sanatana-biddapith/docs/guide/icon-set-light.svg
+     32K  sanatana-biddapith/docs/guide/icons-preview.html
+    8.0K  sanatana-biddapith/docs/guide/notes-preview.html
+    8.0K  sanatana-biddapith/docs/guide/plus-panel-preview.html
+    8.0K  sanatana-biddapith/docs/guide/ubacha-preview.html
+    4.0K  sanatana-biddapith/index.html
+    4.0K  sanatana-biddapith/tools/build-gita-bn.py
+    4.0K  sanatana-biddapith/tools/build-gita-katha.py
+    4.0K  sanatana-biddapith/tools/build-gita-speaker.py
+    4.0K  sanatana-biddapith/tools/panjika_tithi.py
