@@ -441,7 +441,7 @@ html[data-theme="light"] .stars{color:#c14a2e}
 .toggle.on::after{transform:translateX(18px)}
 
 /* ---------- toast / fx ---------- */
-.toast{position:fixed; left:50%; bottom:96px; transform:translate(-50%,8px); z-index:200;
+.toast{position:fixed; left:50%; bottom:calc(56px + 96px); transform:translate(-50%,8px); z-index:200;
   padding:10px 16px; border-radius:12px; font-size:11.5px; font-weight:600;
   background:rgba(14,1,2,.95); border:1px solid rgba(215,169,79,.4); color:var(--gold-100);
   opacity:0; transition:.26s; pointer-events:none; max-width:88vw; text-align:center}
@@ -3363,12 +3363,7 @@ html[data-theme="light"] .dv-upimg{filter:drop-shadow(0 2px 3px rgba(90,40,20,.2
   display:grid; place-items:center; animation:flyIn 1s cubic-bezier(.2,.7,.3,1) forwards}
 .fly-in img{max-height:42px; filter:drop-shadow(0 4px 8px rgba(90,30,15,.4))}
 .fly-in b{position:absolute; opacity:.95}
-@keyframes flyIn{
-  0%{opacity:0; transform:translateX(-50%) scale(.6) translateY(20px)}
-  22%{opacity:1; transform:translateX(-50%) scale(1) translateY(0)}
-  72%{opacity:1; transform:translateX(-50%) scale(.8) translateY(-40px)}
-  100%{opacity:0; transform:translateX(-50%) scale(.3) translateY(-70px)}
-}
+/* flyIn-এর নতুন (৩ডি) সংজ্ঞা নিচে v82 ব্লকে */
 
 /* ---------- কমান্ড-বার ---------- */
 .cmdbar{
@@ -3554,3 +3549,282 @@ html[data-theme="dark"] .tside.right .tside-it.now{box-shadow:0 10px 18px -12px 
   .drag-ghost, .drag-ghost.drop, .drag-ghost.back, .tcore.drop-hot::after{animation:none; transition:none}
   .tside-it{transition:none}
 }
+
+/* =========================================================================
+   v81 — আরতি: প্রতিটি দেবতার আরতির কথা + অ্যাপের ভেতরেই তৈরি সুর
+   ========================================================================= */
+.dv-aarti{
+  position:relative; margin:10px 0 0; padding:12px 12px 10px; border-radius:15px;
+  border:1px solid rgba(201,162,39,.5);
+  background:linear-gradient(180deg,#fffdf7,#f8ecd4);
+  box-shadow:0 10px 22px -18px rgba(90,30,15,.7), inset 0 1px 0 rgba(255,255,255,.7);
+}
+.dv-aarti.playing{border-color:rgba(185,132,58,.9); box-shadow:0 12px 26px -16px rgba(140,36,17,.55), inset 0 1px 0 rgba(255,255,255,.8)}
+.ar-head{display:flex; align-items:center; gap:8px}
+.ar-ico{flex:0 0 auto; width:26px; height:26px; display:grid; place-items:center; border-radius:50%;
+  background:radial-gradient(circle at 50% 40%, rgba(255,234,190,.9), rgba(201,162,39,.18)); border:1px solid rgba(201,162,39,.5)}
+.ar-htx{display:flex; flex-direction:column; min-width:0; flex:1 1 auto}
+.ar-htx b{font-size:12px; font-weight:700; color:#6d1a10; line-height:1.35}
+.ar-htx i{font-style:normal; font-size:8.5px; color:#a5895f; line-height:1.4}
+.ar-eq{display:flex; align-items:flex-end; gap:2px; height:15px; opacity:.32; transition:opacity .3s}
+.ar-eq i{width:3px; height:4px; border-radius:2px; background:linear-gradient(180deg,#d7a94f,#8c2411)}
+.dv-aarti.playing .ar-eq, .aarti-lyr.playing .ar-eq{opacity:1}
+.dv-aarti.playing .ar-eq i, .aarti-lyr.playing .ar-eq i{animation:arEq .86s ease-in-out infinite}
+.ar-eq i:nth-child(2){animation-delay:.12s} .ar-eq i:nth-child(3){animation-delay:.24s}
+.ar-eq i:nth-child(4){animation-delay:.36s} .ar-eq i:nth-child(5){animation-delay:.48s}
+@keyframes arEq{0%,100%{height:4px} 50%{height:15px}}
+
+.ar-lines{margin:9px 0 7px; display:flex; flex-direction:column; gap:1px}
+.ar-line{margin:0; padding:2px 6px; border-radius:7px; font-size:10.5px; line-height:1.8; color:#6b5237;
+  transition:color .25s, background .25s, transform .25s, opacity .25s}
+.ar-line.on{color:#8c2411; font-weight:700; transform:translateX(3px);
+  background:linear-gradient(90deg, rgba(215,169,79,.3), rgba(215,169,79,0))}
+.ar-line.past{opacity:.5}
+.ar-cur{display:none}
+.ar-bar{height:3px; border-radius:99px; background:rgba(140,36,17,.14); overflow:hidden}
+.ar-bar > i{display:block; height:100%; width:0; border-radius:99px;
+  background:linear-gradient(90deg,#c9932f,#8c2411); transition:width .24s linear}
+.ar-acts{display:flex; flex-wrap:wrap; gap:6px; margin-top:9px; align-items:center}
+.ar-acts .cbtn, .ar-acts .btn{font-size:9.5px}
+.ar-yt{text-decoration:none; display:inline-flex; align-items:center; gap:4px}
+.ar-yt::after{content:"↗"; font-size:9px; opacity:.7}
+.ar-note{margin:8px 0 0; font-size:8px; line-height:1.65; color:#a5895f}
+
+/* ওভারলের ভিতরের আরতি-পঙক্তি */
+.aarti-lyr{margin:8px 0 6px; padding:9px 10px; border-radius:12px;
+  background:linear-gradient(180deg, rgba(255,253,247,.96), rgba(248,236,212,.96));
+  border:1px solid rgba(201,162,39,.45)}
+.aarti-lyr .ar-lines{max-height:132px; overflow:auto; -webkit-overflow-scrolling:touch}
+.aarti-lyr .ar-line{font-size:11px; text-align:center}
+.aarti-lyr .ar-htx b{font-size:12px}
+.aarti-card .aarti-acts{flex-wrap:wrap}
+
+html[data-theme="dark"] .dv-aarti{
+  border-color:rgba(215,169,79,.45);
+  background:linear-gradient(180deg, rgba(255,240,205,.10), rgba(255,240,205,.03));
+  box-shadow:0 12px 26px -18px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.05)}
+html[data-theme="dark"] .dv-aarti.playing{border-color:rgba(215,169,79,.8)}
+html[data-theme="dark"] .ar-htx b{color:var(--gold-200)}
+html[data-theme="dark"] .ar-htx i, html[data-theme="dark"] .ar-note{color:rgba(255,240,205,.5)}
+html[data-theme="dark"] .ar-line{color:rgba(255,240,205,.72)}
+html[data-theme="dark"] .ar-line.on{color:#ffe9b8; background:linear-gradient(90deg, rgba(215,169,79,.26), rgba(215,169,79,0))}
+html[data-theme="dark"] .ar-bar{background:rgba(255,240,205,.16)}
+html[data-theme="dark"] .aarti-lyr{background:linear-gradient(180deg, rgba(40,20,12,.9), rgba(28,14,8,.9)); border-color:rgba(215,169,79,.4)}
+
+@media (prefers-reduced-motion: reduce){
+  .ar-line, .dv-aarti.playing .ar-eq i, .aarti-lyr.playing .ar-eq i{animation:none; transition:none}
+}
+
+/* =========================================================================
+   v82 — পূজার নাদ (শঙ্খ · উলু · ঢাক · কাঁসর) · ইউটিউব আরতি · স্তর-সংশোধন
+   ========================================================================= */
+
+/* ---- দুই পাশের সাদা বাক্স আরও ছোট, নাদের জন্য জায়গা ---- */
+.tpl{grid-template-columns:minmax(0,1fr) 104px minmax(0,1fr); gap:5px}
+.tside-it{padding:4px 4px 4px 3px; gap:3px; border-radius:7px}
+.tside-no{width:14px; height:14px; font-size:7.5px}
+.tside-ico{width:26px; height:26px}
+.tside-img{max-width:26px; max-height:26px}
+.tside-glyph{width:23px; height:23px; font-size:10px}
+.tside-nm{font-size:9px}
+.tside-cap{font-size:6.6px}
+
+/* ---- নাদের সারি: দুই পাশের ফাঁকা জায়গায়, কলামের নিচে ---- */
+.nad-row{margin-top:auto; padding-top:7px; display:grid; grid-template-columns:1fr 1fr; gap:4px}
+.nad-chip{
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+  padding:5px 2px 4px; border-radius:9px; cursor:pointer; min-width:0;
+  border:1px solid rgba(201,162,39,.55);
+  background:linear-gradient(180deg,#fffdf6,#f7ebd2);
+  box-shadow:0 1px 0 #fff inset, 0 3px 6px -5px rgba(120,70,20,.6);
+  transition:transform .18s, box-shadow .2s, border-color .2s;
+}
+.nad-chip:active{transform:scale(.95)}
+.nd-chip{transform:none}
+.nad-ic{position:relative; width:26px; height:26px; display:grid; place-items:center}
+.nad-ic img{width:26px; height:26px; object-fit:contain; display:block;
+  filter:drop-shadow(0 2px 3px rgba(90,30,15,.28))}
+.nad-ic .fallback{position:absolute; inset:0; display:grid; place-items:center; font-size:9px; color:#8a5a1a}
+.nad-chip b{font-size:7.5px; font-weight:700; color:#6d1a10; letter-spacing:.1px; line-height:1.2; text-align:center}
+.nad-chip.on{border-color:#8c2411; box-shadow:0 0 0 2px rgba(215,169,79,.5), 0 4px 10px -6px rgba(140,36,17,.7)}
+.nad-chip.on::after{content:""; position:absolute; inset:-4px; border-radius:12px; border:1.5px solid rgba(185,132,58,.7);
+  animation:nadPulse .9s ease-out 2; pointer-events:none}
+.nad-chip{position:relative}
+.nad-chip.on .nad-ic{animation:nadKick .5s ease-out}
+@keyframes nadPulse{0%{opacity:1; transform:scale(.9)}100%{opacity:0; transform:scale(1.25)}}
+@keyframes nadKick{0%{transform:scale(1)}35%{transform:scale(1.22)}100%{transform:scale(1)}}
+
+/* ---- দেবতার সামনে অর্পণ (পিছনে যাওয়া বন্ধ) ---- */
+.fly-in{z-index:9; transform-style:preserve-3d}
+@keyframes flyIn{
+  0%{opacity:0; transform:translateX(-50%) translateZ(48px) scale(.6) translateY(20px)}
+  22%{opacity:1; transform:translateX(-50%) translateZ(84px) scale(1) translateY(0)}
+  72%{opacity:1; transform:translateX(-50%) translateZ(84px) scale(.85) translateY(-40px)}
+  100%{opacity:0; transform:translateX(-50%) translateZ(84px) scale(.3) translateY(-70px)}
+}
+
+/* ---- ঘণ্টা: বাটন নড়ে না, মন্দিরের ঘণ্টা দোলে ---- */
+.cbtn.ring{animation:none}
+.m-bell.ring{animation:bellRingHard .85s cubic-bezier(.3,.9,.4,1)}
+@keyframes bellRingHard{
+  0%{transform:rotate(0)} 18%{transform:rotate(-16deg)} 38%{transform:rotate(13deg)}
+  58%{transform:rotate(-9deg)} 78%{transform:rotate(5deg)} 100%{transform:rotate(0)}
+}
+
+/* ---- ইউটিউব আরতি: চাপ দিলেই লোড হয়, লেআউট লাফায় না ---- */
+.btn.maroon{background:linear-gradient(180deg,#a83018,#7d1c0c); color:#fff6e2; border-color:rgba(140,36,17,.8);
+  box-shadow:0 4px 10px -6px rgba(140,36,17,.8)}
+.btn.maroon:active{transform:translateY(1px)}
+.yt-slot{display:block}
+.yt-slot:empty{display:none}
+.yt-frame{position:relative; width:100%; aspect-ratio:16/9; margin-top:9px; border-radius:12px; overflow:hidden;
+  border:1px solid rgba(201,162,39,.6); background:#150a06;
+  box-shadow:0 10px 22px -16px rgba(90,30,15,.8)}
+.yt-frame iframe{position:absolute; inset:0; width:100%; height:100%; border:0}
+.yt-bar{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:6px}
+.yt-bar span{font-size:8.5px; color:#a5895f; line-height:1.4}
+html[data-theme="dark"] .yt-bar span{color:rgba(255,240,205,.55)}
+html[data-theme="dark"] .btn.maroon{background:linear-gradient(180deg,#c04022,#8c2411); color:#fff3dd}
+html[data-theme="dark"] .nad-chip{background:linear-gradient(180deg, rgba(255,240,205,.10), rgba(255,240,205,.03));
+  border-color:rgba(215,169,79,.45); box-shadow:none}
+html[data-theme="dark"] .nad-chip b{color:var(--gold-200)}
+html[data-theme="dark"] .nad-chip.on{border-color:rgba(215,169,79,.95)}
+
+@media (max-width:360px){
+  .tpl{grid-template-columns:minmax(0,1fr) 92px minmax(0,1fr); gap:4px}
+  .tside-ico, .tside-img{width:23px; max-width:23px; height:23px}
+  .nad-ic, .nad-ic img{width:23px; height:23px}
+  .nad-chip b{font-size:7px}
+}
+@media (prefers-reduced-motion: reduce){
+  .nad-chip.on::after, .nad-chip.on .nad-ic, .m-bell.ring{animation:none}
+  .fly-in{animation:flyIn 1s ease-out forwards}
+}
+
+/* নাদের সারিও পাশের কার্ডের সঙ্গে সামান্য হেলে থাকে (৩ডি-সঙ্গতি) */
+.tside.left .nad-row{transform:rotateY(7deg)}
+.tside.right .nad-row{transform:rotateY(-7deg)}
+@media (prefers-reduced-motion: reduce){ .tside .nad-row{transform:none} }
+
+/* =========================================================================
+   v83 — নাদ-বাটন এখন ল্যাচিং টগল: একবার চালু = বাজতেই থাকবে,
+   একসঙ্গে সব কয়টা খুশি চালু রাখা যায় (শঙ্খ · উলু · ঘণ্টা | ঢাক · কাঁসর)
+   ========================================================================= */
+.nad-chip.on{
+  border-color:#8c2411;
+  background:linear-gradient(180deg,#fff6e2,#f7e6c4);
+  box-shadow:inset 0 0 0 1px rgba(140,36,17,.22), 0 6px 14px -10px rgba(140,36,17,.85);
+}
+.nad-chip.on b{color:#8c2411}
+.nad-chip.on .nad-ic::after{
+  content:""; position:absolute; inset:-3px; border-radius:50%;
+  border:1.5px solid rgba(140,36,17,.5); animation:nadRing 1.5s ease-out infinite; pointer-events:none;
+}
+@keyframes nadRing{0%{opacity:.85; transform:scale(.86)}70%{opacity:0; transform:scale(1.2)}100%{opacity:0; transform:scale(1.2)}}
+.nad-chip.kick{animation:nadKick .45s ease-out}
+.nad-chip.synth::before{
+  content:""; position:absolute; top:-3px; right:-3px; width:7px; height:7px; border-radius:50%;
+  background:radial-gradient(circle at 40% 35%, #ffe9b8, #b9843a); border:1px solid #8c2411;
+}
+.nad-chip{position:relative}
+.nad-stop{border-style:dashed; opacity:.85}
+.nad-stop:active{opacity:1}
+.nad-x{
+  width:26px; height:26px; border-radius:50%; display:grid; place-items:center;
+  font-size:11px; color:#8c2411; background:rgba(140,36,17,.07); border:1px solid rgba(140,36,17,.25);
+}
+.nad-stop b{color:#8a5a34}
+html[data-theme="dark"] .nad-chip.on{background:linear-gradient(180deg, rgba(255,214,140,.22), rgba(255,214,140,.07)); border-color:rgba(215,169,79,.95)}
+html[data-theme="dark"] .nad-chip.on b{color:#ffe9b8}
+html[data-theme="dark"] .nad-x{color:var(--gold-200); background:rgba(255,240,205,.08); border-color:rgba(215,169,79,.35)}
+@media (prefers-reduced-motion: reduce){ .nad-chip.on .nad-ic::after, .nad-chip.kick{animation:none} }
+
+/* v83.1 — নাদ লোড হওয়ার অবস্থা: বাজা শুরু না হওয়া পর্যন্ত স্পষ্ট সংকেত */
+.nad-chip.pending{opacity:.85}
+.nad-chip.pending .nad-ic::before{
+  content:""; position:absolute; inset:-2px; border-radius:50%;
+  border:2px solid rgba(140,36,17,.35); border-top-color:#8c2411;
+  animation:nadSpin .8s linear infinite;
+}
+@keyframes nadSpin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){ .nad-chip.pending .nad-ic::before{animation:none} }
+
+/* =========================================================================
+   v85 — ঘণ্টা ও “সব বন্ধ” এক লাইনে (নিচের সারি), দুইটিতেই এআই ছবি
+   ========================================================================= */
+.nad-foot{
+  display:grid; grid-template-columns:1fr 1fr; gap:6px; align-items:stretch;
+  margin:8px 2px 2px; padding:6px; border-radius:11px;
+  border:1px dashed rgba(201,162,39,.55);
+  background:linear-gradient(180deg, rgba(255,253,246,.9), rgba(250,240,219,.75));
+}
+.nad-foot .nad-chip{
+  flex-direction:row; justify-content:center; gap:7px; padding:6px 8px; border-radius:9px;
+}
+.nad-foot .nad-chip b{font-size:9px}
+.nad-foot .nad-ic, .nad-foot .nad-ic img{width:24px; height:24px}
+.nad-foot .nad-chip.nad-stop{border-style:solid; border-color:rgba(140,36,17,.35)}
+.nad-note{
+  margin:5px 2px 0; font-size:7.5px; line-height:1.6; color:#a5895f; text-align:center;
+  min-height:11px;
+}
+html[data-theme="dark"] .nad-foot{background:linear-gradient(180deg, rgba(255,240,205,.07), rgba(255,240,205,.02)); border-color:rgba(215,169,79,.4)}
+html[data-theme="dark"] .nad-note{color:rgba(255,240,205,.5)}
+@media (max-width:360px){
+  .nad-foot{gap:4px; padding:5px}
+  .nad-foot .nad-chip b{font-size:8px}
+}
+
+/* =========================================================================
+   v86 — নিচের কমান্ড-বার সরু (পোস্টারের নিচের বাটন ঢাকা না পড়ে),
+        ঘণ্টার ছবি বাটনে, নাদ-বাটন আরও বড় ও স্পষ্ট
+   ========================================================================= */
+.cmdbar{padding:6px 10px 7px}
+.cmd-order{padding-bottom:3px}
+.cmd-dot{width:15px; height:15px; font-size:8px}
+.cmd-h{font-size:9.5px; margin-bottom:1px}
+.cmd-m{font-size:10.5px; -webkit-line-clamp:1; line-height:1.5}
+.cmd-acts{margin-top:5px; gap:5px}
+.cmdbar .cbtn{padding:6px 8px; font-size:9px}
+.cmdbar .btn.cmd-go{padding:8px 10px; font-size:11px}
+.cmdbar.min{padding:5px 10px 6px}
+.cmdbar.min .cmd-order{display:none}
+.cmdbar.min .cmd-m{-webkit-line-clamp:1}
+.cmdbar.min .cmd-h{font-size:9px}
+/* বাটনে ঘণ্টার ছবি */
+.cbtn-ico{display:inline-flex; align-items:center; gap:4px}
+.cbtn-art{width:15px; height:15px; object-fit:contain; display:block}
+/* নাদ-বাটন বড় ও সহজে চাপার মতো (কমপক্ষে ৪৪px) */
+.nad-chip{min-height:46px; touch-action:manipulation}
+.nad-ic, .nad-ic img{width:28px; height:28px}
+.nad-chip b{font-size:8px}
+.nad-foot .nad-chip{min-height:40px}
+.nad-foot .nad-ic, .nad-foot .nad-ic img{width:22px; height:22px}
+/* কমান্ড-বারের ফাঁকা জায়গা দিয়ে নিচের কনটেন্টে চাপ যেতে দাও */
+.cmdbar{pointer-events:none}
+.cmdbar > *{pointer-events:auto}
+@media (max-width:360px){
+  .nad-chip{min-height:44px}
+  .nad-ic, .nad-ic img{width:25px; height:25px}
+}
+/* কমান্ড-বারের লেখা/বিন্দু চাপ আটকাবে না — শুধু বাটনগুলো চাপ নেয় */
+.cmd-order,.cmd-dot,.cmd-sep,.cmd-h,.cmd-m,.cmd-now{pointer-events:none}
+.cmd-acts .btn,.cmd-acts .cbtn{pointer-events:auto}
+/* স্ক্রল করলে বার আরও সরু হয় (প্রায় ৪৬px) — নিচের কনটেন্ট ঢাকা পড়ে না */
+.cmdbar.min{padding:4px 10px 5px}
+.cmdbar.min .cmd-h{font-size:9px; margin:0; opacity:.85}
+.cmdbar.min .cmd-acts{margin-top:3px}
+
+/* =========================================================================
+   v87 — নাদ-বাটন কখনোই ঢাকা পড়বে না; ইউটিউবে শুনুন লিংক
+   ========================================================================= */
+/* বাটনগুলো ৩ডি-স্তরে সামনে — Safari/iOS-এর 3D hit-testing-এও চাপ পায় */
+.tside .nad-chip, .nad-foot .nad-chip{position:relative; z-index:6; transform:translateZ(10px)}
+.nad-row, .nad-foot{position:relative; z-index:5}
+/* কেন্দ্রের অলংকরণ কখনো চাপ নেবে না */
+.tc-halo, .tc-arch, .tc-pedestal, .t-figure, .m-halo{pointer-events:none}
+/* "ইউটিউবে শুনুন" লিংক-সারি */
+.nad-links{margin:5px 0 0; font-size:8.5px; line-height:1.7; text-align:center; color:#8a5a34}
+.nad-links a{color:#8c2411; font-weight:700; text-decoration:underline; text-underline-offset:2px}
+html[data-theme="dark"] .nad-links{color:var(--ink-3)}
+html[data-theme="dark"] .nad-links a{color:var(--gold-200)}
