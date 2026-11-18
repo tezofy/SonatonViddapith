@@ -154,6 +154,9 @@ html[data-theme="light"] .av{color:#8c2411; background:radial-gradient(circle at
 .li:last-child{border-bottom:none}
 .ico{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round}
 .ico.sm{width:16px;height:16px;stroke-width:1.8}
+html[data-theme="light"] .ico{stroke-width:1.75}
+html[data-theme="light"] .ico.sm{stroke-width:1.9}
+html[data-theme="light"] .ico.xs{stroke-width:2.1}
 .ico.xs{width:13px;height:13px;stroke-width:2}
 .iconbtn{width:36px;height:36px;border-radius:12px; display:grid;place-items:center; flex:0 0 auto; cursor:pointer;
   border:1px solid var(--card-border); background:var(--chip-bg); color:var(--ink-2); transition:.16s}
@@ -244,7 +247,7 @@ html[data-theme="light"] .ring .n{color:#8c2411}
   border-radius:17px; border:1px solid var(--card-border); background:var(--glass); color:var(--ink-2);
   font-size:10px; transition:.18s}
 .q:hover{border-color:var(--card-border-strong); transform:translateY(-2px)}
-.q .qi{width:34px;height:34px;border-radius:12px; display:grid;place-items:center; color:var(--gold-300);
+.q .qi{width:42px;height:42px;border-radius:14px; display:grid;place-items:center; color:var(--gold-300);
   background:radial-gradient(circle at 38% 30%, #762026, #3a0b0f 78%); border:1px solid rgba(215,169,79,.32)}
 html[data-theme="light"] .q .qi{color:#b0361f; background:radial-gradient(circle at 38% 30%, #fff6e2, #fbeed2 78%); border-color:rgba(176,54,31,.3)}
 .cover{width:54px;height:70px;border-radius:11px; flex:0 0 auto; display:grid; place-items:center; position:relative;
@@ -617,3 +620,120 @@ html[data-theme="light"] .sheet{background:linear-gradient(180deg,#fffdf6,#fdf3e
 html[data-theme="light"] .sheet-bg{background:rgba(107,41,26,.28)}
 html[data-theme="light"] .sheet .grab{background:rgba(176,54,31,.35)}
 @media (min-width:900px){ .sheet{left:50%; right:auto; transform:translateX(-50%); width:min(520px,100%); border-radius:22px 22px 0 0} }
+
+/* ---------- ফিড: পোস্ট · রিলস · চ্যাট ---------- */
+.avatar{width:32px; height:32px; border-radius:50%; display:grid; place-items:center; flex:0 0 auto;
+  font-family:var(--f-dis); font-size:13px; color:var(--gold-200);
+  background:radial-gradient(circle at 35% 30%, rgba(215,169,79,.35), rgba(215,169,79,.10));
+  border:1px solid rgba(215,169,79,.35)}
+html[data-theme="light"] .avatar{color:#8c2411; border-color:rgba(176,54,31,.35);
+  background:radial-gradient(circle at 35% 30%, #fff6e2, #fbeed2)}
+.posttext{margin:10px 0 0; font-size:12.9px; line-height:1.9; white-space:pre-wrap}
+.postacts{display:flex; gap:16px; margin-top:11px; padding-top:10px; border-top:1px solid var(--hairline)}
+.pact{display:flex; align-items:center; gap:5px; border:none; background:none; cursor:pointer;
+  color:var(--ink-4); font-size:11px; padding:0}
+.pact.on{color:var(--danger)}
+.reelgrid{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+.reel{position:relative; aspect-ratio:9/13; border-radius:16px; border:1px solid var(--card-border);
+  cursor:pointer; overflow:hidden; text-align:left; padding:0; color:#fff;
+  background:linear-gradient(170deg, var(--tint, #4a2222) 0%, rgba(0,0,0,.72) 100%)}
+.reel .rl-ico{position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  width:34px; height:34px; border-radius:50%; display:grid; place-items:center;
+  background:rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.35)}
+.reel .rl-len{position:absolute; top:8px; right:8px; font-size:9px; padding:2px 6px; border-radius:99px;
+  background:rgba(0,0,0,.45)}
+.reel .rl-txt{position:absolute; left:9px; right:9px; bottom:9px}
+.reel .rl-txt b{display:block; font-size:11.6px; line-height:1.45; font-weight:600}
+.reel .rl-txt i{display:block; font-size:9.4px; opacity:.85; font-style:normal; margin-top:3px}
+.chatrow{display:flex; align-items:center; gap:10px; width:100%; cursor:pointer; padding:11px 13px}
+.chatbox{display:flex; flex-direction:column; gap:8px; padding:4px 0 6px}
+.bub{max-width:82%; padding:9px 12px; border-radius:14px; font-size:12.4px; line-height:1.75;
+  background:var(--chip-bg); border:1px solid var(--card-border); color:var(--ink-2);
+  border-bottom-left-radius:5px; align-self:flex-start}
+.bub.me{align-self:flex-end; border-bottom-left-radius:14px; border-bottom-right-radius:5px;
+  background:linear-gradient(180deg, rgba(215,169,79,.24), rgba(215,169,79,.10));
+  border-color:rgba(215,169,79,.4); color:var(--ink)}
+html[data-theme="light"] .bub.me{background:linear-gradient(180deg, rgba(176,54,31,.14), rgba(176,54,31,.05));
+  border-color:rgba(176,54,31,.35)}
+.bub .bubwho{font-size:9.4px; letter-spacing:.4px; color:var(--gold-300); margin-bottom:3px}
+html[data-theme="light"] .bub .bubwho{color:#a83a22}
+
+/* ---------- ব্র্যান্ড আইকন (লাইট/ডার্ক দুই রূপ) ---------- */
+.brandav{width:38px; height:38px; border-radius:12px; flex:0 0 auto;
+  box-shadow:0 6px 16px -8px rgba(107,41,26,.5), inset 0 0 0 1px rgba(215,169,79,.25)}
+html[data-theme="dark"] .brandav{box-shadow:0 6px 16px -8px rgba(0,0,0,.8), inset 0 0 0 1px rgba(215,169,79,.35)}
+
+/* ---------- এআই ব্র্যান্ড আইকন (পটভূমি ছাড়া; থিম-অনুযায়ী আলাদা ফাইল) ---------- */
+.aico{width:28px; height:28px; flex:0 0 auto; display:block; object-fit:contain}
+.aico.sm{width:22px; height:22px}
+.aico.lg{width:40px; height:40px}
+.tab .aico{width:29px; height:29px; margin:0 auto}
+.qai{width:42px; height:42px; display:block; object-fit:contain}
+.aico.seg{width:18px; height:18px}
+.segment button{display:flex; align-items:center; justify-content:center; gap:6px}
+
+/* ---------- এআই পটভূমি থিম (মন্দির-পত্র) ---------- */
+html[data-bg="on"] .shell{
+  background-image:
+    linear-gradient(180deg, rgba(253,247,228,.42), rgba(253,247,228,.30)),
+    url('../img/bg-light.webp');
+  background-size:auto, cover;
+  background-position:center, center;
+  background-repeat:repeat, no-repeat;
+}
+html[data-theme="dark"][data-bg="on"] .shell{
+  background-image:
+    linear-gradient(180deg, rgba(16,1,2,.55), rgba(16,1,2,.42)),
+    url('../img/bg-dark.webp');
+}
+/* পটভূমি যেন কার্ডের ফাঁক-ফোকর ও অংশ-শিরোনামে দেখা যায় */
+html[data-bg="on"] .view, html[data-bg="on"] .scroll, html[data-bg="on"] main{background:transparent}
+
+/* পঞ্জিকা: উৎসব-দিনের চিহ্ন */
+.day.fest{position:relative; border-color:rgba(215,169,79,.45)}
+.day.fest::before{content:""; position:absolute; top:4px; right:4px; width:4px; height:4px; border-radius:50%;
+  background:var(--gold-400); opacity:.85}
+html[data-theme="light"] .day.fest::before{background:#b0361f}
+.day.ek.fest::before{background:#ffe9bd}
+html[data-theme="light"] .day.ek.fest::before{background:#fff6e6}
+
+/* পঞ্জিকা: সূত্র-লিংক চিপ */
+.xchips{display:flex; flex-wrap:wrap; gap:7px}
+.xlink{font-size:11.5px; font-weight:600; padding:7px 11px; border-radius:999px; text-decoration:none;
+  color:var(--ink-2); background:rgba(215,169,79,.08); border:1px solid rgba(215,169,79,.28); line-height:1}
+.xlink:active{transform:scale(.97)}
+html[data-theme="light"] .xlink{color:#6b1f22; background:rgba(215,169,79,.13); border-color:rgba(176,54,31,.24)}
+
+/* পঞ্জিকা: ভেতরের বিভাগ-চিপ */
+.xlink{border:1px solid rgba(215,169,79,.28); cursor:pointer; font-family:inherit}
+.xlink.on{background:var(--gold-400); color:#2a0b0d; border-color:var(--gold-400)}
+html[data-theme="light"] .xlink.on{background:#7e2127; color:#ffeccb; border-color:#7e2127}
+/* পঞ্চাঙ্গ ছক */
+.pghead,.pgrow{display:grid; grid-template-columns:.62fr .5fr 1fr .92fr 1.5fr; gap:6px; align-items:center;
+  font-size:10.5px; padding:6px 0; border-bottom:1px solid rgba(215,169,79,.12)}
+.pghead{color:var(--ink-3); font-weight:600; letter-spacing:.2px; border-bottom-color:rgba(215,169,79,.3)}
+.pgrow:last-child{border-bottom:none}
+.pgd{font-weight:700; color:var(--gold-200)}
+.pgw{color:var(--ink-3)}
+.pgt{color:var(--ink-2)}
+.pgn{color:var(--ink-3)}
+.pgf{color:var(--gold-300); line-height:1.35}
+html[data-theme="light"] .pgd{color:#7e2127}
+
+/* রিলস প্লেয়ার */
+.reelplayer{position:relative;border-radius:18px;overflow:hidden;padding:16px 15px 13px;min-height:330px;display:flex;flex-direction:column;
+  background:linear-gradient(160deg,color-mix(in srgb,var(--tint) 82%,#000) 0%,color-mix(in srgb,var(--tint) 46%,#170a0b) 100%);
+  border:1px solid rgba(215,169,79,.28); color:#fff4e2}
+.rp-bar{position:absolute;top:0;left:0;right:0;height:3px;background:rgba(255,255,255,.18)}
+.rp-bar i{display:block;height:100%;width:0;background:var(--gold-300);animation:rpfill 32s linear forwards}
+@keyframes rpfill{from{width:0}to{width:100%}}
+.rp-head{display:flex;justify-content:space-between;align-items:center;font-size:10.5px;opacity:.9}
+.rp-head .pill{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff4e2}
+.rp-body{flex:1;display:flex;flex-direction:column;justify-content:center;gap:11px;padding:16px 2px}
+.rp-line{font-family:var(--f-dis);font-size:16px;line-height:1.75;opacity:0;transform:translateY(10px);
+  animation:rplin .55s ease forwards;text-shadow:0 1px 2px rgba(0,0,0,.35)}
+@keyframes rplin{to{opacity:1;transform:none}}
+.rp-acts{display:flex;gap:8px;flex-wrap:wrap}
+.rp-acts .pact{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);color:#fff4e2}
+.rp-acts .pact.on{background:rgba(215,169,79,.85);color:#2a0b0d;border-color:transparent}
+html[data-theme="light"] .reelplayer{color:#fff6e8}

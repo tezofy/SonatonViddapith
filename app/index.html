@@ -6,9 +6,11 @@
 <meta name="theme-color" content="#fdf7e4"/>
 <title>সনাতন বিদ্যাপীঠ — শাস্ত্রের আলোয়, সেবার পথে</title>
 <meta name="description" content="সনাতন ধর্মের অনলাইন বিদ্যাপীঠ — শাস্ত্র গ্রন্থাগার, কোর্স, পরীক্ষা ও কুইজ, পূজা পদ্ধতি, পঞ্জিকা, সেবা ও দক্ষতাভিত্তিক আয়।"/>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%233c0e12'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23e8c274'%3E%E0%A5%90%3C/text%3E%3C/svg%3E"/>
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-light-192.png"/>
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-dark-192.png" media="(prefers-color-scheme: dark)"/>
+<link rel="apple-touch-icon" href="icons/icon-light-512.png"/>
 <link rel="manifest" href="manifest.webmanifest"/>
-<link rel="stylesheet" href="css/app.css?v=17"/>
+<link rel="stylesheet" href="css/app.css?v=31"/>
 </head>
 <body>
 <div class="grain" aria-hidden="true"></div>
@@ -25,7 +27,14 @@
 <script src="js/gita-bn.js?v=4"></script>
 <script src="js/gita-katha.js?v=29"></script>
 <script src="js/gita-speaker.js?v=1"></script>
-<script src="js/data.js?v=9"></script>
-<script src="js/app.js?v=19"></script>
+<script>
+  /* অফলাইন: service worker */
+  if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)) {
+    addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  }
+</script>
+<script src="js/data.js?v=19"></script>
+<script src="js/jyotish.js?v=2"></script>
+<script src="js/app.js?v=35"></script>
 </body>
 </html>

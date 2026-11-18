@@ -34,6 +34,7 @@
   const S = {
     name: store.get('name', 'সৌরভ চক্রবর্তী'),
     theme: store.get('theme', 'light'),
+    bg: store.get('bg', true),
     sound: store.get('sound', false),
     motion: store.get('motion', true),
     font: store.get('font', 17),
@@ -62,7 +63,12 @@
     asanaDone: store.get('asanaDone', {}),
     daily: store.get('daily', {}),
     script: store.get('script', 'bn'),
-    notes: store.get('notes', [])
+    notes: store.get('notes', []),
+    socialLikes: store.get('socialLikes', {}),
+    chatMsgs: store.get('chatMsgs', {}),
+    notifyOn: store.get('notifyOn', false),
+    notifiedKey: store.get('notifiedKey', ''),
+    festSeen: store.get('festSeen', '')
   };
   const save = k => store.set(k, S[k]);
 
@@ -74,46 +80,67 @@
     sadhanaTab: 'japa',
     med: { mins: 10, left: 600, running: false, phase: '' }, medTimer: null,
     seq: { i: 0, left: 20, running: false }, seqTimer: null,
-    panjika: { y: TODAY.getFullYear(), m: TODAY.getMonth() + 1, day: TODAY_KEY, view: 'bn', by: null, bm: null },
+    panjika: { y: TODAY.getFullYear(), m: TODAY.getMonth() + 1, day: TODAY_KEY, view: 'bn', by: null, bm: null, all: false },
     noteQ: '', noteTag: 'সব', noteCtx: null,
     note: { text: '', tags: [], ctx: null, edit: null },
-    sheet: false
+    sheet: false,
+    feedTab: 'posts', chatId: null, chatDraft: ''
   };
 
   /* --------------------------------------------------------------- icons  */
   const SPRITE = `
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 10.6 12 4l8 6.6V20h-5.2v-5.6H9.2V20H4z"/></symbol>
-  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4.2 5.6c2.6-1 5-1 7.8.6v13c-2.8-1.6-5.2-1.6-7.8-.6z"/><path d="M19.8 5.6c-2.6-1-5-1-7.8.6v13c2.8-1.6 5.2-1.6 7.8-.6z"/></symbol>
-  <symbol id="i-exam" viewBox="0 0 24 24"><path d="M5.5 4.2h8.2l4.8 4.8v10.8H5.5z"/><path d="M13.7 4.2v4.8h4.8"/><path d="m8.9 14.6 1.9 1.9 3.7-3.7"/></symbol>
-  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20.2s-7.2-4.4-7.2-9.5A4.1 4.1 0 0 1 12 7.4a4.1 4.1 0 0 1 7.2 3.3c0 5.1-7.2 9.5-7.2 9.5z"/></symbol>
-  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8.4" r="3.6"/><path d="M5.2 20c1.3-3.6 3.8-5.3 6.8-5.3s5.5 1.7 6.8 5.3"/></symbol>
-  <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 3.2c1.3 1.7 2 3.2 2 4.5 0 1.6-1.1 2.6-2 3.4-.9-.8-2-1.8-2-3.4 0-1.3.7-2.8 2-4.5z"/><path d="M5.4 12.4h13.2L17.2 20H6.8z"/></symbol>
-  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.8" y="5.2" width="16.4" height="15" rx="2.6"/><path d="M8.2 3.2v4M15.8 3.2v4M3.8 10h16.4"/></symbol>
-  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.6"/><path d="M12 2.4v2.2M12 19.4v2.2M2.4 12h2.2M19.4 12h2.2"/></symbol>
-  <symbol id="i-bag" viewBox="0 0 24 24"><path d="M3.6 8.6h16.8L19 20.4H5z"/><path d="M8.6 8.6V7a3.4 3.4 0 0 1 6.8 0v1.6"/></symbol>
-  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.4"/><path d="m15.8 15.8 4.2 4.2"/></symbol>
-  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6.4 16.6V11a5.6 5.6 0 0 1 11.2 0v5.6l1.6 2H4.8z"/><path d="M10.2 20.2a2 2 0 0 0 3.6 0"/></symbol>
-  <symbol id="i-back" viewBox="0 0 24 24"><path d="m14.2 6-6 6 6 6"/></symbol>
-  <symbol id="i-close" viewBox="0 0 24 24"><path d="M7 7l10 10M17 7 7 17"/></symbol>
-  <symbol id="i-mark" viewBox="0 0 24 24"><path d="M6.5 4.6h11v15.2l-5.5-3.8-5.5 3.8z"/></symbol>
-  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8.4 5.6 18 12l-9.6 6.4z"/></symbol>
-  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5.4 12.6 4.4 4.4 8.8-9.4"/></symbol>
-  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h13M12.6 6l6 6-6 6"/></symbol>
-  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.2"/><path d="M12 7.6V12l3 2"/></symbol>
-  <symbol id="i-wallet" viewBox="0 0 24 24"><rect x="3.6" y="6" width="16.8" height="12.4" rx="2.6"/><path d="M3.6 10.4h16.8"/><circle cx="16.4" cy="14.6" r="1.2"/></symbol>
-  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.4 5.4l1.6 1.6M17 17l1.6 1.6M18.6 5.4 17 7M7 17l-1.6 1.6"/></symbol>
-  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3.4v2M12 18.6v2M3.4 12h2M18.6 12h2M5.8 5.8l1.4 1.4M16.8 16.8l1.4 1.4M18.2 5.8l-1.4 1.4M7.2 16.8l-1.4 1.4"/></symbol>
-  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3.4 19 6v6c0 4.3-3 7.2-7 8.6-4-1.4-7-4.3-7-8.6V6z"/><path d="m9.2 12 2 2 3.6-3.8"/></symbol>
-  <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M7.6 4.6h8.8v4.2a4.4 4.4 0 0 1-8.8 0z"/><path d="M7.6 6H5a2.4 2.4 0 0 0 2.6 2.4M16.4 6H19a2.4 2.4 0 0 1-2.6 2.4M12 13.2V17M8.6 20h6.8"/></symbol>
-  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
-  <symbol id="i-pen" viewBox="0 0 24 24"><path d="M4.6 19.4l1-4.2L16.1 4.7l3.2 3.2L8.8 18.4z"/><path d="m14.3 6.5 3.2 3.2"/></symbol>
-  <symbol id="i-om" viewBox="0 0 24 24"><path d="M7 17c-2.2 0-3.4-1.4-3.4-3.2 0-1.8 1.3-3 3-3"/><path d="M6.6 10.8c0-2.4 1.9-4.1 4.2-4.1 2 0 3.4 1.2 3.4 3 0 1.6-1 2.6-2.4 2.6"/><path d="M11.8 12.4c1.6 0 2.7 1.1 2.7 2.6 0 2-2 3.4-4.6 3.4-1.6 0-3-.4-4.1-1.1"/><path d="M7.6 6.3c.9-.6 2.3-.9 3.6-.6"/><path d="M14.6 7.6c1.6.5 2.6 1.8 2.6 3.4 0 1.4-.7 2.6-1.8 3.3"/></symbol>
-  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.2 8.2 0 0 1 9.5 4a8.4 8.4 0 1 0 10.5 10.5z"/></symbol>
-  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h11"/></symbol>
+  <!-- ধর্মীয় ধাঁচের আইকন-সেট: প্রতিটি আইকন নিজের বাটনের ভাব অনুসারে -->
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3.6 20.4h16.8"/><path d="M5.8 20.4V13h12.4v7.4"/><path d="M10.1 20.4v-4.1a1.9 1.9 0 0 1 3.8 0v4.1"/><path d="m7 13 5-4.2 5 4.2"/><path d="m9.1 8.8 2.9-2.4 2.9 2.4"/><path d="M12 6.4V4.2"/><path d="m12 4.2 3 1.2-3 1.2"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M3.8 6.7c2.4-1 4.6-.6 6.5.8v10.8c-1.9-1.4-4.1-1.8-6.5-.8z"/><path d="M20.2 6.7c-2.4-1-4.6-.6-6.5.8v10.8c1.9-1.4 4.1-1.8 6.5-.8z"/><path d="M12 7.5v10.8"/><circle cx="12" cy="10.4" r=".55"/><circle cx="12" cy="15.2" r=".55"/></symbol>
+  <symbol id="i-exam" viewBox="0 0 24 24"><path d="M4.3 7.1h15.4a1 1 0 0 1 1 1v9.6a1 1 0 0 1-1 1H4.3a1 1 0 0 1-1-1V8.1a1 1 0 0 1 1-1z"/><path d="M6.6 10.5h6.4"/><path d="M6.6 13.6h4.2"/><path d="m14.3 14.2 1.5 1.5 2.6-2.9"/><path d="M3.3 7.1c1.4-.9 2.7-1.3 4-1.1"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4.2 8.9a3 3 0 0 1 3-3h9.6a3 3 0 0 1 3 3v4.6a3 3 0 0 1-3 3H9.6l-3.8 3v-3a3 3 0 0 1-1.6-2.6z"/><path d="M8.5 5.9C9.4 4.5 10.6 3.8 12 3.8s2.6.7 3.5 2.1"/><circle cx="9.1" cy="11.1" r=".7"/><circle cx="12" cy="11.1" r=".7"/><circle cx="14.9" cy="11.1" r=".7"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M4.7 14.2c0 1.9 1.4 3 3.1 3h8.4c1.7 0 3.1-1.1 3.1-3"/><path d="m4.7 14.2 2.1-3.4M19.3 14.2 17.2 10.8"/><path d="M12 5.6c-.9 1.1-1.4 2-1.4 2.8 0 .9.6 1.5 1.4 2 .8-.5 1.4-1.1 1.4-2 0-.8-.5-1.7-1.4-2.8z"/><path d="M9.1 8.2c.8.2 1.3.7 1.5 1.4M14.9 8.2c-.8.2-1.3.7-1.5 1.4"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="7.6" r="2.7"/><path d="M12 5.2v.7"/><path d="M6.2 19.3c.9-3.2 3.1-4.9 5.8-4.9s4.9 1.7 5.8 4.9"/><path d="M8.3 19.3c1.2.6 2.4.9 3.7.9s2.5-.3 3.7-.9"/></symbol>
+  <symbol id="i-flame" viewBox="0 0 24 24"><path d="M5.2 15.4h13.6l-1.7 4.3H6.9z"/><path d="M12 3.3c1.4 1.9 2.1 3.4 2.1 4.7 0 1.6-1.2 2.7-2.1 3.5-.9-.8-2.1-1.9-2.1-3.5 0-1.3.7-2.8 2.1-4.7z"/><path d="M9.4 12.6c.8.6 1.7.9 2.6.9s1.8-.3 2.6-.9"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><path d="M4.4 6.4h15.2v13.4H4.4z"/><path d="M4.4 10h15.2"/><path d="M7.2 13.2h5.2M7.2 16.4h4.2"/><circle cx="16" cy="14.9" r="1.7"/><path d="M16 12.2v.8M16 16.8v.8M13.3 14.9h.8M17.9 14.9h.8"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.7"/><circle cx="12" cy="12" r="3.3"/><path d="M12 4.3v3.2M12 16.5v3.2M4.3 12h3.2M16.5 12h3.2"/><path d="m6.6 6.6 2.3 2.3M15.1 15.1l2.3 2.3M17.4 6.6l-2.3 2.3M8.9 15.1l-2.3 2.3"/><circle cx="12" cy="12" r=".9"/></symbol>
+  <symbol id="i-bag" viewBox="0 0 24 24"><path d="M6.1 9.4h11.8l-1.2 10.4H7.3z"/><path d="M8.7 9.4c0-2.1 1.5-3.6 3.3-3.6s3.3 1.5 3.3 3.6"/><path d="M10.7 9.4v1.9M13.3 9.4v1.9"/><circle cx="12" cy="14.6" r="1.1"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.6" cy="10.6" r="5.7"/><path d="m14.9 14.9 4.2 4.2"/><circle cx="10.6" cy="10.6" r="1.2"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M7.3 16.3c.9-1 1.3-2.4 1.3-4.4 0-2.6 1.5-4.5 3.4-4.5s3.4 1.9 3.4 4.5c0 2 .4 3.4 1.3 4.4z"/><path d="M12 7.4V6.1"/><circle cx="12" cy="4.9" r="1"/><path d="M10.6 16.3c0 1 .6 1.7 1.4 1.7s1.4-.7 1.4-1.7"/><path d="M12 18v1.4"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="m14.3 6.3-6 5.5 6 5.5"/><circle cx="16.6" cy="11.8" r=".85"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M7.2 7.2l9.6 9.6M16.8 7.2l-9.6 9.6"/></symbol>
+  <symbol id="i-mark" viewBox="0 0 24 24"><path d="M6.7 4.6h10.6v15.1l-5.3-3.7-5.3 3.7z"/><circle cx="12" cy="9.8" r="1"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.1"/><path d="M10.4 8.9l4.6 3.1-4.6 3.1z"/><path d="M12 2.3v1.2M12 20.5v1.2M2.3 12h1.2M20.5 12h1.2"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5.6 12.7 4.3 4.3 8.5-9.1"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4.4 12h14.2"/><path d="m14.5 7.6 4.1 4.4-4.1 4.4"/><path d="M6.4 9.6 8.8 12M6.4 14.4 8.8 12"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 7.6V12l3 1.9"/><path d="M12 4v1.1M12 18.9V20M4 12h1.1M18.9 12H20"/></symbol>
+  <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M4.5 12.4h15c0 4.1-3.3 6.9-7.5 6.9s-7.5-2.8-7.5-6.9z"/><circle cx="12" cy="8.2" r="1.7"/><circle cx="8.4" cy="9.6" r="1.1"/><circle cx="15.6" cy="9.6" r="1.1"/><path d="M6.9 12.4c1.4.8 3.1 1.2 5.1 1.2s3.7-.4 5.1-1.2"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.7"/><circle cx="12" cy="12" r=".8"/><path d="M12 2.9v2.1M12 19v2.1M2.9 12h2.1M19 12h2.1M5.6 5.6l1.5 1.5M16.9 16.9l1.5 1.5M18.4 5.6l-1.5 1.5M7.1 16.9l-1.5 1.5"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6.9"/><circle cx="12" cy="12" r="2.7"/><path d="M12 5.1v1.9M12 17v1.9M5.1 12h1.9M17 12h1.9"/><path d="m7.4 7.4 1.3 1.3M15.3 15.3l1.3 1.3M16.6 7.4l-1.3 1.3M8.7 15.3l-1.3 1.3"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3.4 19 6v6c0 4.3-3 7.2-7 8.6-4-1.4-7-4.3-7-8.6V6z"/><path d="M12 8.9c-1.2 1.4-1.8 2.4-1.8 3.4 0 1 .8 1.8 1.8 2.4 1-.6 1.8-1.4 1.8-2.4 0-1-.6-2-1.8-3.4z"/></symbol>
+  <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M7.2 12.6h9.6c0 3.7-2.1 6-4.8 6s-4.8-2.3-4.8-6z"/><path d="M9.4 12.6c0-1.1 1.1-1.8 2.6-1.8s2.6.7 2.6 1.8"/><circle cx="12" cy="8.1" r="1.4"/><path d="M8.9 11.4c-.4-1.9.1-3.3 1.3-4.2M15.1 11.4c.4-1.9-.1-3.3-1.3-4.2"/><path d="M8.4 7.6c.9-.4 1.8-.4 2.6 0M15.6 7.6c-.9-.4-1.8-.4-2.6 0"/><path d="M7 20.4h10"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5.2v13.6M5.2 12h13.6"/><circle cx="7.1" cy="7.1" r=".62"/><circle cx="16.9" cy="7.1" r=".62"/><circle cx="7.1" cy="16.9" r=".62"/><circle cx="16.9" cy="16.9" r=".62"/></symbol>
+  <symbol id="i-om" viewBox="0 0 24 24"><text x="12" y="18.1" text-anchor="middle" font-size="17.5" font-family="Noto Sans Devanagari, Nirmala UI, Mangal, serif" fill="currentColor" stroke="none">ॐ</text></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.2 8.2 0 0 1 9.5 4a8.4 8.4 0 1 0 10.5 10.5z"/><circle cx="17.2" cy="6.6" r=".7"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7.4h16M4 12h10.6M4 16.6h16"/><circle cx="18.4" cy="12" r="1"/></symbol>
+  <symbol id="i-pen" viewBox="0 0 24 24"><path d="M18.1 4.7c1.3 2.5.6 5.6-1.6 7.8-1.9 1.9-4.5 2.9-6.8 2.6.3-2.3 1.3-4.9 3.2-6.8 1.9-1.9 4.1-2.4 5.2-3.6z"/><path d="m9.9 15.9-4.6 4.6"/><path d="M14.2 8.2 11.9 10.5M11.9 12.9 9.6 15.2"/></symbol>
+  <symbol id="i-video" viewBox="0 0 24 24"><path d="M4.4 6.5h15.2v11H4.4z"/><path d="M9.9 9.7l4.3 2.3-4.3 2.3z"/><path d="M7 9.5v5M17 9.5v5"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M4 12 20 4.6 15.4 20 12 13.6z"/><path d="m12 13.6 8-9"/><circle cx="6.4" cy="15.6" r=".6"/></symbol>
   <defs><radialGradient id="gGlow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffd79a" stop-opacity=".85"/><stop offset="1" stop-color="#ffd79a" stop-opacity="0"/></radialGradient></defs>
 </svg>`;
-  const ico = (n, cls) => `<svg class="ico ${cls || ''}" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+  /* ---- এআই-জেনারেট ব্র্যান্ড আইকন (মেরুন টাইলে সোনালি প্রতীক) ---- */
+  const AI_ICON = {
+    home: 'home', book: 'library', chat: 'feed', exam: 'exam', heart: 'seva', user: 'me',
+    flame: 'puja', cal: 'panjika', target: 'quiz', bag: 'market',
+    om: 'om', gita: 'gita', dan: 'track', lekha: 'notes',
+    posts: 'posts', reels: 'reels', chats: 'chats'
+  };
+  const aiFile = n => `icons/ai/${AI_ICON[n]}-${S.theme === 'light' ? 'light' : 'dark'}.png`;
+  const aiIco = (n, cls) => `<img class="aico ${cls || ''}" src="${aiFile(n)}" alt="" aria-hidden="true"/>`;
+  const vico = (n, cls) => `<svg class="ico ${cls || ''}" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+  const ico = (n, cls) => (AI_ICON[n] && cls !== 'xs')
+    ? aiIco(n, cls)
+    : `<svg class="ico ${cls || ''}" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+  /* দ্রুত-বাটনের বড় স্লট — ব্র্যান্ড আইকন থাকলে সেটিই, নইলে ভেক্টর */
+  const qico = n => AI_ICON[n]
+    ? `<img class="qai" src="${aiFile(n)}" alt="" aria-hidden="true"/>`
+    : `<span class="qi">${ico(n)}</span>`;
   const FLAME = (w, h) => `<svg class="flame" width="${w || 30}" height="${h || 42}" viewBox="0 0 34 46" fill="none" aria-hidden="true">
     <ellipse class="glow" cx="17" cy="16" rx="14" ry="14" fill="url(#gGlow)"/>
     <path class="f2" d="M17 3c4.2 5.6 6.4 9.8 6.4 13.1 0 4-2.9 6.6-6.4 8.5-3.5-1.9-6.4-4.5-6.4-8.5C10.6 12.8 12.8 8.6 17 3Z" fill="#ffb347"/>
@@ -167,19 +194,93 @@
   /* -------------------------------------------------------------- panjika */
   const P = DB.panjika;
   const DAY_MS = 86400000;
+
+  /* --- সূর্যোদয়/সূর্যাস্ত ও দিনের মুহূর্ত (ঢাকা: ২৩.৮১° উ, ৯০.৪১° পূ, UTC+৬) --- */
+  const GEO = { lat: 23.8103, lon: 90.4125, tz: 6 };
+  const RAD = Math.PI / 180;
+  function sunTimes(dateKey) {
+    const [y, mo, da] = dateKey.split('-').map(Number);
+    const a = Math.floor((14 - mo) / 12), y2 = y + 4800 - a, m2 = mo + 12 * a - 3;
+    const JDN = da + Math.floor((153 * m2 + 2) / 5) + 365 * y2 + Math.floor(y2 / 4) - Math.floor(y2 / 100) + Math.floor(y2 / 400) - 32045;
+    const n = JDN - 2451545 + 0.0008, Jstar = n - GEO.lon / 360;
+    const M = (357.5291 + 0.98560028 * Jstar) % 360;
+    const C = 1.9148 * Math.sin(M * RAD) + 0.02 * Math.sin(2 * M * RAD) + 0.0003 * Math.sin(3 * M * RAD);
+    const lam = (M + C + 180 + 102.9372) % 360;
+    const Jt = 2451545 + Jstar + 0.0053 * Math.sin(M * RAD) - 0.0069 * Math.sin(2 * lam * RAD);
+    const dec = Math.asin(Math.sin(lam * RAD) * Math.sin(23.44 * RAD));
+    const cosH = (Math.sin(-0.833 * RAD) - Math.sin(GEO.lat * RAD) * Math.sin(dec)) / (Math.cos(GEO.lat * RAD) * Math.cos(dec));
+    const H = Math.acos(Math.max(-1, Math.min(1, cosH))) / RAD;
+    const cv = j => { const ms = (j - 2440587.5) * DAY_MS + GEO.tz * 3600000; const d = new Date(ms); return d.getUTCHours() * 60 + d.getUTCMinutes() + d.getUTCSeconds() / 60; };
+    return { rise: cv(Jt - H / 360), set: cv(Jt + H / 360), noon: cv(Jt) };
+  }
+  const pjHM = m => { m = Math.round(((m % 1440) + 1440) % 1440); return bn(Math.floor(m / 60)) + ':' + bn(String(m % 60).padStart(2, '0')); };
+  /* অষ্টভাগ: রাহুকাল · যমগণ্ড · গুলিক (বার অনুসারে), অভিজিৎ ও পারণের কাল */
+  function muhurta(dateKey) {
+    const t = sunTimes(dateKey), len = t.set - t.rise, part = len / 8;
+    const wd = new Date(dateKey + 'T00:00:00').getDay();
+    const R = [7, 1, 6, 4, 5, 3, 2][wd], Y = [4, 3, 2, 1, 0, 6, 5][wd], G = [6, 5, 4, 3, 2, 1, 0][wd];
+    const sp = i => [t.rise + i * part, t.rise + (i + 1) * part];
+    const mid = t.rise + len / 2;
+    const r = sp(R), yg = sp(Y), gl = sp(G);
+    return {
+      sunrise: pjHM(t.rise), sunset: pjHM(t.set), noon: pjHM(t.noon),
+      rahu: [pjHM(r[0]), pjHM(r[1])], yama: [pjHM(yg[0]), pjHM(yg[1])], guli: [pjHM(gl[0]), pjHM(gl[1])],
+      abhijit: [pjHM(mid - 24), pjHM(mid + 24)],
+      parana: [pjHM(t.rise), pjHM(t.rise + len / 4)],
+      len
+    };
+  }
+  /* --- তিথি ও নক্ষত্র: সূর্য-চন্দ্রের দ্রাঘিমা থেকে (নিম্ন-নির্ভুল Meeus সিরিজ) --- */
+  const norm360 = x => ((x % 360) + 360) % 360;
+  function jdLocal(dateKey, hoursLocal) {
+    const [y, mo, da] = dateKey.split('-').map(Number);
+    const a = Math.floor((14 - mo) / 12), y2 = y + 4800 - a, m2 = mo + 12 * a - 3;
+    const JDN = da + Math.floor((153 * m2 + 2) / 5) + 365 * y2 + Math.floor(y2 / 4) - Math.floor(y2 / 100) + Math.floor(y2 / 400) - 32045;
+    return JDN - 0.5 + (hoursLocal - GEO.tz) / 24;
+  }
+  function sunLon(T) {
+    const L0 = norm360(280.46646 + 36000.76983 * T + 0.0003032 * T * T);
+    const M = norm360(357.52911 + 35999.05029 * T - 0.0001537 * T * T);
+    const C = (1.914602 - 0.004817 * T - 0.000014 * T * T) * Math.sin(M * RAD) + 0.019993 * Math.sin(2 * M * RAD) + 0.000289 * Math.sin(3 * M * RAD);
+    return norm360(L0 + C);
+  }
+  function moonLon(T) {
+    const Lp = norm360(218.3164477 + 481267.88123421 * T - 0.0015786 * T * T);
+    const D = norm360(297.8501921 + 445267.1114034 * T - 0.0018819 * T * T);
+    const M = norm360(357.5291092 + 35999.0502909 * T - 0.0001536 * T * T);
+    const Mp = norm360(134.9633964 + 477198.8675055 * T + 0.0087414 * T * T);
+    const F = norm360(93.272095 + 483202.0175233 * T - 0.0036539 * T * T);
+    return norm360(Lp
+      + 6.288774 * Math.sin(Mp * RAD) + 1.274027 * Math.sin((2 * D - Mp) * RAD)
+      + 0.658314 * Math.sin(2 * D * RAD) + 0.213618 * Math.sin(2 * Mp * RAD)
+      - 0.185116 * Math.sin(M * RAD) - 0.114332 * Math.sin(2 * F * RAD)
+      + 0.058793 * Math.sin((2 * D - 2 * Mp) * RAD) + 0.057066 * Math.sin((2 * D - M - Mp) * RAD)
+      + 0.053322 * Math.sin((2 * D + Mp) * RAD) + 0.045758 * Math.sin((2 * D - M) * RAD)
+      - 0.040923 * Math.sin((M - Mp) * RAD) - 0.034720 * Math.sin(D * RAD)
+      - 0.030383 * Math.sin((M + Mp) * RAD));
+  }
+  function tithiIndex(dateKey, hoursLocal) {
+    const T = (jdLocal(dateKey, hoursLocal) - 2451545) / 36525;
+    return Math.floor(norm360(moonLon(T) - sunLon(T)) / 12) % 30;
+  }
+  function nakIndex(dateKey, hoursLocal) {
+    const T = (jdLocal(dateKey, hoursLocal) - 2451545) / 36525;
+    return Math.floor(norm360(moonLon(T)) / (360 / 27)) % 27;
+  }
   function panjikaFor(dateKeyStr) {
-    const d = new Date(dateKeyStr + 'T00:00:00');
-    const start = new Date(P.startNewMoon + 'T00:00:00');
-    const diff = Math.round((d - start) / DAY_MS);
-    const pos = ((diff % 30) + 30) % 30;
-    const shukla = pos < 15;
-    const t = shukla ? P.tithi[pos] : P.tithiK[pos - 15];
-    const nak = P.nakshatra[((diff % 27) + 27) % 27];
-    const sunrise = '৬:১৪', sunset = '৫:২১';
-    const shubho = ['৯:১০–১০:৪০', '১০:৫০–১২:২০', '১১:৩০–১:০০', '৯:৪০–১১:১০'][Math.abs(diff) % 4];
-    const rahu = ['১৫:০০–১৬:৩০', '১৩:৩০–১৫:০০', '১২:০০–১৩:৩০', '১৬:৩০–১৮:০০'][Math.abs(diff) % 4];
+    const mh = muhurta(dateKeyStr);
+    const riseH = sunTimes(dateKeyStr).rise / 60;
+    const ti = tithiIndex(dateKeyStr, riseH), ni = nakIndex(dateKeyStr, riseH);
+    const shukla = ti < 15;
+    const t = shukla ? P.tithi[ti] : P.tithiK[ti - 15];
+    const nak = P.nakshatra[ni];
     const fest = P.festivals[dateKeyStr] || '';
-    return { tithi: `${shukla ? 'শুক্লা' : 'কৃষ্ণ'} ${t}`, nak, sunrise, sunset, shubho, rahu, fest, ekadashi: t === 'একাদশী' };
+    return {
+      tithi: `${shukla ? 'শুক্লা' : 'কৃষ্ণ'} ${t}`, nak,
+      sunrise: mh.sunrise, sunset: mh.sunset,
+      shubho: `${mh.abhijit[0]}–${mh.abhijit[1]}`, rahu: `${mh.rahu[0]}–${mh.rahu[1]}`,
+      mh, fest, ekadashi: t === 'একাদশী' || /একাদশী/.test(fest)
+    };
   }
   /* ---------------- বাংলা ক্যালেন্ডার (বঙ্গাব্দ · বাংলাদেশ সংশোধিত) ---------------- */
   const BM_NAMES = ['বৈশাখ', 'জ্যৈষ্ঠ', 'আষাঢ়', 'শ্রাবণ', 'ভাদ্র', 'আশ্বিন', 'কার্তিক', 'অগ্রহায়ণ', 'পৌষ', 'মাঘ', 'ফাল্গুন', 'চৈত্র'];
@@ -254,7 +355,7 @@
 
     return `
     <div class="home-head">
-      <div class="av round">${ico('om', 'sm')}</div>
+      <img class="brandav" src="${S.theme === 'light' ? 'icons/icon-light-192.png' : 'icons/icon-dark-192.png'}" alt="সনাতন বিদ্যাপীঠ" data-light="icons/icon-light-192.png" data-dark="icons/icon-dark-192.png"/>
       <div style="flex:1"><div class="who">${greet}</div><div class="nm">${esc(S.name)}</div></div>
       ${themeBtn()}
       <button class="iconbtn" data-act="toast" data-msg="আজকের ২টি রিমাইন্ডার আছে" aria-label="বিজ্ঞপ্তি">${ico('bell')}</button>
@@ -277,10 +378,14 @@
     </div>
 
     <div class="quick">
-      <button class="q" data-act="nav" data-to="#/puja"><span class="qi">${ico('flame')}</span>পূজা</button>
-      <button class="q" data-act="nav" data-to="#/panjika"><span class="qi">${ico('cal')}</span>পঞ্জিকা</button>
-      <button class="q" data-act="nav" data-to="#/exam"><span class="qi">${ico('target')}</span>কুইজ</button>
-      <button class="q" data-act="nav" data-to="#/market"><span class="qi">${ico('bag')}</span>কাজ</button>
+      <button class="q" data-act="nav" data-to="#/puja">${qico('flame')}পূজা</button>
+      <button class="q" data-act="nav" data-to="#/panjika">${qico('cal')}পঞ্জিকা</button>
+      <button class="q" data-act="nav" data-to="#/exam">${qico('target')}কুইজ</button>
+      <button class="q" data-act="nav" data-to="#/market">${qico('bag')}কাজ</button>
+      <button class="q" data-act="nav" data-to="#/sadhana">${qico('om')}সাধনা</button>
+      <button class="q" data-act="nav" data-to="#/gita">${qico('gita')}গীতা</button>
+      <button class="q" data-act="nav" data-to="#/track">${qico('dan')}হিসাব</button>
+      <button class="q" data-act="nav" data-to="#/notes">${qico('lekha')}নোট</button>
     </div>
 
     <div class="pad">
@@ -357,7 +462,7 @@
     </div>
 
     <div class="sevaband" data-act="nav" data-to="#/seva" style="cursor:pointer">
-      ${ico('heart')}
+      ${vico('heart')}
       <div style="flex:1"><h5>${esc(camp.title)}</h5><p>${esc(camp.sh || camp.blurb)}</p></div>
       <span class="pill ok">${bn(pct)}%</span>
     </div>
@@ -594,12 +699,17 @@
         </div>
         <p class="ktext">${esc(t.katha)}</p>
         ${t.prayog ? `<div class="prayog"><b>জীবনে প্রয়োগ ·</b> ${esc(t.prayog)}</div>` : ''}
+        <div style="display:flex;gap:8px;margin-top:11px;flex-wrap:wrap">
+          <button class="btn ghost sm" data-act="speakKatha" data-i="${i}">${vico('play', 'xs')} কথা শুনুন</button>
+          <button class="btn ghost sm" data-act="speakFull" data-i="${i}">${vico('play', 'xs')} শ্লোক + কথা</button>
+          <button class="btn ghost sm" data-act="speakStop">থামান</button>
+        </div>
         <div class="tiny muted" style="margin-top:10px;line-height:1.7">কথাটি শ্লোকের ভাব অনুসরণ করে লেখা — শাস্ত্রীয় ঘটনা বা দৈনন্দিন জীবনের দৃষ্টান্ত; উদ্দেশ্য কেবল শিক্ষা, বিনোদন নয়।</div>
       </div>` : `<div class="card pad"><div class="mini muted">এই শ্লোকের উদাহরণ-কথা এখনো যুক্ত হয়নি — ধাপে ধাপে যোগ হচ্ছে।</div></div>`}
 
       <div style="display:flex;gap:9px;margin-top:14px">
         <button class="btn ghost" style="flex:1" data-act="nav" data-to="#/reader/${b.id}/${i - 1}" ${i === 0 ? 'disabled' : ''}>আগের</button>
-        <button class="btn ghost" style="width:52px;padding:0" data-act="bookmark" data-i="${i}" aria-label="বুকমার্ক">${ico('mark', 'sm')}</button>
+        <button class="btn ghost" style="width:52px;padding:0" data-act="bookmark" data-i="${i}" aria-label="বুকমার্ক">${vico('mark', 'sm')}</button>
         <button class="btn ghost" style="width:52px;padding:0" data-act="noteFromReader" data-i="${i}" aria-label="এই শ্লোকের নোট">${ico('pen', 'sm')}</button>
         <button class="btn gold" style="flex:1.3" data-act="markread" data-i="${i}">${S.read[k] ? 'পঠিত ✓' : 'পাঠ সম্পন্ন'}</button>
       </div>
@@ -804,7 +914,7 @@
           <div class="sno">${done.includes(i) ? ico('check', 'xs') : bn(i + 1)}</div>
           <div style="flex:1"><h5>${esc(s.t)}</h5><p>${esc(s.d)}</p>
             ${s.m ? `<div class="mantra">${esc(s.m)}</div>
-              <button class="btn ghost sm" style="margin-top:8px" data-act="speak" data-text="${esc(s.m)}">${ico('play', 'xs')} উচ্চারণ শুনুন</button>` : ''}
+              <button class="btn ghost sm" style="margin-top:8px" data-act="speak" data-text="${esc(s.m)}">${vico('play', 'xs')} উচ্চারণ শুনুন</button>` : ''}
           </div>
         </div>`).join('')}
       <button class="btn ghost block" data-act="nav" data-to="#/panjika">আজকের শুভ সময় দেখুন</button>
@@ -831,9 +941,9 @@
       monthEnd = cells.length ? key(cells[cells.length - 1].date) : '9999-99-99';
       cellsHtml = Array.from({ length: lead }, () => '<div class="day mut"></div>').join('') +
         cells.map(c => {
-          const k = key(c.date), ek = panjikaFor(k).ekadashi, now = k === TODAY_KEY, selected = k === selKey;
-          return `<button class="day bn-day ${ek ? 'ek' : ''} ${now ? 'now' : ''} ${selected ? 'sel' : ''}" data-act="pday" data-k="${k}"
-            aria-label="${bn(c.d)} ${BM_NAMES[m]} ${bn(y)}">
+          const k = key(c.date), pk = panjikaFor(k), ek = pk.ekadashi, now = k === TODAY_KEY, selected = k === selKey;
+          return `<button class="day bn-day ${ek ? 'ek' : ''} ${pk.fest ? 'fest' : ''} ${now ? 'now' : ''} ${selected ? 'sel' : ''}" data-act="pday" data-k="${k}"
+            title="${esc(pk.fest || '')}" aria-label="${bn(c.d)} ${BM_NAMES[m]} ${bn(y)}">
             <span class="bnn">${bn(c.d)}</span><span class="eng">${bn(c.date.getDate())}</span></button>`;
         }).join('');
       head = `${BM_NAMES[m]} ${bn(y)} বঙ্গাব্দ`;
@@ -852,9 +962,9 @@
       monthStart = key(new Date(y, m - 1, 1));
       monthEnd = key(new Date(y, m - 1, daysInMonth));
       cellsHtml = cells.map(c => {
-        const k = key(c.date), ek = panjikaFor(k).ekadashi, now = k === TODAY_KEY, selected = k === selKey;
+        const k = key(c.date), pk = panjikaFor(k), ek = pk.ekadashi, now = k === TODAY_KEY, selected = k === selKey;
         const bd = bengaliDate(c.date);
-        return `<button class="day bn-day ${c.mut ? 'mut' : ''} ${ek ? 'ek' : ''} ${now ? 'now' : ''} ${selected ? 'sel' : ''}" data-act="pday" data-k="${k}">
+        return `<button class="day bn-day ${c.mut ? 'mut' : ''} ${ek ? 'ek' : ''} ${pk.fest ? 'fest' : ''} ${now ? 'now' : ''} ${selected ? 'sel' : ''}" data-act="pday" data-k="${k}" title="${esc(pk.fest || '')}">
           <span class="bnn">${bn(c.d)}</span><span class="eng">${bn(bd.d)}</span></button>`;
       }).join('');
       head = `${BN_MONTH[m - 1]} ${bn(y)}`;
@@ -871,6 +981,17 @@
         <button class="${!isBn ? 'on' : ''}" data-act="pview" data-v="en">ইংরেজি</button>
       </div>
 
+      <div class="card pad" style="margin-bottom:12px;border:1px solid rgba(215,169,79,.45);background:linear-gradient(160deg,rgba(215,169,79,.13),rgba(215,169,79,.03))">
+        <div class="kv"><div style="min-width:0"><div class="mini muted">নতুন যোগ হয়েছে — জ্যোতিষ</div>
+          <div class="ttl" style="margin-top:3px;font-size:.98rem">বিয়ে-শুভদিন · মৃতদোষ · রাশি নির্ণয়</div></div>
+          <span class="pill ok">নতুন</span></div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px">
+          <button data-act="pjsub" data-s="bibaho" style="padding:10px 6px;border-radius:12px;border:1px solid rgba(215,169,79,.35);background:rgba(215,169,79,.08);color:inherit;font-family:inherit;font-size:.82rem;font-weight:700;line-height:1.5;cursor:pointer">বিয়ে-শুভদিন<div class="mini muted" style="font-weight:400;margin-top:3px">বিবাহ লগ্ন</div></button>
+          <button data-act="pjsub" data-s="mritdosh" style="padding:10px 6px;border-radius:12px;border:1px solid rgba(215,169,79,.35);background:rgba(215,169,79,.08);color:inherit;font-family:inherit;font-size:.82rem;font-weight:700;line-height:1.5;cursor:pointer">মৃতদোষ<div class="mini muted" style="font-weight:400;margin-top:3px">পাদ ও শান্তি</div></button>
+          <button data-act="pjsub" data-s="rashi" style="padding:10px 6px;border-radius:12px;border:1px solid rgba(215,169,79,.35);background:rgba(215,169,79,.08);color:inherit;font-family:inherit;font-size:.82rem;font-weight:700;line-height:1.5;cursor:pointer">রাশি নির্ণয়<div class="mini muted" style="font-weight:400;margin-top:3px">জন্মলগ্ন ও গ্রহ</div></button>
+        </div>
+      </div>
+
       <div class="card oath pad mt">
         <div class="kv"><div><div class="mini muted">নির্বাচিত দিন</div>
           <div class="display" style="font-size:15px;margin-top:3px">${bn(selBn.d)} ${selBn.month}, ${BN_DAY[selDate.getDay()]}</div>
@@ -883,12 +1004,14 @@
           <div class="stat"><div class="k">সূর্যোদয়</div><div class="v">${sel.sunrise}</div></div>
           <div class="stat"><div class="k">ঋতু</div><div class="v">${selBn.season}</div></div>
         </div>
+        <button class="btn ghost block mt" data-act="pjsub" data-s="daily">দিনের মুহূর্ত ও পঞ্চাঙ্গ দেখুন</button>
       </div>
 
       <div class="sect"><h4>${head}</h4><div class="line"></div>${nav}</div>
       <div class="card pad">
         <div class="cal">${BN_DAYS.map(d => `<div class="h">${d}</div>`).join('')}${cellsHtml}</div>
         <div class="legend"><span><i style="background:#7e2127;border:1px solid #d7a94f"></i>একাদশী</span>
+          <span><i style="background:transparent;border:1px solid var(--gold-400)"></i>উৎসব</span>
           <span><i style="background:rgba(215,169,79,.5)"></i>আজ</span>
           <span class="mini muted">${note}</span></div>
       </div>
@@ -903,8 +1026,527 @@
             <div class="mini muted" style="margin-top:5px">${bn(d.getDate())} ${BN_MONTH[d.getMonth()]} · ${panjikaFor(k).tithi} · শুভ ${panjikaFor(k).shubho}</div></div></div>`;
       }).join('') : '<p class="tiny muted">এই মাসে কোনো ব্রত নেই।</p>'}
 
-      <p class="mini muted" style="margin-top:16px;line-height:1.7">বঙ্গাব্দ গণনা: বাংলাদেশ সংশোধিত পঞ্জিকা অনুযায়ী <b>বৈশাখ ১ = ১৪ এপ্রিল</b>. উপরের ছোট সংখ্যা ইংরেজি তারিখ। কিছু ক্ষেত্রে আঞ্চলিক পঞ্জিকায় ১ দিন পার্থক্য হতে পারে।</p>
+      ${(() => {
+        const f = nextFestInfo();
+        if (!f) return '';
+        return `<div class="sect"><h4>আসন্ন উৎসব</h4><div class="line"></div><span class="mini muted">${f.days === 0 ? 'আজ' : bn(f.days) + ' দিন বাকি'}</span></div>
+        <div class="card pad" style="border:1px solid rgba(215,169,79,.3)">
+          <div class="kv"><div style="min-width:0"><div class="ttl" style="color:var(--gold-200)">${esc(f.name)}</div>
+            <div class="mini muted" style="margin-top:5px">${bn(new Date(f.k + 'T00:00:00').getDate())} ${BN_MONTH[new Date(f.k + 'T00:00:00').getMonth()]} · ${panjikaFor(f.k).tithi}</div></div>
+            <span class="pill">${f.days === 0 ? 'আজ' : bn(f.days) + ' দিন'}</span></div>
+          <div style="display:flex;gap:8px;margin-top:11px">
+            <button class="btn ghost sm" style="flex:1" data-act="notifyAsk">${S.notifyOn ? 'রিমাইন্ডার বন্ধ করুন' : 'রিমাইন্ডার চালু করুন'}</button>
+            <button class="btn ghost sm" style="flex:1" data-act="pjsub" data-s="broto">পুরো তালিকা</button>
+          </div>
+        </div>`;
+      })()}
+
+      <div class="sect"><h4>পঞ্জিকার বিভাগ</h4><div class="line"></div><span class="mini muted">সবই অ্যাপের ভেতরে</span></div>
+      <div class="card pad xlinks">
+        <div class="xchips">${PJ_SUBS.map(([sl, lb]) => pjChip(sl, lb, '')).join('')}</div>
+        <div class="mini muted" style="margin-top:10px;line-height:1.65">ব্রত, একাদশী, পূর্ণিমা, অমাবস্যা, পূজা, বিশেষ দিন, দিবস, দৈনিক পঞ্জিকা, শুভকর্মের দিন, <b>বিয়ে-শুভদিন</b>, <b>মৃতদোষ</b>, <b>রাশি নির্ণয়</b>, পঞ্চাঙ্গ, রাশিফল, গ্রহণ ও ক্যালেন্ডার — সব এখানেই খুলবে।
+        তারিখ মিলিয়ে নেওয়া হয়েছে <a href="https://banglapanjika.com/" target="_blank" rel="noopener noreferrer" style="color:var(--gold-300)">বাংলা পঞ্জিকা</a>-র তালিকা থেকে।</div>
+      </div>
+
+      <p class="mini muted" style="margin-top:16px;line-height:1.7">বঙ্গাব্দ গণনা: বাংলাদেশ সংশোধিত পঞ্জিকা অনুযায়ী <b>বৈশাখ ১ = ১৪ এপ্রিল</b>. উপরের ছোট সংখ্যা ইংরেজি তারিখ। কিছু ক্ষেত্রে আঞ্চলিক পঞ্জিকায় ১ দিন পার্থক্য হতে পারে। তারিখ ও ব্রতের তালিকা মিলিয়ে নেওয়া হয়েছে <a href="https://banglapanjika.com/" target="_blank" rel="noopener noreferrer" style="color:var(--gold-300)">বাংলা পঞ্জিকা</a> থেকে; বিস্তারিত জানতে মূল সাইট দেখুন।</p>
     </div><div style="height:20px"></div>`;
+  }
+
+  /* ---------------- পঞ্জিকা: ভেতরের ১৬টি বিভাগ ---------------- */
+  const PJ_SUBS = [
+    ['broto', 'ব্রতের তালিকা'], ['ekadashi', 'একাদশী'], ['purnima', 'পূর্ণিমা'], ['amavasya', 'অমাবস্যা'],
+    ['puja', 'পূজার দিন'], ['bishesh', 'বিশেষ দিন'], ['dibosh', 'দিবস'], ['daily', 'দৈনিক পঞ্জিকা'],
+    ['shubho', 'শুভকর্মের দিন'], ['bibaho', 'বিয়ে-শুভদিন'], ['mritdosh', 'মৃতদোষ'], ['rashi', 'রাশি নির্ণয়'], ['panchang', 'পঞ্চাঙ্গ'], ['rashifal', 'রাশিফল'], ['grohon', 'গ্রহণ'], ['calendar', 'ক্যালেন্ডার']
+  ];
+  const pjChip = (slug, label, on) =>
+    `<button class="xlink ${on ? 'on' : ''}" data-act="pjsub" data-s="${slug}">${label}</button>`;
+  const pjChips = active =>
+    `<div class="xchips">${PJ_SUBS.filter(([sl]) => sl !== 'calendar').map(([s, l]) => pjChip(s, l, s === active)).join('')}</div>`;
+  const pjPairs = () => Object.keys(P.festivals).sort().map(k => [k, P.festivals[k]]);
+  const pjWhen = k => {
+    const d = new Date(k + 'T00:00:00'), diff = Math.round((d - new Date(TODAY_KEY + 'T00:00:00')) / DAY_MS);
+    return { d, diff };
+  };
+  function pjRow(k, name, note) {
+    const { d, diff } = pjWhen(k), bD = bengaliDate(d), pk = panjikaFor(k);
+    if (!note && /একাদশী/.test(name)) note = `পারণ ${pk.mh.parana[0]}–${pk.mh.parana[1]}`;
+    return `<div class="card rowcard stack"><div class="datebox"><b>${bn(bD.d)}</b><i>${bD.month.slice(0, 4)}</i></div>
+      <div style="flex:1;min-width:0"><div class="kv"><span class="ttl">${esc(name)}</span>
+        <span class="pill">${diff === 0 ? 'আজ' : diff > 0 ? bn(diff) + ' দিন' : 'সম্পন্ন'}</span></div>
+        <div class="mini muted" style="margin-top:5px">${bn(d.getDate())} ${BN_MONTH[d.getMonth()]} ${bn(d.getFullYear())} · ${BN_DAY[d.getDay()]} · ${pk.tithi}${note ? ' · ' + note : ''}</div></div></div>`;
+  }
+  const pjShell = (title, sub, body, active) =>
+    `${appbar(title, sub, '#/panjika')}
+    <div class="pad" style="padding-top:0">
+      ${pjChips(active)}
+      <div style="height:12px"></div>${body}
+    </div><div style="height:20px"></div>`;
+  const pjEmpty = msg => `<p class="tiny muted" style="padding:14px 2px">${msg}</p>`;
+
+  function pjList(title, sub, active, filter, desc) {
+    const rows = pjPairs().filter(([k, n]) => filter(k, n));
+    const shown = U.panjika.all ? rows : rows.filter(([k]) => k >= TODAY_KEY);
+    const body = `<p class="mini muted" style="margin:0 0 12px;line-height:1.65">${desc}</p>
+      <div class="kv" style="margin-bottom:10px"><span class="mini muted">মোট ${bn(rows.length)}টির মধ্যে ${bn(shown.length)}টি দেখানো হচ্ছে</span>
+        <button class="act" data-act="pjall">${U.panjika.all ? 'শুধু আসন্ন' : 'সব দেখুন'}</button></div>
+      ${shown.length ? shown.slice(0, 150).map(([k, n]) => pjRow(k, n)).join('') : pjEmpty('এই তালিকায় এখন কোনো দিন নেই।')}`;
+    return pjShell(title, sub, body, active);
+  }
+
+  function pjDaily() {
+    const k = U.panjika.day || TODAY_KEY, pk = panjikaFor(k), d = new Date(k + 'T00:00:00'), bD = bengaliDate(d);
+    const body = `
+      <div class="sect" style="margin-top:4px"><h4>${bn(d.getDate())} ${BN_MONTH[d.getMonth()]} ${bn(d.getFullYear())} · ${BN_DAY[d.getDay()]}</h4>
+        <div class="line"></div>
+        <button class="act" data-act="pjday" data-d="-1">◀</button><button class="act" data-act="pjnow">আজ</button>
+        <button class="act" data-act="pjday" data-d="1">▶</button></div>
+      <div class="card oath pad">
+        <div class="kv"><div><div class="mini muted">বঙ্গাব্দ</div>
+          <div class="display" style="font-size:15px;margin-top:3px">${bn(bD.d)} ${bD.month} ${bn(bD.year)}</div>
+          <div class="mini muted" style="margin-top:3px">${bD.season} ঋতু</div></div>
+          <span class="pill">${pk.tithi}</span></div>
+        ${pk.fest ? `<div class="mini" style="color:var(--gold-300);margin-top:9px">✦ ${esc(pk.fest)}</div>` : ''}
+        <div class="grid2 mt">
+          <div class="stat"><div class="k">নক্ষত্র</div><div class="v">${pk.nak}</div></div>
+          <div class="stat"><div class="k">তিথি</div><div class="v">${pk.tithi}</div></div>
+          <div class="stat"><div class="k">সূর্যোদয়</div><div class="v">${pk.sunrise}</div></div>
+          <div class="stat"><div class="k">সূর্যাস্ত</div><div class="v">${pk.sunset}</div></div>
+          <div class="stat"><div class="k">শুভ সময়</div><div class="v" style="color:var(--ok)">${pk.shubho}</div></div>
+          <div class="stat"><div class="k">রাহুকাল</div><div class="v" style="color:var(--danger)">${pk.rahu}</div></div>
+        </div>
+        ${pk.ekadashi ? `<div class="mini" style="margin-top:10px;color:var(--gold-200)">একাদশী তিথি — উপবাসের দিন।</div>` : ''}
+      </div>
+
+      <div class="sect"><h4>দিনের মুহূর্ত</h4><div class="line"></div><span class="mini muted">ঢাকা</span></div>
+      <div class="card pad">
+        <div class="grid2">
+          <div class="stat"><div class="k">অভিজিৎ (শুভ)</div><div class="v" style="color:var(--ok)">${pk.mh.abhijit[0]}–${pk.mh.abhijit[1]}</div></div>
+          <div class="stat"><div class="k">রাহুকাল</div><div class="v" style="color:var(--danger)">${pk.mh.rahu[0]}–${pk.mh.rahu[1]}</div></div>
+          <div class="stat"><div class="k">যমগণ্ড</div><div class="v" style="color:var(--danger)">${pk.mh.yama[0]}–${pk.mh.yama[1]}</div></div>
+          <div class="stat"><div class="k">গুলিক</div><div class="v" style="color:var(--danger)">${pk.mh.guli[0]}–${pk.mh.guli[1]}</div></div>
+          <div class="stat"><div class="k">মধ্যাহ্ন</div><div class="v">${pk.mh.noon}</div></div>
+          <div class="stat"><div class="k">দিনের দৈর্ঘ্য</div><div class="v">${Math.floor(pk.mh.len / 60)} ঘ ${String(Math.round(pk.mh.len % 60)).padStart(2, '0')} মি</div></div>
+        </div>
+        ${pk.ekadashi ? `<div class="card pad mt" style="background:rgba(215,169,79,.08);border:1px solid rgba(215,169,79,.25)">
+          <div class="mini" style="color:var(--gold-200);font-weight:600">একাদশীর পারণ</div>
+          <div class="mini" style="margin-top:5px;line-height:1.7">সূর্যোদয় ${pk.mh.parana[0]} থেকে ${pk.mh.parana[1]}-এর মধ্যে (দিনের প্রথম ১/৪ ভাগ)। গোস্বামী ও স্মার্ত মতে সময়ে সামান্য পার্থক্য হতে পারে — পারণের আগে স্থানীয় পঞ্জিকা মিলিয়ে নিন।</div></div>` : ''}
+        <div class="mini muted" style="margin-top:10px;line-height:1.7">সূর্যোদয়-সূর্যাস্ত আট ভাগে ভাগ করে বার অনুসারে রাহু, যমগণ্ড ও গুলিকের কাল গণনা করা হয়েছে (ঢাকার অক্ষাংশ-দ্রাঘিমা)।</div>
+      </div>
+      <div class="sect"><h4>আগামী ৪ দিন</h4><div class="line"></div></div>
+      ${[1, 2, 3, 4].map(i => {
+        const kk = key(new Date(d.getTime() + i * DAY_MS));
+        return pjRow(kk, P.festivals[kk] || panjikaFor(kk).tithi, '');
+      }).join('')}`;
+    return pjShell('দৈনিক পঞ্জিকা', 'Daily panjika', body, 'daily');
+  }
+
+  function pjPanchang() {
+    const y = U.panjika.by, m = U.panjika.bm, cells = banglaMonthCells(y, m);
+    const rows = cells.map(c => {
+      const k = key(c.date), pk = panjikaFor(k);
+      return `<div class="pgrow"><span class="pgd">${bn(c.d)}</span><span class="pgw">${BN_DAY[c.date.getDay()].slice(0, 3)}</span>
+        <span class="pgt">${pk.tithi}</span><span class="pgn">${pk.nak}</span>
+        <span class="pgf">${pk.fest ? esc(pk.fest) : '—'}</span></div>`;
+    }).join('');
+    const body = `<div class="sect" style="margin-top:4px"><h4>${BM_NAMES[m]} ${bn(y)} বঙ্গাব্দ</h4><div class="line"></div>
+        <button class="act" data-act="pbm" data-d="-1">◀</button><button class="act" data-act="pbm" data-d="1">▶</button></div>
+      <div class="card pad"><div class="pghead"><span class="pgd">তারিখ</span><span class="pgw">বার</span><span class="pgt">তিথি</span><span class="pgn">নক্ষত্র</span><span class="pgf">উৎসব</span></div>
+        ${rows}</div>
+      <p class="mini muted" style="margin-top:12px;line-height:1.7">তিথি ও নক্ষত্র সূর্যোদয়-ভিত্তিক; স্থানীয় পঞ্জিকায় সামান্য পার্থক্য হতে পারে।</p>`;
+    return pjShell('পঞ্চাঙ্গ', 'Panchang · মাসিক তিথি-নক্ষত্র', body, 'panchang');
+  }
+
+  function pjRashifal() {
+    const R = P.rashi, day = new Date(TODAY_KEY).getDate(), mon = TODAY.getMonth() + 1;
+    const cards = R.names.map((n, i) => {
+      const t = R.lines[(day + i * 7 + mon * 3) % R.lines.length];
+      return `<div class="card pad" style="margin-bottom:9px">
+        <div class="kv"><span class="ttl">${n} রাশি</span><span class="pill">শুভ ${R.lucky[(day + i) % R.lucky.length]} · ${R.color[(mon + i) % R.color.length]}</span></div>
+        <div class="mini" style="margin-top:7px;line-height:1.75">${t}</div>
+        <div class="mini muted" style="margin-top:6px">ইষ্টদেব: ${R.deity[i]}</div></div>`;
+    }).join('');
+    const body = `<p class="mini muted" style="margin:0 0 12px;line-height:1.7">আজ ${bn(new Date(TODAY_KEY).getDate())} ${BN_MONTH[TODAY.getMonth()]} — ১২ রাশির দিনফল।</p>${cards}
+      <p class="mini muted" style="margin-top:10px;line-height:1.7">রাশিফল সাধারণ পঞ্জিকার ধারা অনুসারে সাজানো; জীবনের বড় সিদ্ধান্তে নিজের বিচার ও গুরুজনের পরামর্শই প্রধান।</p>`;
+    return pjShell('রাশিফল', 'Rashifal · আজকের দিনফল', body, 'rashifal');
+  }
+
+  function pjGrohon() {
+    const rows = P.eclipse.map(e => {
+      const { d, diff } = pjWhen(e.d), bD = bengaliDate(d);
+      return `<div class="card rowcard stack"><div class="datebox"><b>${bn(d.getDate())}</b><i>${BN_MONTH[d.getMonth()].slice(0, 4)}</i></div>
+        <div style="flex:1;min-width:0"><div class="kv"><span class="ttl">${e.t} · ${e.k}</span>
+          <span class="pill ${diff < 0 ? 'flat' : ''}">${diff > 0 ? bn(diff) + ' দিন' : 'সম্পন্ন'}</span></div>
+          <div class="mini muted" style="margin-top:5px">${bn(d.getDate())} ${BN_MONTH[d.getMonth()]} ${bn(d.getFullYear())} · ${bn(bD.d)} ${bD.month} · ${e.n}</div></div></div>`;
+    }).join('');
+    return pjShell('গ্রহণ', 'Grahan · ২০২৬–২০২৮',
+      `<p class="mini muted" style="margin:0 0 12px;line-height:1.7">সূর্যগ্রহণ ও চন্দ্রগ্রহণের তালিকা। কোথা থেকে কতটা দেখা যাবে তা লেখা আছে — বাংলাদেশ থেকে দৃশ্যমানতা স্থানীয় পঞ্জিকা দেখে নিন।</p>${rows}`,
+      'grohon');
+  }
+
+  function pjDibosh() {
+    const items = P.dibosh.map(([md, name]) => {
+      const [mm, dd] = md.split('-').map(Number);
+      let d = new Date(TODAY.getFullYear(), mm - 1, dd);
+      if (key(d) < TODAY_KEY) d = new Date(TODAY.getFullYear() + 1, mm - 1, dd);
+      return { d, name, diff: Math.round((d - new Date(TODAY_KEY + 'T00:00:00')) / DAY_MS) };
+    }).sort((a, b) => a.diff - b.diff);
+    const rows = items.map(o => `<div class="card rowcard stack"><div class="datebox"><b>${bn(o.d.getDate())}</b><i>${BN_MONTH[o.d.getMonth()].slice(0, 4)}</i></div>
+      <div style="flex:1;min-width:0"><div class="kv"><span class="ttl">${o.name}</span><span class="pill ${o.diff > 30 ? 'flat' : ''}">${bn(o.diff)} দিন</span></div>
+        <div class="mini muted" style="margin-top:5px">${bn(o.d.getDate())} ${BN_MONTH[o.d.getMonth()]} ${bn(o.d.getFullYear())} · ${BN_DAY[o.d.getDay()]}</div></div></div>`).join('');
+    return pjShell('দিবস', 'National & international days',
+      `<p class="mini muted" style="margin:0 0 12px;line-height:1.7">জাতীয় ও আন্তর্জাতিক দিবস — আসন্ন দিনগুলো আগে দেখানো হচ্ছে।</p>${rows}`, 'dibosh');
+  }
+
+  function pjCalendar() {
+    const y = U.panjika.by;
+    const cards = BM_NAMES.map((nm, m) => {
+      const cells = banglaMonthCells(y, m);
+      if (!cells.length) return '';
+      const a = cells[0].date, z = cells[cells.length - 1].date;
+      const ks = key(a), kz = key(z);
+      const count = Object.keys(P.festivals).filter(k => k >= ks && k <= kz).length;
+      return `<button class="card pad" style="width:100%;text-align:left;border:1px solid rgba(215,169,79,.22);margin-bottom:8px;background:transparent"
+        data-act="pjmonth" data-y="${y}" data-m="${m}">
+        <div class="kv"><span class="ttl">${nm} ${bn(y)}</span><span class="pill">${bn(cells.length)} দিন · ${bn(count)} ব্রত</span></div>
+        <div class="mini muted" style="margin-top:5px">${bn(a.getDate())} ${BN_MONTH[a.getMonth()]} – ${bn(z.getDate())} ${BN_MONTH[z.getMonth()]} ${bn(z.getFullYear())}</div></button>`;
+    }).join('');
+    const body = `<div class="sect" style="margin-top:4px"><h4>বঙ্গাব্দ ${bn(y)}</h4><div class="line"></div>
+        <button class="act" data-act="pjyear" data-d="-1">◀</button><button class="act" data-act="pjyear" data-d="1">▶</button></div>
+      ${cards}<p class="mini muted" style="margin-top:12px;line-height:1.7">মাসে ট্যাপ করলে সেই মাসের ক্যালেন্ডার খুলবে।</p>`;
+    return pjShell('ক্যালেন্ডার', 'Calendar · বছরের মাস', body, 'calendar');
+  }
+
+  /* ---------------- শুভকর্মের দিন: সরল নিয়মে গণনা ---------------- */
+  /* নক্ষত্রের শ্রেণি: স্থির (প্রতিষ্ঠা/গৃহ), মৃদু (সংস্কার), ক্ষিপ্র (ক্রয়-বিক্রয়), শুভ (সাধারণ) */
+  const NAK_CLASS = {
+    sthir: [3, 11, 20, 25],            /* রোহিণী · উত্তরফাল্গুনী · উত্তরাষাঢ়া · উত্তরভাদ্রপদ */
+    mridu: [4, 13, 16, 26],            /* মৃগশিরা · চিত্রা · অনুরাধা · রেবতী */
+    kshipra: [0, 7, 12, 14, 22],       /* অশ্বিনী · পুষ্যা · হস্তা · স্বাতী · ধনিষ্ঠা */
+    shubha: [3, 4, 9, 11, 12, 13, 16, 17, 18, 20, 21, 22, 23, 25, 26]
+  };
+  function karmaDates(item, fromKey, limit) {
+    const out = [], start = new Date(fromKey + 'T00:00:00');
+    const keys = Array.isArray(item.nak) ? item.nak : [item.nak];
+    const naks = [];
+    keys.forEach(x => { if (typeof x === 'number') naks.push(x); else (NAK_CLASS[x] || []).forEach(y => { if (!naks.includes(y)) naks.push(y); }); });
+    for (let i = 0; i < 420 && out.length < limit; i++) {
+      const d = new Date(start.getTime() + i * DAY_MS), k = key(d);
+      if (item.months && !item.months.includes(bengaliDate(d).m)) continue;
+      if (!item.bar.includes(d.getDay())) continue;
+      const rise = sunTimes(k).rise / 60;
+      const ti = tithiIndex(k, rise);
+      const tno = ti < 15 ? ti + 1 : ti - 14;
+      if (tno === 11 || tno === 15) continue;                 /* একাদশী ও পূর্ণিমা বর্জিত */
+      if (!item.tithi.includes(tno)) continue;
+      if (!naks.includes(nakIndex(k, rise))) continue;
+      if (/একাদশী|অমাবস্যা|পূর্ণিমা|সংক্রান্তি/.test(P.festivals[k] || '')) continue;
+      out.push(k);
+    }
+    return out;
+  }
+  function pjShubho() {
+    const today = TODAY_KEY;
+    const cards = (P.shubhoKarma || []).map(it => {
+      const ds = karmaDates(it, today, 3);
+      const first = ds[0];
+      const { diff } = first ? pjWhen(first) : { diff: 0 };
+      const fd = first ? new Date(first + 'T00:00:00') : null;
+      return `<div class="card pad stack" style="margin-bottom:9px">
+        <div class="kv"><div style="min-width:0"><div class="ttl">${it.name}</div>
+          <div class="mini muted" style="margin-top:4px">${it.sub}</div></div>
+          ${first ? `<span class="pill ${diff <= 7 ? 'ok' : ''}">${diff === 0 ? 'আজ' : bn(diff) + ' দিন'}</span>` : '<span class="pill flat">—</span>'}</div>
+        ${first ? `<div class="mini" style="margin-top:8px;color:var(--gold-200)">
+            পরের দিন: ${BN_DAY[fd.getDay()]}, ${bn(fd.getDate())} ${BN_MONTH[fd.getMonth()]} ${bn(fd.getFullYear())}
+            <span class="muted"> · ${panjikaFor(first).tithi} · ${panjikaFor(first).nak}</span></div>
+          <div class="mini muted" style="margin-top:4px">${ds.slice(1).map(k => {
+            const d2 = new Date(k + 'T00:00:00');
+            return `${bn(d2.getDate())} ${BN_MONTH[d2.getMonth()]}`;
+          }).join(' · ') || 'আরও দিন খুঁজছি…'}</div>` : `<div class="mini muted" style="margin-top:8px">আগামী ৪২০ দিনে শুভ যোগ মেলেনি — উপনয়নের ক্ষেত্রে শুভ মাসের অপেক্ষা।</div>`}
+      </div>`;
+    }).join('');
+    const body = `<p class="mini muted" style="margin:0 0 12px;line-height:1.7">১৭টি শুভকর্মের পরবর্তী শুভ দিন — <b>শুভ তিথি + শুভ নক্ষত্র + শুভ বার</b> মিলিয়ে সরল নিয়মে গণনা করা, আর একাদশী/অমাবস্যা/পূর্ণিমা/সংক্রান্তি বাদ দেওয়া হয়েছে।</p>
+      ${cards}
+      <p class="mini muted" style="margin-top:12px;line-height:1.7">⚠️ এটি নির্দেশক তালিকা। বিয়ে, প্রতিষ্ঠা বা গৃহপ্রবেশের পূর্ণাঙ্গ মুহূর্তের জন্য লগ্ন, যোগ-করণ ও স্থানীয় পঞ্জিকা মিলিয়ে <b>পণ্ডিত/পুরোহিতের পরামর্শ</b> নিন।</p>`;
+    return pjShell('শুভকর্মের দিন', 'Shubho Karma · ১৭টি সংস্কার', body, 'shubho');
+  }
+
+  /* ============ বিবাহ-শুভদিন · রাশি নির্ণয় · মৃতদোষ ============ */
+
+  /* জন্মস্থান — অক্ষাংশ ও দ্রাঘিমাংশ (ডিগ্রি) */
+  const JY_CITY = [
+    ['ঢাকা', 23.8103, 90.4125], ['চট্টগ্রাম', 22.3569, 91.7832], ['খুলনা', 22.8456, 89.5403],
+    ['রাজশাহী', 24.3745, 88.6042], ['সিলেট', 24.8949, 91.8687], ['বরিশাল', 22.7010, 90.3535],
+    ['রংপুর', 25.7439, 89.2752], ['ময়মনসিংহ', 24.7471, 90.4203], ['কুমিল্লা', 23.4607, 91.1809],
+    ['নারায়ণগঞ্জ', 23.6238, 90.5000]
+  ];
+  /* লগ্নের প্রকৃতি: ১ = স্থির/দ্বিস্বভাব (বিবাহে শুভ), ০ = চল */
+  const LAGNA_GOOD = [0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1];
+  const jyState = () => {
+    if (!U.jyoti) U.jyoti = { date: '1995-06-15', time: '06:30', city: 0, day: TODAY_KEY, bday: TODAY_KEY };
+    if (!U.jyoti.day) U.jyoti.day = TODAY_KEY;
+    if (!U.jyoti.bday) U.jyoti.bday = TODAY_KEY;
+    return U.jyoti;
+  };
+  const hhmm = h => {
+    let t = Math.round((((h % 24) + 24) % 24) * 60) % 1440;
+    const H = Math.floor(t / 60), M = t % 60;
+    return bn((H < 10 ? '0' : '') + H) + ':' + bn((M < 10 ? '0' : '') + M);
+  };
+  const jyOK = () => typeof window.JY === 'object' && window.JY;
+
+  /* ---- ১৪. বিবাহ-শুভদিন (বিবাহ লগ্ন) ---- */
+  function pjBibaho() {
+    const JY = jyOK();
+    const st = jyState();
+    const k = st.bday, d = new Date(k + 'T00:00:00');
+    const st2 = sunTimes(k);
+    const rise = st2.rise / 60, set = st2.set / 60;
+    const pk = panjikaFor(k);
+    let wins = [];
+    if (JY) wins = JY.lagnaWindows(k, GEO.lat, GEO.lon, Math.max(0, rise - 0.02), set);
+    const lagnaRows = wins.map(w => {
+      const good = LAGNA_GOOD[w.idx];
+      return `<div class="kv" style="padding:9px 0;border-bottom:1px dashed rgba(215,169,79,.16)">
+        <span class="ttl" style="font-size:.95rem">${w.name} লগ্ন</span>
+        <span class="mini"><b>${hhmm(w.start)} – ${hhmm(w.end)}</b>
+          <span class="pill ${good ? 'ok' : 'flat'}" style="margin-left:6px">${good ? 'শুভ' : 'চল'}</span></span></div>`;
+    }).join('');
+    /* আসন্ন শুভ বিবাহ-দিন */
+    const TITHI = [2, 3, 5, 7, 10, 11, 12, 13];
+    const NAKV = [3, 4, 9, 11, 12, 13, 14, 16, 18, 20, 21, 22, 23, 25, 26];
+    const BAR = [1, 3, 4, 5];
+    const days = [];
+    for (let i = 0; i < 400 && days.length < 6; i++) {
+      const dd = new Date(new Date(TODAY_KEY + 'T00:00:00').getTime() + i * DAY_MS), kk = key(dd);
+      if ([2, 8, 11].indexOf(bengaliDate(dd).m) >= 0) continue;   /* আষাঢ় · পৌষ · চৈত্র বর্জিত */
+      if (BAR.indexOf(dd.getDay()) < 0) continue;
+      const r0 = sunTimes(kk).rise / 60;
+      const ti = tithiIndex(kk, r0), tno = ti < 15 ? ti + 1 : ti - 14;
+      if (TITHI.indexOf(tno) < 0) continue;
+      if (NAKV.indexOf(nakIndex(kk, r0)) < 0) continue;
+      if (/একাদশী|অমাবস্যা|পূর্ণিমা|সংক্রান্তি/.test(P.festivals[kk] || '')) continue;
+      days.push(kk);
+    }
+    const dayRows = days.map(kk => {
+      const d2 = new Date(kk + 'T00:00:00'), p2 = panjikaFor(kk);
+      let best = '';
+      if (JY) {
+        const s2 = sunTimes(kk);
+        const w2 = JY.lagnaWindows(kk, GEO.lat, GEO.lon, Math.max(0, s2.rise / 60 - 0.02), s2.set / 60)
+          .filter(w => LAGNA_GOOD[w.idx]);
+        const w3 = w2.filter(w => (w.end - w.start) >= 0.6);
+        const pick = w3[0] || w2[0];
+        if (pick) best = `শুভ লগ্ন ${hhmm(pick.start)}–${hhmm(pick.end)} (${pick.name})`;
+      }
+      const diff = Math.round((d2 - new Date(TODAY_KEY + 'T00:00:00')) / DAY_MS);
+      return `<div class="card rowcard stack" style="margin-bottom:8px"><div class="datebox"><b>${bn(d2.getDate())}</b><i>${BN_MONTH[d2.getMonth()].slice(0, 4)}</i></div>
+        <div style="flex:1;min-width:0"><div class="kv"><span class="ttl">${BN_DAY[d2.getDay()]} · ${p2.tithi}</span>
+          <span class="pill ${diff <= 30 ? 'ok' : ''}">${diff === 0 ? 'আজ' : bn(diff) + ' দিন'}</span></div>
+          <div class="mini muted" style="margin-top:4px">${p2.nak}${best ? ' · ' + best : ''}</div></div></div>`;
+    }).join('');
+    const body = `<div class="card oath pad stack" style="margin-bottom:10px">
+        <div class="kv"><div><div class="mini muted">নির্বাচিত দিনের লগ্ন</div>
+          <div class="display" style="font-size:19px;margin-top:3px">${bn(d.getDate())} ${BN_MONTH[d.getMonth()]} ${bn(d.getFullYear())}</div>
+          <div class="mini muted" style="margin-top:4px">${BN_DAY[d.getDay()]} · ${pk.tithi} · ${pk.nak}</div></div>
+          <div style="text-align:right"><div class="mini muted">সূর্যোদয়–অস্ত</div>
+            <div class="mini" style="margin-top:4px">${hhmm(rise)} – ${hhmm(set)}</div></div></div>
+        <div class="kv" style="margin-top:8px">
+          <button class="act" data-act="bbDay" data-d="-1">◀ আগের</button>
+          <button class="act" data-act="bbNow">আজ</button>
+          <button class="act" data-act="bbDay" data-d="1">পরের ▶</button></div></div>
+      <div class="sect" style="margin-top:2px"><h4>এই দিনের লগ্ন ও শুভ সময়</h4><div class="line"></div>
+        <span class="mini muted">${wins.length ? bn(wins.length) + 'টি লগ্ন' : ''}</span></div>
+      ${lagnaRows || '<p class="mini muted" style="line-height:1.7">লগ্ন গণনার জন্য জ্যোতিষ মডিউল লোড হয়নি।</p>'}
+      <p class="mini muted" style="margin-top:8px;line-height:1.7">স্থির (বৃষ, সিংহ, বৃশ্চিক, কুম্ভ) ও দ্বিস্বভাব (মিথুন, কন্যা, ধনু, মীন) লগ্ন বিবাহে শুভ; চল লগ্ন (মেষ, কর্কট, তুলা, মকর) সাধারণত বর্জনীয়।</p>
+      <div class="sect" style="margin-top:16px"><h4>আসন্ন শুভ বিবাহ-দিন</h4><div class="line"></div>
+        <span class="mini muted">শুভ তিথি + নক্ষত্র + বার</span></div>
+      ${dayRows || '<p class="mini muted">আগামী ৪০০ দিনে শুভ যোগ পাওয়া যায়নি।</p>'}
+      <p class="mini muted" style="margin-top:12px;line-height:1.7">নিয়ম: শুভ তিথি ${bn('২,৩,৫,৭,১০,১১,১২,১৩')} · শুভ নক্ষত্র রোহিণী, মৃগশিরা, মঘা, উত্তরফাল্গুনী, হস্তা, চিত্রা, স্বাতী, অনুরাধা, মূলা, উত্তরাষাঢ়া, শ্রবণা, ধনিষ্ঠা, শতভিষা*, উত্তরভাদ্রপদ, রেবতী · শুভ বার সোম, বুধ, বৃহস্পতি, শুক্র · বর্জিত মাস আষাঢ়, পৌষ, চৈত্র; একাদশী, অমাবস্যা, পূর্ণিমা ও সংক্রান্তি বাদ। <b>*</b> তালিকাটি নির্দেশক — লগ্ন-মুহূর্ত চূড়ান্ত করার আগে <b>পণ্ডিতের পরামর্শ</b> নিন।</p>`;
+    return pjShell('বিয়ে-শুভদিন', 'Vivaha Lagna · বিবাহ লগ্ন ও শুভ দিন', body, 'bibaho');
+  }
+
+  /* ---- ১৫. মৃতদোষ ---- */
+  const MRIT_INFO = {
+    'একপাদ দোষ': '১ পাদ — হালকা দোষ',
+    'দ্বিপাদ দোষ': '২ পাদ — মধ্যম দোষ',
+    'ত্রিপাদ দোষ': '৩ পাদ — প্রবল দোষ',
+    'চতুষ্পাদ দোষ': '৪ পাদ — ত্রিপুষ্কর, সর্বাধিক দোষ',
+    'দোষ নাই': 'কোনো মৃতদোষ নেই'
+  };
+  function pjMritdosh() {
+    const st = jyState();
+    const k = st.day, d = new Date(k + 'T00:00:00');
+    const pk = panjikaFor(k), raw = (P.mritdosh || {})[k] || '';
+    const segs = raw ? raw.split('|') : [];
+    const label = sl => MRIT_INFO[sl] || sl;
+    const card = !raw
+      ? `<div class="card pad stack"><div class="ttl">এই দিনের যাচাইকৃত তথ্য নেই</div>
+          <p class="mini muted" style="margin:6px 0 0;line-height:1.7">মৃতদোষের যাচাইকৃত তালিকা ১৫ এপ্রিল ২০২৬ – ১৪ এপ্রিল ২০২৭ পর্যন্ত সংকলিত হয়েছে (বাংলা পঞ্জিকার প্রকাশিত সীমা)। এই দিনটির জন্য উৎসে তথ্য না থাকায় <b>অনুমান করা হয়নি</b>।</p></div>`
+      : `<div class="card oath pad stack">
+          <div class="kv"><div><div class="mini muted">সূর্যোদয়ের পর</div>
+            <div class="display" style="font-size:18px;margin-top:3px;color:${segs[0] === 'দোষ নাই' ? 'var(--ok)' : 'var(--gold-200)'}">${segs[0]}</div>
+            <div class="mini muted" style="margin-top:4px">${label(segs[0])}</div></div>
+            ${segs[1] ? `<div style="text-align:right"><div class="mini muted">পরে</div>
+              <div class="display" style="font-size:18px;margin-top:3px;color:${segs[1] === 'দোষ নাই' ? 'var(--ok)' : 'var(--gold-200)'}">${segs[1]}</div>
+              <div class="mini muted" style="margin-top:4px">${label(segs[1])}</div></div>` : ''}</div></div>`;
+    /* পরের ৩০ দিন */
+    const rows = [];
+    for (let i = 0; i <= 30; i++) {
+      const dd = new Date(d.getTime() + i * DAY_MS), kk = key(dd), rr = (P.mritdosh || {})[kk];
+      const p2 = panjikaFor(kk);
+      rows.push(`<div class="card rowcard stack" style="margin-bottom:7px"><div class="datebox"><b>${bn(dd.getDate())}</b><i>${BN_MONTH[dd.getMonth()].slice(0, 4)}</i></div>
+        <div style="flex:1;min-width:0"><div class="kv"><span class="ttl">${rr ? rr.split('|')[0] : '—'}</span>
+          <span class="mini muted">${BN_DAY[dd.getDay()]}</span></div>
+          <div class="mini muted" style="margin-top:4px">${p2.tithi} · ${p2.nak}${rr && rr.split('|')[1] ? ' · পরে ' + rr.split('|')[1] : ''}</div></div></div>`);
+    }
+    const body = `<p class="mini muted" style="margin:0 0 10px;line-height:1.7"><b>মৃতদোষ</b> — শাস্ত্রমতে যে যোগে জন্ম বা মৃত্যু হলে বিশেষ শান্তি বিধি পালন করতে হয়। বার, তিথি ও নক্ষত্রের দোষ মিলে পাদ সংখ্যা ঠিক হয় — এক পাদ (হালকা) থেকে চতুষ্পাদ (ত্রিপুষ্কর, প্রবল)।</p>
+      <div class="kv" style="margin-bottom:8px">
+        <button class="act" data-act="mdDay" data-d="-1">◀ আগের</button>
+        <button class="act" data-act="mdNow">আজ</button>
+        <button class="act" data-act="mdDay" data-d="1">পরের ▶</button></div>
+      <div class="mini muted" style="text-align:center;margin-bottom:8px">${BN_DAY[d.getDay()]}, ${bn(d.getDate())} ${BN_MONTH[d.getMonth()]} ${bn(d.getFullYear())} · ${pk.tithi} · ${pk.nak}</div>
+      ${card}
+      <div class="sect" style="margin-top:16px"><h4>শান্তি বিধি</h4><div class="line"></div></div>
+      <div class="card pad stack">
+        <p class="mini" style="margin:0;line-height:1.85">
+          <b>একপাদ:</b> ১০৮টি তুলসীপত্রে বিষ্ণুর পূজা, ১০৮ দুর্গানাম ও মধুসূদন জপ, ১টি শিবপূজা, সহস্রনাম ১ পাঠ।<br>
+          <b>দ্বিপাদ:</b> অষ্টোত্তরশত (১০৮) তুলসীপত্র, ১০০০ দুর্গানাম, ৪টি শিবপূজা, দেবীমাহাত্ম্য ১ পাঠ, কাঞ্চনদান।<br>
+          <b>ত্রিপাদ:</b> ষোড়শোপচারে বিষ্ণুপূজা, ১০০৮ তুলসীদান; ত্রিপুষ্কর খণ্ডনে ১০,০০০ তুলসীদান।<br>
+          <b>গ্রহণ-বর্জন:</b> দোষ অনুসারে ১ মাস / ৬ মাস / ১ বছর গৃহত্যাগ ও স্বস্ত্যয়ন, গোদান-পিণ্ডদান; পুষ্কর তীর্থে ব্রহ্মার মন্দিরে যজ্ঞ।</p></div>
+      <p class="mini muted" style="margin-top:10px;line-height:1.7">সূত্র: বাংলা পঞ্জিকার প্রতিদিনের প্রকাশিত ‘মৃতদোষ’ ও তার প্রশ্নোত্তর-শান্তি বিধি। বিধি পালনের আগে <b>পুরোহিতের পরামর্শ</b> অবশ্যই নিন।</p>
+      <div class="sect" style="margin-top:16px"><h4>আগামী ৩০ দিন</h4><div class="line"></div></div>
+      ${rows}
+      <p class="mini muted" style="margin-top:10px;line-height:1.7">যাচাইকৃত তালিকা: ১৫ এপ্রিল ২০২৬ – ১৪ এপ্রিল ২০২৭। এর বাইরের দিনে উৎসের তথ্য না থাকায় কিছু দেখানো হয় না।</p>`;
+    return pjShell('মৃতদোষ', 'Mrita Dosha · পাদ ও শান্তি', body, 'mritdosh');
+  }
+
+  /* ---- ১৬. রাশি নির্ণয় (জন্মকুণ্ডলী) ---- */
+  function pjRashi() {
+    const JY = jyOK();
+    const st = jyState();
+    const city = JY_CITY[st.city] || JY_CITY[0];
+    const [dy, dm, dd2] = st.date.split('-').map(Number);
+    const [th, tm] = st.time.split(':').map(Number);
+    const jd = JY ? JY.jdLocal(dy, dm, dd2, th + tm / 60, GEO.tz) : 0;
+    const bD = bengaliDate(new Date(dy, dm - 1, dd2));
+    let asc = null, pos = [];
+    if (JY) {
+      asc = JY.ascSid(jd, city[1], city[2]);
+      pos = JY.positions(jd);
+    }
+    /* জন্মসময় ±২ মিনিটে লগ্ন কতটা স্থির — স্বচ্ছতা দেখানোর জন্য */
+    let ascM = null, ascP = null;
+    if (JY) {
+      ascM = JY.ascSid(jd - 2 / 1440, city[1], city[2]);
+      ascP = JY.ascSid(jd + 2 / 1440, city[1], city[2]);
+    }
+    const ascMName = JY ? JY.rashiOf(ascM).name : '', ascPName = JY ? JY.rashiOf(ascP).name : '';
+    const ascUnstable = JY && (ascMName !== JY.RASHI[Math.floor(asc / 30)] || ascPName !== JY.RASHI[Math.floor(asc / 30)]);
+    const ascSandhi = JY ? JY.sandhiDist(asc) : 99;
+    const moon = pos[1] || null, sunP = pos[0] || null;
+    const ascR = JY ? JY.rashiOf(asc) : null;
+    const cards = JY ? `<div class="dualrow" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div class="card pad" style="text-align:center"><div class="mini muted">জন্মরাশি (চন্দ্র)</div>
+          <div class="display" style="font-size:20px;margin-top:4px;color:var(--gold-200)">${moon.rashi}</div>
+          <div class="mini muted" style="margin-top:3px">${moon.nak} ${bn(moon.pada)} পাদ</div></div>
+        <div class="card pad" style="text-align:center"><div class="mini muted">জন্মলগ্ন</div>
+          <div class="display" style="font-size:20px;margin-top:4px;color:var(--gold-200)">${ascR.name}</div>
+          <div class="mini muted" style="margin-top:3px">${BN_DAY[new Date(dy, dm - 1, dd2).getDay()]} · ${hhmm(th + tm / 60)}</div></div>
+      </div>
+      <div class="card pad" style="text-align:center;margin-top:8px">
+        <div class="mini muted">সূর্যরাশি</div>
+        <div class="mini" style="margin-top:4px">${sunP.rashi} · ${sunP.nak} (${bn(sunP.pada)} পাদ)</div>
+        <div class="mini muted" style="margin-top:4px">নবাংশ (D9): চন্দ্র ${JY.navamsaOf(moon.lon).name} · লগ্ন ${JY.navamsaOf(asc).name}</div></div>
+      <div class="card pad" style="margin-top:8px;${ascUnstable || ascSandhi < 1 ? 'border-color:rgba(226,120,60,.45)' : ''}">
+        <div class="mini muted">জন্মসময়ের নিশ্চয়তা (লগ্ন ${bn(-2)}–+${bn(2)} মিনিটে)</div>
+        <div class="mini" style="margin-top:5px">${ascMName} · <b>${ascR.name}</b> · ${ascPName}</div>
+        <div class="mini muted" style="margin-top:5px;line-height:1.7">${ascUnstable
+          ? '⚠️ জন্মসময় ২ মিনিট এদিক-ওদিক হলে লগ্ন বদলে যাচ্ছে — জন্মসময় যতটা জানা আছে ঠিকভাবে দিন, নইলে লগ্ন-সংক্রান্ত ফল নির্ভরযোগ্য নয়।'
+          : (ascSandhi < 1 ? '⚠️ লগ্ন রাশি-সন্ধির খুব কাছে (' + JY.dms(ascSandhi) + ') — ২–৩ মিনিটের পার্থক্যেও লগ্ন বদলাতে পারে।' : '✓ লগ্ন স্থির — ২ মিনিটের পার্থক্যে রাশি বদলায় না।')}</div></div>` : '';
+
+    /* ১২ ঘর — লগ্ন থেকে */
+    let houses = '';
+    if (JY) {
+      const rows = [];
+      for (let h = 0; h < 12; h++) {
+        const rIdx = (ascR.i + h) % 12;
+        const inH = pos.filter(p => p.rashiIdx === rIdx).map(p => p.name).join(', ');
+        rows.push(`<div class="kv" style="padding:7px 0;border-bottom:1px dashed rgba(215,169,79,.14)">
+          <span class="mini" style="min-width:74px">${bn(h + 1)}ম ঘর · ${JY.RASHI[rIdx]}</span>
+          <span class="mini" style="color:${inH ? 'var(--gold-200)' : 'var(--muted, #8a8378)'}">${inH || '—'}</span></div>`);
+      }
+      houses = rows.join('');
+    }
+    const grahaRows = JY ? pos.map(p => `<div class="kv" style="padding:7px 0;border-bottom:1px dashed rgba(215,169,79,.14)">
+        <span class="ttl" style="font-size:.92rem;min-width:86px">${p.name}${p.retro ? ' <span class="mini muted">(বক্রী)</span>' : ''}</span>
+        <span class="mini">${p.rashi} ${JY.dms(p.deg)}</span>
+        <span class="mini muted" style="min-width:96px;text-align:right">${p.nak} ${bn(p.pada)}<br><span style="opacity:.7">D9 ${JY.navamsaOf(p.lon).name}</span></span></div>`).join('') : '';
+    const cityOpts = JY_CITY.map((c, i) => `<option value="${i}" ${i === st.city ? 'selected' : ''}>${c[0]}</option>`).join('');
+    const body = `<p class="mini muted" style="margin:0 0 10px;line-height:1.7">জন্ম তারিখ, সময় ও স্থান দিয়ে <b>চন্দ্ররাশি, জন্মলগ্ন, জন্মনক্ষত্র ও নবগ্রহের অবস্থান</b> — লহিড়ী অয়নাংশে (নিরয়ণ) প্রকৃত গণিত দিয়ে। জন্মসময় যত নিখুঁত, লগ্ন তত নিখুঁত।</p>
+      <div class="card pad stack">
+        <label class="mini muted" for="jyDate">জন্মতারিখ</label>
+        <input id="jyDate" type="date" value="${st.date}" style="width:100%;padding:10px;border-radius:12px;border:1px solid rgba(215,169,79,.3);background:transparent;color:inherit;font-family:inherit;margin-top:4px">
+        <div class="kv" style="margin-top:8px;gap:8px">
+          <div style="flex:1"><label class="mini muted" for="jyTime">জন্মসময়</label>
+            <input id="jyTime" type="time" value="${st.time}" style="width:100%;padding:10px;border-radius:12px;border:1px solid rgba(215,169,79,.3);background:transparent;color:inherit;font-family:inherit;margin-top:4px"></div>
+          <div style="flex:1"><label class="mini muted" for="jyCity">জন্মস্থান</label>
+            <select id="jyCity" style="width:100%;padding:10px;border-radius:12px;border:1px solid rgba(215,169,79,.3);background:transparent;color:inherit;font-family:inherit;margin-top:4px">${cityOpts}</select></div>
+        </div>
+      </div>
+      <div class="mini muted" style="text-align:center;margin:8px 0 10px">বঙ্গাব্দ ${bn(bD.d)} ${bD.month} ${bn(bD.year)} · ${BN_DAY[new Date(dy, dm - 1, dd2).getDay()]} · ${city[0]}</div>
+      ${cards}
+      <div class="sect" style="margin-top:16px"><h4>গ্রহস্থিতি</h4><div class="line"></div>
+        <span class="mini muted">নিরয়ণ · লহিড়ী</span></div>
+      <div class="card pad stack">${grahaRows}</div>
+      <div class="sect" style="margin-top:16px"><h4>১২ ঘর</h4><div class="line"></div></div>
+      <div class="card pad stack">${houses}</div>
+      <p class="mini muted" style="margin-top:10px;line-height:1.7">গণনা: গ্রহের কক্ষপথ-উপাদান (JPL), চন্দ্রের Meeus সিরিজ, লহিড়ী অয়নাংশ ২৩°৫১′১১″ (J2000) থেকে বছরে ৫০.২৯″ বৃদ্ধি, উদয়লগ্ন = স্থানীয় নাক্ষত্রিক কাল + অক্ষাংশ। যাচাই: প্রকাশিত নিরয়ণ গ্রহস্থিতির সঙ্গে সব গ্রহ ০.১°-এর মধ্যে মেলে; চন্দ্র ০.০৬°। ২৬,২৮০টি নমুনায় দেখা গেছে ৪ মিনিট জন্মসময় ভুল হলে লগ্ন-রাশি বদলায় মাত্র ৩.৩% ক্ষেত্রে, নক্ষত্র বদলায় ০.২%-এ (docs/guide/JYOTISH-VERIFY.md)।</p>`;
+    return pjShell('রাশি নির্ণয়', 'Rashi · জন্মরাশি ও জন্মলগ্ন', body, 'rashi');
+  }
+
+  function panjikaSub(slug) {
+    if (U.panjika.by == null) { const bt = bengaliDate(TODAY); U.panjika.by = bt.year; U.panjika.bm = bt.m; }
+    switch (slug) {
+      case 'broto':
+        return pjList('ব্রতের তালিকা', 'Brata · ব্রত ও উৎসব', 'broto',
+          () => true, 'সারা বছরের ব্রত, উপবাস ও উৎসব — একাদশী, পূর্ণিমা, অমাবস্যা, সংক্রান্তি ও পূজা-পার্বণ।');
+      case 'ekadashi':
+        return pjList('একাদশী', 'Ekadashi · উপবাস', 'ekadashi',
+          (k, n) => n.includes('একাদশী'), 'শুক্লা ও কৃষ্ণ পক্ষের একাদশী — উপবাস ও পারণের দিন।');
+      case 'purnima': {
+        const rows = Object.keys(P.purnima).sort().filter(k => U.panjika.all || k >= TODAY_KEY);
+        return pjShell('পূর্ণিমা', 'Purnima · পূর্ণিমার তিথি',
+          `<p class="mini muted" style="margin:0 0 12px;line-height:1.7">সারা বছরের পূর্ণিমা তিথি — স্নান, দান ও ব্রতের দিন।</p>
+           ${rows.map(k => pjRow(k, P.purnima[k])).join('')}
+           <div class="kv" style="margin-top:10px"><span class="mini muted">মোট ${bn(Object.keys(P.purnima).length)}টি</span>
+             <button class="act" data-act="pjall">${U.panjika.all ? 'শুধু আসন্ন' : 'সব দেখুন'}</button></div>`, 'purnima');
+      }
+      case 'amavasya': {
+        const rows = Object.keys(P.amavasya).sort().filter(k => U.panjika.all || k >= TODAY_KEY);
+        return pjShell('অমাবস্যা', 'Amavasya · পিতৃতর্পণ',
+          `<p class="mini muted" style="margin:0 0 12px;line-height:1.7">সারা বছরের অমাবস্যা — পিতৃতর্পণ, দীপদান ও তর্পণের দিন।</p>
+           ${rows.map(k => pjRow(k, P.amavasya[k])).join('')}
+           <div class="kv" style="margin-top:10px"><span class="mini muted">মোট ${bn(Object.keys(P.amavasya).length)}টি</span>
+             <button class="act" data-act="pjall">${U.panjika.all ? 'শুধু আসন্ন' : 'সব দেখুন'}</button></div>`, 'amavasya');
+      }
+      case 'puja':
+        return pjList('পূজার দিন', 'Puja · পূজা-পার্বণ', 'puja',
+          (k, n) => n.includes('পূজা') || n.includes('পূজো'), 'দেব-দেবীর পূজার দিন — দুর্গা, লক্ষ্মী, কালী, সরস্বতী, শিব, গণেশ ও বিশ্বকর্মা।');
+      case 'bishesh':
+        return pjList('বিশেষ দিন', 'Special days · ব্রত ও পালন', 'bishesh',
+          (k, n) => !n.includes('একাদশী'), 'একাদশী ছাড়া বছরের সব বিশেষ ধর্মীয় ও পালনীয় দিন — জন্মাষ্টমী, রথ, ঝুলন, শিবরাত্রি, দোল, সংক্রান্তি।');
+      case 'shubho': return pjShubho();
+      case 'bibaho': return pjBibaho();
+      case 'mritdosh': return pjMritdosh();
+      case 'rashi': return pjRashi();
+      case 'dibosh': return pjDibosh();
+      case 'daily': return pjDaily();
+      case 'panchang': return pjPanchang();
+      case 'rashifal': return pjRashifal();
+      case 'grohon': return pjGrohon();
+      case 'calendar': return pjCalendar();
+      default: return pjCalendar();
+    }
   }
 
   /* ------------------------------------------------------------- 10. seva */
@@ -1083,6 +1725,10 @@
           <span style="color:var(--gold-300)">${ico('sun', 'sm')}</span>
           <div style="flex:1;font-size:12.5px">লাইট মোড (পাটা-থিম)</div>
           <span class="toggle ${S.theme === 'light' ? 'on' : ''}"></span></div>
+        <div class="setting" data-act="toggleBg">
+          <span style="color:var(--gold-300)">${ico('flame', 'sm')}</span>
+          <div style="flex:1;font-size:12.5px">পটভূমি থিম (মন্দির-পত্র)</div>
+          <span class="toggle ${S.bg ? 'on' : ''}"></span></div>
         <div class="setting" data-act="toggleSound">
           <span style="color:var(--gold-300)">${ico('bell', 'sm')}</span>
           <div style="flex:1;font-size:12.5px">মৃদু ঘণ্টাধ্বনি</div>
@@ -1092,7 +1738,7 @@
           <div style="flex:1;font-size:12.5px">অ্যানিমেশন</div>
           <span class="toggle ${S.motion ? 'on' : ''}"></span></div>
         <div class="setting" data-act="toggleName">
-          <span style="color:var(--gold-300)">${ico('user', 'sm')}</span>
+          <span style="color:var(--gold-300)">${vico('user', 'sm')}</span>
           <div style="flex:1;font-size:12.5px">নাম পরিবর্তন</div>
           <span class="mini muted">${esc(S.name.split(' ')[0])} ›</span></div>
         <div class="setting" data-act="reset">
@@ -1792,6 +2438,120 @@
   }
 
   /* =====================================================================
+     ফিড — পোস্ট · রিলস · চ্যাট
+     ===================================================================== */
+  const feedLike = id => !!(S.socialLikes && S.socialLikes[id]);
+  /* ------------------------------- রিলস প্লেয়ার ------------------------------- */
+  function reelScreen(id) {
+    const F = DB.feed || { reels: [] };
+    const list = F.reels || [];
+    if (!list.length) return feedScreen();
+    let i = list.findIndex(r => r.id === id);
+    if (i < 0) i = U.reel ? U.reel.i : 0;
+    const r = list[i];
+    const on = feedLike(r.id);
+    return `${appbar(r.title, r.sub + ' · ' + r.views, '#/feed', false, true)}
+    <div class="pad" style="padding-top:0">
+      <div class="reelplayer" style="--tint:${r.tint}">
+        <div class="rp-bar"><i style="animation-duration:${U.reelPaused ? '0s' : '32s'};animation-play-state:${U.reelPaused ? 'paused' : 'running'}"></i></div>
+        <div class="rp-head"><span class="pill">${esc(r.ref || 'রিলস')}</span><span class="tiny">${bn(i + 1)}/${bn(list.length)}</span></div>
+        <div class="rp-body">
+          ${r.lines.map((l, n) => `<div class="rp-line" style="animation-delay:${n * 35}ms">${esc(l)}</div>`).join('')}
+        </div>
+        <div class="rp-acts">
+          <button class="pact ${on ? 'on' : ''}" data-act="feedLike" data-id="${r.id}">${vico('heart', 'sm')}${on ? 'ভালো লেগেছে' : 'ভালো লাগল'}</button>
+          <button class="pact" data-act="reelSpeak" data-id="${r.id}">${vico('play', 'sm')}শুনুন</button>
+          <button class="pact" data-act="reelPause">${U.reelPaused ? 'চালু করুন' : 'বিরতি'}</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:9px;margin-top:12px">
+        <button class="btn ghost" style="flex:1" data-act="reelStep" data-d="-1" ${i === 0 ? 'disabled' : ''}>আগের</button>
+        <button class="btn gold" style="flex:1.2" data-act="reelStep" data-d="1">${i === list.length - 1 ? 'প্রথম রিল' : 'পরের রিল'}</button>
+      </div>
+      <div class="sect"><h4>আরও রিলস</h4><div class="line"></div></div>
+      <div class="reelgrid">${list.filter((_, n) => n !== i).map(x => `
+        <button class="reel" data-act="reelPlay" data-id="${x.id}" style="--tint:${x.tint}">
+          <span class="rl-ico">${vico('play', 'sm')}</span><span class="rl-len">${esc(x.len)}</span>
+          <span class="rl-txt"><b>${esc(x.title)}</b><i>${esc(x.sub)}</i></span></button>`).join('')}</div>
+    </div><div style="height:20px"></div>`;
+  }
+
+  function feedScreen(chatId) {
+    const F = DB.feed || { posts: [], reels: [], chats: [] };
+    if (chatId) return chatScreen(chatId);
+    const t = U.feedTab;
+    const tabs = [['posts', 'পোস্ট'], ['reels', 'রিলস'], ['chats', 'চ্যাট']];
+    const unread = F.chats.reduce((a, c) => a + (c.unread || 0), 0);
+
+    let body = '';
+    if (t === 'posts') {
+      body = F.posts.map(p => {
+        const on = feedLike(p.id);
+        return `<div class="card pad postcard">
+          <div style="display:flex;gap:9px;align-items:center">
+            <span class="avatar">${esc(p.name.slice(0, 1))}</span>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12.4px;font-weight:600">${esc(p.name)}</div>
+              <div class="tiny muted">${esc(p.role)} · ${esc(p.when)}</div>
+            </div>
+            <span class="tiny" style="color:var(--gold-300)">${esc(p.tag || '')}</span>
+          </div>
+          <p class="posttext">${esc(p.text)}</p>
+          <div class="postacts">
+            <button class="pact ${on ? 'on' : ''}" data-act="feedLike" data-id="${p.id}">${vico('heart', 'sm')}${bn(p.liked + (on ? 1 : 0))}</button>
+            <button class="pact" data-act="toast" data-msg="মন্তব্য শীঘ্রই আসছে">${vico('chat', 'sm')}${bn(p.cmt)}</button>
+            <button class="pact" data-act="toast" data-msg="লিংক কপি হয়েছে">${vico('send', 'sm')}শেয়ার</button>
+          </div>
+        </div>`;
+      }).join('');
+    } else if (t === 'reels') {
+      body = `<div class="reelgrid">${F.reels.map(r => `
+        <button class="reel" data-act="reelPlay" data-id="${r.id}" style="--tint:${r.tint}">
+          <span class="rl-ico">${vico('play', 'sm')}</span>
+          <span class="rl-len">${esc(r.len)}</span>
+          <span class="rl-txt"><b>${esc(r.title)}</b><i>${esc(r.sub)} · ${esc(r.views)}</i></span>
+        </button>`).join('')}</div>`;
+    } else {
+      body = F.chats.map(c => `<button class="card rowcard chatrow" data-act="chatOpen" data-id="${c.id}">
+          <span class="avatar">${esc(c.name.slice(0, 1))}</span>
+          <div style="flex:1;min-width:0;text-align:left">
+            <div class="kv"><span style="font-size:12.4px;font-weight:600">${esc(c.name)}</span>
+              <span class="tiny muted">${esc(c.when)}</span></div>
+            <div class="tiny muted" style="margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(c.last)}</div>
+          </div>
+          ${c.unread ? `<span class="pill ok">${bn(c.unread)}</span>` : ''}
+        </button>`).join('');
+    }
+
+    return `${appbar('সমাজ · ফিড', 'পোস্ট · রিলস · চ্যাট — সনাতন পরিবারের সঙ্গে জুড়ে থাকুন', '#/home', true, true)}
+    <div class="pad" style="padding-top:0">
+      <div class="segment">${tabs.map(([k, l]) => `<button class="${t === k ? 'on' : ''}" data-act="feedSeg" data-t="${k}">${ico(k, 'seg')}<span>${l}${k === 'chats' && unread ? ' · ' + bn(unread) : ''}</span></button>`).join('')}</div>
+      <div class="mt">${body}</div>
+      ${t === 'posts' ? `<button class="btn ghost block mt" data-act="toast" data-msg="নতুন পোস্ট লেখার সুবিধা শীঘ্রই আসছে">${ico('pen', 'sm')} নিজের পোস্ট লিখুন</button>` : ''}
+      <p class="tiny muted" style="text-align:center;margin-top:12px;line-height:1.7">এটি ডেমো ফিড — আসল সমাজ-মঞ্চে পোস্ট, রিলস ও চ্যাট যোগ হবে যাচাই করা সদস্যদের জন্য।</p>
+    </div><div style="height:20px"></div>`;
+  }
+
+  function chatScreen(id) {
+    const c = (DB.feed.chats || []).find(x => x.id === id);
+    if (!c) return feedScreen();
+    const msgs = (S.chatMsgs || {})[id] || [];
+    const all = c.msgs.concat(msgs);
+    return `${appbar(c.name, 'চ্যাট · সনাতন বিদ্যাপীঠ', '#/feed', false, true)}
+    <div class="pad" style="padding-top:0">
+      <div class="chatbox">
+        ${all.map(m => `<div class="bub ${m.me ? 'me' : ''}">
+          ${!m.me && m.who ? `<div class="bubwho">${esc(m.who)}</div>` : ''}${esc(m.t)}</div>`).join('')}
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <input class="input" id="chatDraft" placeholder="বার্তা লিখুন…" value="${esc(U.chatDraft)}" style="flex:1"/>
+        <button class="btn gold" data-act="chatSend" data-id="${c.id}" style="width:56px;padding:0">${vico('send', 'sm')}</button>
+      </div>
+      <button class="btn ghost block mt" data-act="nav" data-to="#/feed">‹ সব চ্যাট</button>
+    </div><div style="height:20px"></div>`;
+  }
+
+  /* =====================================================================
      নোট — পড়ার পাশাপাশি লিখে রাখা, ট্যাগ ও তারিখ ধরে সাজানো
      ===================================================================== */
   const NOTE_TAGS = ['শ্লোক', 'প্রশ্ন', 'সাধনা', 'প্রার্থনা', 'পূজা', 'অনুপ্রেরণা', 'কথা'];
@@ -1890,7 +2650,7 @@
   const TABS = [
     { id: 'home', icon: 'home', label: 'হোম', target: '#/home' },
     { id: 'library', icon: 'book', label: 'লাইব্রেরি', target: '#/library' },
-    { id: 'sadhana', icon: 'flame', label: 'সাধনা', target: '#/sadhana' },
+    { id: 'feed', icon: 'chat', label: 'ফিড', target: '#/feed' },
     { id: 'exam', icon: 'exam', label: 'পরীক্ষা', target: '#/exam' },
     { id: 'seva', icon: 'heart', label: 'সেবা', target: '#/seva' },
     { id: 'me', icon: 'user', label: 'আমি', target: '#/me' }
@@ -1921,7 +2681,11 @@
       case 'quiz': html = quizScreen(); tab = 'exam'; break;
       case 'result': html = resultScreen(); tab = 'exam'; break;
       case 'puja': html = a ? pujaGuideScreen(a) : pujaScreen(); tab = 'home'; break;
-      case 'panjika': html = panjikaScreen(); tab = 'home'; break;
+      case 'panjika': html = a ? panjikaSub(a) : panjikaScreen(); tab = 'home'; break;
+      case 'feed':
+        if (a === 'reel') { html = reelScreen(b); tab = 'feed'; }
+        else { html = feedScreen(a === 'chat' ? b : null); tab = 'feed'; root = !a; }
+        break;
       case 'notes': html = notesScreen(); tab = 'home'; break;
       case 'note': html = noteComposerScreen(); tab = 'home'; break;
       case 'seva': html = sevaScreen(); tab = 'seva'; root = true; break;
@@ -1930,8 +2694,8 @@
       case 'manage': html = manageScreen(); tab = 'me'; break;
       case 'track': html = (a === 'history') ? historyScreen() : trackScreen(); tab = 'me'; break;
       case 'sadhana':
-        if (a === 'seq') { html = seqScreen(); tab = 'sadhana'; }
-        else { if (a) U.sadhanaTab = a; html = sadhanaScreen(); tab = 'sadhana'; }
+        if (a === 'seq') { html = seqScreen(); tab = 'home'; }
+        else { if (a) U.sadhanaTab = a; html = sadhanaScreen(); tab = 'home'; }
         break;
       default: html = homeScreen(); tab = 'home'; root = true;
     }
@@ -1997,7 +2761,12 @@
   function setTheme(v) {
     S.theme = v; save('theme');
     document.documentElement.dataset.theme = v;
+    const bv = document.querySelector('.brandav');
+    if (bv) bv.src = v === 'light' ? bv.dataset.light : bv.dataset.dark;
     document.querySelector('meta[name="theme-color"]').setAttribute('content', v === 'light' ? '#fdf7e4' : '#180304');
+  }
+  function applyBg() {
+    document.documentElement.dataset.bg = S.bg ? 'on' : 'off';
   }
   function speak(text) {
     try {
@@ -2009,8 +2778,73 @@
     } catch (e) { toast('উচ্চারণ সম্ভব হয়নি'); }
   }
 
+  /* ---------------- উৎসবের রিমাইন্ডার ---------------- */
+  function askNotify() {
+    if (!('Notification' in window)) return toast('এই ব্রাউজারে নোটিফিকেশন নেই — তবু অ্যাপে রিমাইন্ডার দেখাবে');
+    if (Notification.permission === 'granted') { S.notifyOn = !S.notifyOn; save('notifyOn'); toast(S.notifyOn ? 'রিমাইন্ডার চালু' : 'রিমাইন্ডার বন্ধ'); render(); return; }
+    Notification.requestPermission().then(p => {
+      S.notifyOn = p === 'granted'; save('notifyOn');
+      toast(S.notifyOn ? 'রিমাইন্ডার চালু — উৎসবের আগের দিন জানানো হবে' : 'অনুমতি দেওয়া হয়নি — অ্যাপের ভেতরে রিমাইন্ডার দেখাবে');
+      render();
+    }).catch(() => { S.notifyOn = true; save('notifyOn'); render(); });
+  }
+  function nextFestInfo() {
+    const keys = Object.keys(P.festivals).filter(k => k >= TODAY_KEY).sort();
+    if (!keys.length) return null;
+    const k = keys[0], d = new Date(k + 'T00:00:00');
+    return { k, name: P.festivals[k], days: Math.round((d - new Date(TODAY_KEY + 'T00:00:00')) / DAY_MS) };
+  }
+  function maybeNotify() {
+    if (!S.notifyOn) return;
+    const f = nextFestInfo();
+    if (!f || f.days > 1) return;
+    if (S.notifiedKey === f.k) return;
+    S.notifiedKey = f.k; save('notifiedKey');
+    const body = f.days === 0 ? `আজ ${f.name}` : `কাল ${f.name}`;
+    try {
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('সনাতন বিদ্যাপীঠ · পঞ্জিকা', { body, icon: 'icons/icon-light-192.png' });
+      } else toast(body);
+    } catch (e) { toast(body); }
+  }
+
   const ACTIONS = {
     nav: el => { closeSheet(); location.hash = el.dataset.to; },
+    feedSeg: el => { U.feedTab = el.dataset.t; U.chatId = null; render(); },
+    feedLike: el => {
+      S.socialLikes = S.socialLikes || {};
+      const id = el.dataset.id;
+      S.socialLikes[id] = !S.socialLikes[id];
+      save('socialLikes'); chime('soft'); render();
+    },
+    reelPlay: el => { U.reelPaused = false; location.hash = '#/feed/reel/' + el.dataset.id; render(); },
+    reelPause: el => { U.reelPaused = !U.reelPaused; render(); },
+    reelStep: el => {
+      const list = (DB.feed && DB.feed.reels) || [];
+      const cur = (location.hash.split('/')[3] || '');
+      let i = list.findIndex(r => r.id === cur);
+      if (i < 0) i = 0;
+      const n = (i + (+el.dataset.d) + list.length) % list.length;
+      U.reelPaused = false;
+      location.hash = '#/feed/reel/' + list[n].id; render();
+    },
+    reelSpeak: el => {
+      const r = ((DB.feed && DB.feed.reels) || []).find(x => x.id === el.dataset.id);
+      if (r) speak(r.title + '। ' + r.lines.join(' '));
+    },
+    speakStop: () => { try { speechSynthesis.cancel(); toast('উচ্চারণ থামানো হলো'); } catch (e) {} },
+    notifyAsk: () => askNotify(),
+    markFestSeen: () => { S.festSeen = TODAY_KEY; save('festSeen'); render(); },
+    chatOpen: el => { U.chatId = el.dataset.id; location.hash = '#/feed/chat/' + el.dataset.id; render(); },
+    chatSend: el => {
+      const inp = document.getElementById('chatDraft');
+      const v = (inp ? inp.value : '').trim();
+      if (!v) { toast('বার্তা লিখুন'); return; }
+      const id = el.dataset.id;
+      S.chatMsgs = S.chatMsgs || {};
+      (S.chatMsgs[id] = S.chatMsgs[id] || []).push({ me: true, t: v });
+      save('chatMsgs'); U.chatDraft = ''; render(); toast('বার্তা পাঠানো হলো');
+    },
     sheetOpen: () => openSheet(),
     sheetClose: () => closeSheet(),
     /* ---- নোট ---- */
@@ -2106,6 +2940,7 @@
       setTheme(next); render();
       toast(next === 'light' ? 'লাইট মোড (পাটা-থিম) চালু ☀' : 'ডার্ক মোড চালু 🌙');
     },
+    toggleBg: () => { S.bg = !S.bg; save('bg'); applyBg(); render(); toast(S.bg ? 'পটভূমি থিম চালু' : 'পটভূমি থিম বন্ধ'); },
     toggleSound: () => { S.sound = !S.sound; save('sound'); if (S.sound) chime('soft'); render(); },
     toggleMotion: () => {
       S.motion = !S.motion; save('motion');
@@ -2156,12 +2991,43 @@
       render();
     },
     speak: el => speak(el.dataset.text || ''),
+    speakKatha: el => {
+      const b = DB.books.find(x => x.id === 'gita') || DB.books[0];
+      const t = b.texts[+el.dataset.i];
+      if (t && t.katha) speak(t.katha + (t.prayog ? ' জীবনে প্রয়োগ। ' + t.prayog : ''));
+    },
+    speakFull: el => {
+      const b = DB.books.find(x => x.id === 'gita') || DB.books[0];
+      const t = b.texts[+el.dataset.i];
+      if (t) speak([t.bn, t.arth, t.katha].filter(Boolean).join('। '));
+    },
     pmonth: el => {
       let { y, m } = U.panjika; m += +el.dataset.d;
       if (m < 1) { m = 12; y--; } if (m > 12) { m = 1; y++; }
       U.panjika.y = y; U.panjika.m = m; render();
     },
     pday: el => { U.panjika.day = el.dataset.k; render(); },
+    pjsub: el => { location.hash = '#/panjika/' + el.dataset.s; },
+    bbDay: el => {
+      const st = jyState();
+      const d = new Date(st.bday + 'T00:00:00'); d.setDate(d.getDate() + (+el.dataset.d));
+      st.bday = key(d); render();
+    },
+    bbNow: () => { jyState().bday = TODAY_KEY; render(); },
+    mdDay: el => {
+      const st = jyState();
+      const d = new Date(st.day + 'T00:00:00'); d.setDate(d.getDate() + (+el.dataset.d));
+      st.day = key(d); render();
+    },
+    mdNow: () => { jyState().day = TODAY_KEY; render(); },
+    pjall: el => { U.panjika.all = !U.panjika.all; render(); },
+    pjday: el => {
+      const d = new Date((U.panjika.day || TODAY_KEY) + 'T00:00:00');
+      d.setDate(d.getDate() + (+el.dataset.d)); U.panjika.day = key(d); render();
+    },
+    pjnow: el => { U.panjika.day = TODAY_KEY; render(); },
+    pjyear: el => { U.panjika.by += (+el.dataset.d); render(); },
+    pjmonth: el => { U.panjika.by = +el.dataset.y; U.panjika.bm = +el.dataset.m; U.panjika.view = 'bn'; location.hash = '#/panjika'; render(); },
     scriptSet: el => { S.script = el.dataset.v; save('script'); render(); },
     pview: el => { U.panjika.view = el.dataset.v; render(); },
     pbm: el => {
@@ -2354,6 +3220,7 @@
     if (el) { e.preventDefault(); el.click(); }
   });
   document.addEventListener('input', e => {
+    if (e.target.id === 'chatDraft') { U.chatDraft = e.target.value; return; }
     if (e.target.id === 'noteText') { U.note.text = e.target.value; return; }
     if (e.target.id === 'noteSearch') {
       U.noteQ = e.target.value; render();
@@ -2371,6 +3238,14 @@
       const entry = entryFor(TODAY_KEY);
       entry[f] = e.target.value;
       save('daily');
+      return;
+    }
+    if (e.target.id === 'jyDate' || e.target.id === 'jyTime' || e.target.id === 'jyCity') {
+      const st = jyState();
+      if (e.target.id === 'jyDate') st.date = e.target.value;
+      else if (e.target.id === 'jyTime') st.time = e.target.value;
+      else st.city = +e.target.value;
+      render();
       return;
     }
     if (e.target.id === 'gitaSearch') {
@@ -2405,9 +3280,11 @@
     document.body.insertAdjacentHTML('beforeend',
       `<div id="sheetHost"></div><button class="notefab" data-act="sheetOpen" aria-label="আজকের হিসাব ও নোট" title="আজকের হিসাব ও নোট">${ico('plus')}</button>`);
     document.documentElement.dataset.theme = S.theme;
+    applyBg();
     document.documentElement.classList.toggle('no-motion', !S.motion);
     if (!location.hash) location.hash = '#/home';
     render();
+    setTimeout(maybeNotify, 2500);
     setTimeout(() => {
       if (!store.get('seen', false)) {
         store.set('seen', true);
