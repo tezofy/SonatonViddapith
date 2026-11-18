@@ -49,6 +49,7 @@
     attempts: store.get('attempts', []),
     lessons: store.get('lessons', { nityakarma: [0, 1, 2] }),
     puja: store.get('puja', {}),
+    deva: store.get('deva', {}),
     raised: store.get('raised', {}),
     orders: store.get('orders', []),
     provider: store.get('provider', null),
@@ -93,6 +94,21 @@
   /* --------------------------------------------------------------- icons  */
   const SPRITE = `
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <!-- ৩ডি মেটালিক স্ট্রোক-গ্রেডিয়েন্ট (আইকনemboss) -->
+  <defs>
+    <linearGradient id="icoGold" x1="0" y1="0" x2="0.25" y2="1">
+      <stop offset="0" stop-color="#fdf0cd"/><stop offset="0.42" stop-color="#e6bf74"/>
+      <stop offset="0.72" stop-color="#c2953f"/><stop offset="1" stop-color="#8d6420"/>
+    </linearGradient>
+    <linearGradient id="icoGoldIn" x1="0" y1="0" x2="0.2" y2="1">
+      <stop offset="0" stop-color="#fffaf0"/><stop offset="0.5" stop-color="#f0d49a"/><stop offset="1" stop-color="#c79a48"/>
+    </linearGradient>
+    <radialGradient id="coinGloss" cx="32%" cy="24%" r="78%">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.5"/>
+      <stop offset="0.45" stop-color="#ffffff" stop-opacity="0.06"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.28"/>
+    </radialGradient>
+  </defs>
   <!-- ধর্মীয় ধাঁচের আইকন-সেট: প্রতিটি আইকন নিজের বাটনের ভাব অনুসারে -->
   <symbol id="i-home" viewBox="0 0 24 24"><path d="M3.6 20.4h16.8"/><path d="M5.8 20.4V13h12.4v7.4"/><path d="M10.1 20.4v-4.1a1.9 1.9 0 0 1 3.8 0v4.1"/><path d="m7 13 5-4.2 5 4.2"/><path d="m9.1 8.8 2.9-2.4 2.9 2.4"/><path d="M12 6.4V4.2"/><path d="m12 4.2 3 1.2-3 1.2"/></symbol>
   <symbol id="i-book" viewBox="0 0 24 24"><path d="M3.8 6.7c2.4-1 4.6-.6 6.5.8v10.8c-1.9-1.4-4.1-1.8-6.5-.8z"/><path d="M20.2 6.7c-2.4-1-4.6-.6-6.5.8v10.8c1.9-1.4 4.1-1.8 6.5-.8z"/><path d="M12 7.5v10.8"/><circle cx="12" cy="10.4" r=".55"/><circle cx="12" cy="15.2" r=".55"/></symbol>
@@ -115,6 +131,11 @@
   <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 7.6V12l3 1.9"/><path d="M12 4v1.1M12 18.9V20M4 12h1.1M18.9 12H20"/></symbol>
   <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M4.5 12.4h15c0 4.1-3.3 6.9-7.5 6.9s-7.5-2.8-7.5-6.9z"/><circle cx="12" cy="8.2" r="1.7"/><circle cx="8.4" cy="9.6" r="1.1"/><circle cx="15.6" cy="9.6" r="1.1"/><path d="M6.9 12.4c1.4.8 3.1 1.2 5.1 1.2s3.7-.4 5.1-1.2"/></symbol>
   <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.7"/><circle cx="12" cy="12" r=".8"/><path d="M12 2.9v2.1M12 19v2.1M2.9 12h2.1M19 12h2.1M5.6 5.6l1.5 1.5M16.9 16.9l1.5 1.5M18.4 5.6l-1.5 1.5M7.1 16.9l-1.5 1.5"/></symbol>
+  <symbol id="i-setgear" viewBox="0 0 24 24">
+    <path d="M10.53 2.56 L13.47 2.56 L13.47 5.10 L15.84 6.09 L17.63 4.29 L19.71 6.37 L17.91 8.16 L18.90 10.53 L21.44 10.53 L21.44 13.47 L18.90 13.47 L17.91 15.84 L19.71 17.63 L17.63 19.71 L15.84 17.91 L13.47 18.90 L13.47 21.44 L10.53 21.44 L10.53 18.90 L8.16 17.91 L6.37 19.71 L4.29 17.63 L6.09 15.84 L5.10 13.47 L2.56 13.47 L2.56 10.53 L5.10 10.53 L6.09 8.16 L4.29 6.37 L6.37 4.29 L8.16 6.09 L10.53 5.10 Z"/>
+    <circle cx="12" cy="12" r="3.05"/>
+    <circle cx="12" cy="12" r=".9" fill="currentColor" stroke="none"/>
+  </symbol>
   <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6.9"/><circle cx="12" cy="12" r="2.7"/><path d="M12 5.1v1.9M12 17v1.9M5.1 12h1.9M17 12h1.9"/><path d="m7.4 7.4 1.3 1.3M15.3 15.3l1.3 1.3M16.6 7.4l-1.3 1.3M8.7 15.3l-1.3 1.3"/></symbol>
   <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3.4 19 6v6c0 4.3-3 7.2-7 8.6-4-1.4-7-4.3-7-8.6V6z"/><path d="M12 8.9c-1.2 1.4-1.8 2.4-1.8 3.4 0 1 .8 1.8 1.8 2.4 1-.6 1.8-1.4 1.8-2.4 0-1-.6-2-1.8-3.4z"/></symbol>
   <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M7.2 12.6h9.6c0 3.7-2.1 6-4.8 6s-4.8-2.3-4.8-6z"/><path d="M9.4 12.6c0-1.1 1.1-1.8 2.6-1.8s2.6.7 2.6 1.8"/><circle cx="12" cy="8.1" r="1.4"/><path d="M8.9 11.4c-.4-1.9.1-3.3 1.3-4.2M15.1 11.4c.4-1.9-.1-3.3-1.3-4.2"/><path d="M8.4 7.6c.9-.4 1.8-.4 2.6 0M15.6 7.6c-.9-.4-1.8-.4-2.6 0"/><path d="M7 20.4h10"/></symbol>
@@ -151,8 +172,17 @@
     <path d="M8.6 32h16.8l-2 9.6H10.6L8.6 32Z" fill="#8a5a2a" stroke="#d7a94f" stroke-width=".9"/>
   </svg>`;
 
-  const themeBtn = () => `<button class="iconbtn" data-act="toggleTheme" aria-label="${S.theme === 'light' ? 'ডার্ক মোডে যান' : 'লাইট (পাটা) মোডে যান'}" title="${S.theme === 'light' ? 'ডার্ক মোড' : 'লাইট মোড'}">
+  const themeBtn = () => `<button class="iconbtn hbtn hbtn-theme" data-act="toggleTheme" aria-label="${S.theme === 'light' ? 'ডার্ক মোডে যান' : 'লাইট (পাটা) মোডে যান'}" title="${S.theme === 'light' ? 'ডার্ক মোড' : 'লাইট মোড'}">
       ${ico(S.theme === 'light' ? 'moon' : 'sun', 'sm')}</button>`;
+
+  /* হেডারের গিয়ার → সেটিংস পর্দা (লাইট/ডার্ক টগল ওখানেই আছে) */
+  const settingsBtn = (cls) => `<button class="iconbtn hbtn hbtn-set ${cls || ''}" data-act="setPopupOpen" aria-label="সেটিংস" title="সেটিংস">${vico('setgear', 'hsetico-v')}</button>`;
+
+  /* সার্চ — পুরো অ্যাপের মধ্যে খোঁজে */
+  const searchBtn = (cls) => `<button class="iconbtn hbtn hbtn-search ${cls || ''}" data-act="searchOpen" aria-label="সার্চ" title="সার্চ"><img class="hsearch-ai" src="icons/ai/search-maroon.png" alt="" aria-hidden="true"/></button>`;
+
+  /* বিজ্ঞপ্তি (ঘণ্টা) আপাতত হেডার থেকে সরানো — দরকার হলে bellBtn() আবার যোগ করা যাবে */
+
 
   /* ------------------------------------------------------------ feedback  */
   let ac = null, toastT = null;
@@ -326,6 +356,71 @@
     return { date: d, name: P.festivals[k], days };
   }
 
+  /* ------------------------------------------------- আজকের পালনীয় (v66)
+     পঞ্জিকার ব্রত · উৎসব · তিথি · আসন্ন — হোমের হিরো কার্ডের শিরোনাম এখান থেকেই ঘোরে।
+     দিনক্ষণ সূর্যোদয়/সূর্যাস্ত থেকে গণনা করা (ঐতিহ্যগত স্থানীয় সময় নয়, তাই লেবেলেও তা বলা)। */
+  function todayObservances() {
+    const st = sunTimes(TODAY_KEY), mh = muhurta(TODAY_KEY), p = panjikaFor(TODAY_KEY);
+    const cl = n => pjHM(Math.round(((n % 1440) + 1440) % 1440));
+    const win = (a, b) => `${cl(a)}–${cl(b)}`;
+    const abhijit = `${mh.abhijit[0]}–${mh.abhijit[1]}`;
+    const out = [];
+    const todays = (P.festivals[TODAY_KEY] || '').split('·').map(x => x.trim()).filter(Boolean);
+
+    todays.forEach(name => {
+      const isKali = /কালী|লক্ষ্মী|দীপাবলি|অমাবস্যা/.test(name);
+      const isPuja = /পূজা|আরাধনা|আরতি|যাত্রা/.test(name);
+      const isVrat = /ব্রত|ষষ্ঠী|নবমী|চতুর্থী|একাদশী|দ্বাদশী|চতুর্দশী|অষ্টমী|পূর্ণিমা/.test(name);
+      out.push({
+        kind: isVrat && !isPuja ? 'ব্রত' : isPuja ? 'পূজা' : 'উৎসব',
+        name, tag: 'আজ',
+        note: isKali ? 'সন্ধ্যা-নিশীথে প্রদীপ, মায়ের আরাধনা ও আরতি'
+          : isVrat ? 'সংকল্প নিয়ে নিরাহার বা ফলাহারে পালন, সন্ধ্যায় আরতি'
+          : isPuja ? 'বিধি অনুসারে পূজা, মন্ত্র ও আরতি'
+          : 'পঞ্জিকা অনুসারে আজকের পালনীয়',
+        whenLab: isKali ? 'নিশীথ কাল' : isPuja ? 'সন্ধ্যাকালীন পূজা' : 'শুভ সময় (অভিজিৎ)',
+        when: isKali ? win(st.noon + 696, st.noon + 744) : isPuja ? win(st.set - 48, st.set + 36) : abhijit
+      });
+    });
+
+    /* তিথি-ভিত্তিক ব্রত (নামে আগে না থাকলে) */
+    const tt = (p.tithi.split(' ')[1] || '').trim();
+    const TV = {
+      'একাদশী': ['ব্রত', 'একাদশী ব্রত', 'নিরাহার, বিষ্ণুস্মরণ ও দান', 'পারণ কাল', `${mh.parana[0]}–${mh.parana[1]}`],
+      'পূর্ণিমা': ['ব্রত', 'পূর্ণিমা ব্রত', 'সন্ধ্যায় চন্দ্রদর্শন ও দীপদান', 'সন্ধ্যাকাল', win(st.set - 20, st.set + 70)],
+      'অমাবস্যা': ['তিথি', 'অমাবস্যা তিথি', 'পিতৃতর্পণ ও প্রদীপদান', 'সন্ধ্যাকাল', win(st.set - 30, st.set + 30)],
+      'চতুর্থী': ['ব্রত', 'বিনায়ক চতুর্থী', 'গণেশ আরাধনা, চন্দ্রদর্শন বর্জন', 'মধ্যাহ্ন পূজা', abhijit],
+      'দ্বাদশী': ['তিথি', 'দ্বাদশী তিথি', 'হরিবাসরের পারণ ও পুণ্যস্নান', 'পারণ কাল', `${mh.parana[0]}–${mh.parana[1]}`],
+      'ষষ্ঠী': ['ব্রত', 'ষষ্ঠী ব্রত', 'সন্তান ও পরিবারের মঙ্গল-কামনা', 'সন্ধ্যাকাল', win(st.set - 20, st.set + 40)]
+    }[tt];
+    if (TV && !todays.some(n => n.includes(tt))) {
+      out.push({ kind: TV[0], name: TV[1], tag: 'আজ', note: TV[2], whenLab: TV[3], when: TV[4] });
+    }
+
+    /* আসন্ন ব্রত-উৎসব — দিন ও শুভ সময় সহ */
+    Object.keys(P.festivals).filter(k => k > TODAY_KEY).sort().slice(0, 10).forEach(k => {
+      if (out.length >= 5) return;
+      const d = new Date(k + 'T00:00:00');
+      const days = Math.round((d - new Date(TODAY_KEY + 'T00:00:00')) / DAY_MS);
+      const name = (P.festivals[k] || '').split('·')[0].trim();
+      if (!name) return;
+      const pk = panjikaFor(k);
+      out.push({
+        kind: /ব্রত|ষষ্ঠী|নবমী|একাদশী|পূর্ণিমা|চতুর্দশী/.test(name) ? 'ব্রত' : 'উৎসব',
+        name, tag: days === 1 ? 'আগামীকাল' : `${bn(days)} দিন পরে`,
+        note: `${BN_DAY[d.getDay()]}, ${bn(d.getDate())} ${BN_MONTH[d.getMonth()]} · ${pk.tithi}`,  // নক্ষত্র ডান রেলে
+        whenLab: 'শুভ সময় (অভিজিৎ)', when: `${pk.mh.abhijit[0]}–${pk.mh.abhijit[1]}`
+      });
+    });
+
+    if (!out.length) out.push({
+      kind: 'পাঠ', name: 'শাস্ত্রের আলোয় আজকের পাঠ', tag: 'প্রতিদিন',
+      note: 'পঞ্জিকায় আজ বিশেষ ব্রত নেই — নিত্যপাঠে মন দিই',
+      whenLab: 'শুভ সময় (অভিজিৎ)', when: abhijit
+    });
+    return out.slice(0, 5);
+  }
+
   /* ---------------------------------------------------------------- header */
   function appbar(title, subText, backTo, withTheme, subBelow) {
     return `<header class="appbar"><div class="row">
@@ -335,7 +430,7 @@
         <h3>${title}</h3>
         ${subText && subBelow ? `<div class="sub">${subText}</div>` : ''}
       </div>
-      ${withTheme ? themeBtn() : ''}</div></header>`;
+      ${withTheme ? settingsBtn() : ''}</div></header>`;
   }
 
   /* =====================================================================
@@ -353,31 +448,75 @@
     const camp = DB.campaigns[0];
     const raised = camp.raised + (S.raised[camp.id] || 0);
     const pct = Math.min(100, Math.round(raised / camp.goal * 100));
+    const obs = todayObservances();
+    const bd = bengaliDate(TODAY);
+    const CHS = (typeof GITA_CHAPTERS !== 'undefined' && Array.isArray(GITA_CHAPTERS)) ? GITA_CHAPTERS : [];
+    const chapInfo = CHS.find(c => c.n === verse.ch) || null;
+    const chapName = book.id === 'gita' && chapInfo ? chapInfo.name : '';
+    const chapSum = book.id === 'gita' && chapInfo ? chapInfo.sum : '';
     const hr = new Date().getHours();
     const greet = hr < 5 ? 'শুভ রাত্রি' : hr < 11 ? 'সুপ্রভাত' : hr < 16 ? 'শুভ অপরাহ্ন' : hr < 19 ? 'শুভ সন্ধ্যা' : 'শুভ রাত্রি';
 
     return `
     <div class="home-head">
-      <img class="brandav" src="${S.theme === 'light' ? 'icons/icon-light-192.png' : 'icons/icon-dark-192.png'}" alt="সনাতন বিদ্যাপীঠ" data-light="icons/icon-light-192.png" data-dark="icons/icon-dark-192.png"/>
-      <div style="flex:1"><div class="who">${greet}</div><div class="nm">${esc(S.name)}</div></div>
-      ${themeBtn()}
-      <button class="iconbtn" data-act="toast" data-msg="আজকের ২টি রিমাইন্ডার আছে" aria-label="বিজ্ঞপ্তি">${ico('bell')}</button>
+      <div class="hh-row">
+        <img class="brandav" src="${S.theme === 'light' ? 'icons/icon-light-192.png' : 'icons/icon-dark-192.png'}" alt="সনাতন বিদ্যাপীঠ" data-light="icons/icon-light-192.png" data-dark="icons/icon-dark-192.png"/>
+        <div class="brandwrap" style="flex:1;min-width:0">
+          <h1 class="brandname">সনাতন বিদ্যাপীঠ</h1>
+          <div class="brandrule" aria-hidden="true"></div>
+        </div>
+        ${searchBtn()}
+        ${settingsBtn()}
+      </div>
+      <div class="brandsub"><span class="who">${greet}</span><span class="bdot">·</span><span class="nm">${esc(S.name)}</span></div>
+      <div class="brandline" id="brandline" aria-live="polite"></div>
     </div>
 
-    <div class="hero">
+    <div class="hero herox">
       <div class="pata" aria-hidden="true"></div>
       <div class="wm">${ico('om')}</div>
-      <div class="date">${ico('cal', 'xs')} ${BN_DAY[TODAY.getDay()]}, ${bn(TODAY.getDate())} ${BN_MONTH[TODAY.getMonth()]} ${bn(TODAY.getFullYear())}</div>
-      <h2>আজকের পাঠ শুরু করুন,<br/>শাস্ত্রের আলোয়</h2>
-      <div class="meta"><span>${bn(bengaliDate(TODAY).d)} ${bengaliDate(TODAY).month} ${bn(bengaliDate(TODAY).year)}</span><span>তিথি · ${p.tithi}</span><span>নক্ষত্র · ${p.nak}</span><span>শুভ · ${p.shubho}</span></div>
-      <div class="foot">
-        <div class="ring" style="--p:${doneCount / 3 * 100}%"><div><div class="n">${bn(S.streak)}</div><div class="u">দিন</div></div></div>
-        <div style="flex:1">
-          <div class="txt">টানা <b>${bn(S.streak)} দিন</b> সাধনা · আজকের লক্ষ্য <b>${bn(doneCount)}/৩</b></div>
-          <div class="txt" style="opacity:.85;margin-top:5px">${doneCount === 3 ? 'আজকের সাধনা সম্পূর্ণ 🌸' : 'আর ' + bn(3 - doneCount) + 'টি কাজ বাকি'}</div>
+
+      <div class="hx-main">
+        <div class="hx-left">
+          <div class="date">${ico('cal', 'xs')} ${BN_DAY[TODAY.getDay()]}, ${bn(TODAY.getDate())} ${BN_MONTH[TODAY.getMonth()]} ${bn(TODAY.getFullYear())}</div>
+          <div class="hx-rot" id="heroRot" aria-live="polite">
+            ${obs.map((o, i) => `<div class="hx-item${i === 0 ? ' on' : ''}">
+              <div class="hx-kind"><span class="hx-dot"></span>${o.kind}<span class="hx-tag">${o.tag}</span></div>
+              <h2 class="hx-title">${esc(o.name)}</h2>
+              <div class="hx-when">${ico('clock', 'xs')}<span><b>${o.whenLab}</b> · ${o.when}</span></div>
+              <div class="hx-note">${o.note}</div>
+            </div>`).join('')}
+          </div>
+          ${obs.length > 1 ? `<div class="hx-dots">${obs.map((_, i) => `<button class="hx-d${i === 0 ? ' on' : ''}" data-hd="${i}" aria-label="পরিবর্তন করুন"></button>`).join('')}</div>` : ''}
         </div>
-        ${ico('arrow')}
+
+        <aside class="hx-rail">
+          <button class="hx-more" data-act="nav" data-to="#/panjika" aria-label="পঞ্জিকা">পঞ্জিকা ${ico('arrow', 'xs')}</button>
+          <div class="hx-info"><b>${bn(bd.d)} ${bd.month} ${bn(bd.year)}</b></div>
+          <div class="hx-info"><span class="k">তিথি</span><span class="v">${p.tithi}</span></div>
+          <div class="hx-info"><span class="k">নক্ষত্র</span><span class="v">${p.nak}</span></div>
+        </aside>
       </div>
+
+      <div class="hx-sad" data-act="nav" data-to="#/sadhana" role="button" tabindex="0">
+        <div class="ring" style="--p:${doneCount / 3 * 100}%"><div><div class="n">${bn(S.streak)}</div><div class="u">দিন</div></div></div>
+        <div class="hx-sadbody">
+          <div class="hx-sadrow"><b>আজকের সাধনা</b><span class="hx-pill">${bn(doneCount)}/৩</span><span class="hx-mini">${doneCount === 3 ? 'সম্পূর্ণ 🌸' : `আর ${bn(3 - doneCount)}টি কাজ বাকি`} · জপ ${bn(S.japa.count)}/১০৮ · ধ্যান ${bn(S.sessions.length ? S.sessions[S.sessions.length - 1].mins : 0)} মিনিট</span></div>
+          <div class="hx-bar"><i style="width:${doneCount / 3 * 100}%"></i></div>
+        </div>
+      </div>
+
+      <button class="hx-path" data-act="nav" data-to="#/reader/${book.id}/${lv.idx}" title="${esc(chapSum)}">
+        <div class="hx-cover ${book.cls}"><span class="sym">${book.sym}</span></div>
+        <div class="hx-pathbody">
+          <div class="hx-pathrow"><span class="hx-mini">শাস্ত্র পাঠ · আজ</span><span class="hx-pill ghost">${esc(book.title)} ${bn(verse.ch)}.${bn(verse.v)}</span></div>
+          <div class="hx-ptitle">${chapName ? `অধ্যায় ${bn(verse.ch)} · ${esc(chapName)}` : esc(book.title)}</div>
+          <div class="hx-pbar"><i style="width:${Math.round((lv.idx + 1) / book.texts.length * 100)}%"></i></div>
+        </div>
+        <span class="hx-pgo">পাঠ ${ico('arrow', 'xs')}</span>
+      </button>
+
+      <div class="hx-foot">${ico('sun', 'xs')} সূর্যোদয় ${p.sunrise} · সূর্যাস্ত ${p.sunset} · রাহুকাল ${p.rahu}</div>
     </div>
 
     <div class="quick">
@@ -1181,8 +1320,415 @@
           <div class="bar thin"><i style="width:${pct}%"></i></div>
         </div>`;
     }).join('')}
+      <div class="sect"><h4>দেবদেবীর পূজা · ধাপে ধাপে</h4><div class="line"></div>
+        <span class="mini muted">${bn(DEVA.length)} দেবতা</span></div>
+      <p class="mini muted" style="line-height:1.75;margin:0 0 10px">
+        ঘরে বসে ভাচুর্য়াল উপকরণে পূজা — প্রদীপ, ধূপ, অগরবাতি, ফুল, বেলপাতা, নৈবেদ্য,
+        পঞ্চপ্রদীপ ও ঘণ্টা। প্রতিটি ধাপে মন্ত্র ও কী করতে হবে তা লেখা।</p>
+      ${devaGrid()}
     </div><div style="height:20px"></div>`;
   }
+  /* =================================================================
+     পূজা দর্পণ — দেবদেবীর ভাচুর্য়াল পূজা (ধাপে ধাপে, মন্ত্র-সহ)
+     ================================================================= */
+  const DEVA = (typeof DARPAN_DEVAS !== 'undefined') ? DARPAN_DEVAS : [];
+  const UPK = (typeof DARPAN_UPOKARAN !== 'undefined') ? DARPAN_UPOKARAN : {};
+  const ART_Q = '?v=79';                 /* ছবির ক্যাশ-বাস্ট */
+  const artSrc = (kind, name) => `icons/${kind}/${name}.png${ART_Q}`;
+  const ART_LOAD = 'this.parentNode.classList.add(\'has-art\')';
+  const ART_FAIL = "this.remove()";
+  const devaKey = id => id + ':' + TODAY_KEY;
+  const devaDone = id => (S.deva && S.deva[devaKey(id)]) || [];
+  const upkGlyph = k => ({ aasan: 'আ', jal: 'জ', ful: 'ফ', diya: 'দী', dhup: 'ধূ', agarbati: 'অ',
+    chandan: 'চ', bel: 'বেল', durba: 'দূ', noi: 'নৈ', pancha: 'প', ganti: 'ঘ' }[k] || '•');
+
+  /* ছবি লোড হলে ফলব্যাক গ্লিফ সরাও; না পেলে ফলব্যাক-ই থাকে (সৎ ফলব্যাক) */
+  function hydrateArt() {
+    document.querySelectorAll('img.artimg').forEach(img => {
+      if (img.dataset.hyd) return;
+      img.dataset.hyd = '1';
+      const box = img.closest('[data-artbox]');
+      const done = () => { if (box) box.classList.add('has-art'); };
+      if (img.complete && img.naturalWidth > 0) return done();
+      img.addEventListener('load', done, { once: true });
+      img.addEventListener('error', () => { img.remove(); }, { once: true });
+    });
+  }
+
+  function devaGrid() {
+    return `<div class="dv-grid">${DEVA.map(d => {
+      const steps = darpanSteps(d);
+      const done = Math.min(devaDone(d.id).length, steps.length);
+      const pct = Math.round(done / steps.length * 100);
+      return `<button class="dv-card" data-act="nav" data-to="#/puja/deva/${d.id}">
+        <span class="dv-thumb" data-artbox>
+          <img class="artimg dv-img" src="${artSrc('deva/card', d.id)}" alt="${esc(d.n)} দেবতার মূর্তি" loading="lazy" decoding="async" onload="${ART_LOAD}" onerror="${ART_FAIL}"/>
+          <span class="dv-glyph fallback">${esc(d.murti || d.beej)}</span>
+        </span>
+        <span class="dv-cname">${esc(d.n)}</span>
+        <span class="dv-csub">${esc(d.sub)}</span>
+        <span class="dv-cbar"><i style="width:${pct}%"></i></span>
+        <span class="dv-cmeta">${done ? bn(done) + '/' + bn(steps.length) + ' ধাপ · ' + bn(pct) + '%' : bn(steps.length) + ' ধাপ'}</span>
+      </button>`;
+    }).join('')}</div>`;
+  }
+
+  /* ---- পুরোহিতের হাত: ঘণ্টা, আরতি, অর্পণ ---- */
+  function bellTone(vol) {
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      const ac = bellTone.ac || (bellTone.ac = new AC());
+      if (ac.state === 'suspended') ac.resume();
+      const t0 = ac.currentTime;
+      [[587.33, .22, 2.4], [880, .13, 1.9], [1318.5, .07, 1.4]].forEach(([f, g0, dur], n) => {
+        const o = ac.createOscillator(), g = ac.createGain();
+        o.type = n === 0 ? 'triangle' : 'sine';
+        o.frequency.setValueAtTime(f, t0);
+        o.frequency.exponentialRampToValueAtTime(f * .996, t0 + dur);
+        g.gain.setValueAtTime(.0001, t0);
+        g.gain.exponentialRampToValueAtTime(g0 * (vol || 1), t0 + .012);
+        g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+        o.connect(g); g.connect(ac.destination);
+        o.start(t0); o.stop(t0 + dur + .1);
+      });
+    } catch (e) {}
+  }
+
+  function openAarti(id) {
+    const d = DEVA.find(x => x.id === id) || DEVA[0];
+    if (!d) return;
+    let ov = document.getElementById('aarti');
+    if (!ov) {
+      ov = document.createElement('div');
+      ov.id = 'aarti'; ov.className = 'aarti';
+      document.body.appendChild(ov);
+    }
+    ov.innerHTML = `<div class="aarti-card">
+      <div class="aarti-stage" data-artbox>
+        <div class="aarti-glow" aria-hidden="true"></div>
+        <img class="artimg aarti-deva" src="icons/deva/${d.id}.png" alt="${esc(d.n)}"/>
+        <span class="aarti-fb fallback">${esc(d.murti || d.beej)}</span>
+        <div class="aarti-lamp" aria-hidden="true">
+          <img class="artimg" src="icons/upakaran/diya.png" alt=""/>
+          <span class="fallback">${FLAME(22, 32)}</span>
+        </div>
+      </div>
+      <div class="aarti-ttl">${esc(d.n)} — আরতি</div>
+      <div class="aarti-note">প্রদীপ ঘুরছে — ঘণ্টা বাজিয়ে “জয় ${esc(d.n)}” বলুন</div>
+      <div class="aarti-acts">
+        <button class="btn gold sm" data-act="bellRing">ঘণ্টা বাজান</button>
+        <button class="btn ghost sm" data-act="aartiClose">থামান</button>
+      </div>
+    </div>`;
+    try { hydrateArt(); } catch (e) {}
+    requestAnimationFrame(() => ov.classList.add('on'));
+    bellTone(.9);
+  }
+
+  function closeAarti() {
+    const ov = document.getElementById('aarti');
+    if (!ov) return;
+    ov.classList.remove('on');
+    setTimeout(() => { if (ov && ov.parentNode) ov.remove(); }, 240);
+  }
+
+  function flyOffering(k) {
+    const core = document.querySelector('.tcore');
+    if (!core) return;
+    const el = document.createElement('span');
+    el.className = 'fly-in';
+    el.innerHTML = `<img class="artimg" src="icons/upakaran/${k}.png" alt=""/><b>${FLAME(16, 24)}</b>`;
+    core.appendChild(el);
+    const img = el.querySelector('img');
+    if (img) img.onerror = () => img.remove();
+    setTimeout(() => { if (el.parentNode) el.remove(); }, 1100);
+  }
+
+
+
+
+  /* ---- অর্পণ: ট্যাপ কিংবা আঙুলে টেনে নিয়ে যাওয়া ---- */
+  function offerStep(id, k) {
+    const d = DEVA.find(x => x.id === id);
+    if (!d) return false;
+    const steps = darpanSteps(d);
+    const done = devaDone(id).filter(i => i < steps.length);
+    const i = Math.min(done.length, steps.length);
+    if (!steps[i]) { toast('পূজা সম্পন্ন ✓ — এখন আরতি করুন'); return false; }
+    if (steps[i].k !== k) {
+      toast('এই ধাপে দরকার: ' + ((UPK[steps[i].k] || {}).n || ''));
+      return false;
+    }
+    done.push(i);
+    S.deva[devaKey(id)] = done; save('deva');
+    U.keepTop = location.hash;
+    bellTone(.45);
+    toast(((UPK[k] || {}).n || '') + ' অর্পিত ✓');
+    render();
+    flyOffering(k);
+    return true;
+  }
+
+  /* ৩ডি টেনে-নেওয়ার ইঞ্জিন — মাউস, আঙুল, পেন সবই (Pointer Events) */
+  const DRAG = { on: false, moved: false, el: null, ghost: null, sx: 0, sy: 0, k: '', id: '', swiped: false };
+
+  function dragTargetAt(x, y) {
+    try { if (document.elementFromPoint) { const el = document.elementFromPoint(x, y); if (el) return el.closest('.tcore'); } } catch (e) {}
+    const core = document.querySelector('.tcore');
+    if (!core) return null;
+    const r = core.getBoundingClientRect();
+    const pad = 26;
+    return (x >= r.left - pad && x <= r.right + pad && y >= r.top - pad && y <= r.bottom + pad) ? core : null;
+  }
+
+  function dragStart(e) {
+    if (e.button !== undefined && e.button > 0) return;   /* ডান-ক্লিক/মাঝ-ক্লিক নয় */
+    const card = e.target.closest && e.target.closest('.tside-it');
+    if (!card || !card.dataset.k) return;
+    DRAG.on = true; DRAG.moved = false; DRAG.swiped = false;
+    DRAG.el = card; DRAG.k = card.dataset.k; DRAG.id = card.dataset.id;
+    DRAG.sx = e.clientX; DRAG.sy = e.clientY;
+  }
+
+  function dragMove(e) {
+    if (!DRAG.on) return;
+    const dx = e.clientX - DRAG.sx, dy = e.clientY - DRAG.sy;
+    if (!DRAG.moved) {
+      /* অনুভূমিক ঝোঁকেই টানা শুরু — খাড়া টানে পৃষ্ঠা স্ক্রল হবে */
+      if (Math.abs(dx) < 10 || Math.abs(dx) < Math.abs(dy)) return;
+      DRAG.moved = true;
+      const r = DRAG.el.getBoundingClientRect();
+      const g = document.createElement('div');
+      g.className = 'drag-ghost';
+      g.innerHTML = `<img src="${artSrc('upakaran', DRAG.k)}" alt=""/><span>${esc((UPK[DRAG.k] || {}).n || '')}</span>`;
+      g.style.left = (r.left + r.width / 2) + 'px';
+      g.style.top = (r.top + r.height / 2) + 'px';
+      document.body.appendChild(g);
+      DRAG.ghost = g;
+      DRAG.el.classList.add('grabbed');
+      document.body.classList.add('dragging');
+    }
+    if (DRAG.ghost) {
+      DRAG.ghost.style.left = e.clientX + 'px';
+      DRAG.ghost.style.top = e.clientY + 'px';
+      const over = !!dragTargetAt(e.clientX, e.clientY);
+      DRAG.ghost.classList.toggle('hot', over);
+      const core = document.querySelector('.tcore');
+      if (core) core.classList.toggle('drop-hot', over);
+    }
+    if (e.cancelable) e.preventDefault();
+  }
+
+  function dragEnd(e) {
+    if (!DRAG.on) return;
+    const wasDrag = DRAG.moved;
+    const k = DRAG.k, id = DRAG.id;
+    const ghost = DRAG.ghost;
+    DRAG.on = false; DRAG.moved = false; DRAG.ghost = null; DRAG.swiped = wasDrag;
+    document.body.classList.remove('dragging');
+    const core = document.querySelector('.tcore');
+    if (core) core.classList.remove('drop-hot');
+    if (DRAG.el) DRAG.el.classList.remove('grabbed');
+    if (ghost) {
+      const over = e.type !== 'pointercancel' && !!dragTargetAt(e.clientX, e.clientY);
+      ghost.classList.add(over ? 'drop' : 'back');
+      setTimeout(() => ghost.remove(), 320);
+      if (over) {
+        const ok = offerStep(id, k);
+        if (!ok) bellTone(.25);
+      }
+    }
+    if (wasDrag) {
+      /* ড্র্যাগ শেষে যে click আসবে সেটি আর ধরা হবে না */
+      U.swallowClick = true;
+      setTimeout(() => { U.swallowClick = false; }, 400);
+    }
+    DRAG.el = null;
+  }
+
+  function initDragEngine() {
+    document.addEventListener('pointerdown', dragStart, { passive: true });
+    document.addEventListener('pointermove', dragMove, { passive: false });
+    document.addEventListener('pointerup', dragEnd);
+    document.addEventListener('pointercancel', dragEnd);
+    /* ড্র্যাগের পরে ভুল করে আবার অর্পণ যেন না হয় */
+    document.addEventListener('click', e => {
+      if (!U.swallowClick) return;
+      const onCard = e.target && e.target.closest && e.target.closest('.tside-it, .cmd-go');
+      if (!onCard) return;                 /* অন্য কোথাও চাপলে বাধা নয় */
+      U.swallowClick = false;
+      e.stopPropagation();
+      e.preventDefault();
+    }, true);
+  }
+
+  /* ---------------------------------------------------------------
+     মন্দির-পোস্টার: আইভরি-সোনালি ফ্রেম, কোণে ঝোলানো ঘণ্টা, মাঝে মূর্তি,
+     দুই পাশে নম্বর-করা উপকরণ, নিচে শেষ ধাপের বড় বাক্স ও অর্থ-তালিকা,
+     একেবারে নিচে কমান্ড-বার (ক্রম · মন্ত্র · বাটন)।
+     --------------------------------------------------------------- */
+  function devaPujaScreen(id) {
+    const d = DEVA.find(x => x.id === id) || DEVA[0];
+    if (!d) return pujaScreen();
+    const steps = darpanSteps(d);
+    const done = devaDone(d.id).filter(n => n < steps.length);
+    const i = Math.min(done.length, steps.length);
+    const cur = steps[i] || null;
+    const doneKeys = done.map(n => steps[n] && steps[n].k).filter(Boolean);
+    const has = k => doneKeys.includes(k);
+    const pct = Math.round(done.length / steps.length * 100);
+    const finished = !cur;
+    const keys = [...new Set(steps.map(x => x.k))];
+
+    const item = (st, n) => {
+      const state = n < done.length ? 'done' : (n === i ? 'now' : 'todo');
+      const up = UPK[st.k] || {};
+      return `<button class="tside-it ${state}" data-act="devaOffer" data-id="${d.id}" data-k="${st.k}" data-n="${n}"
+          aria-label="ধাপ ${bn(n + 1)} — ${esc(up.n || st.t)} (মূর্তির দিকে টেনে আনুন)" draggable="false"${state === 'todo' ? ' aria-disabled="true"' : ''}>
+        <span class="tside-no">${state === 'done' ? ico('check', 'xs') : bn(n + 1)}</span>
+        <span class="tside-ico" data-artbox>
+          <img class="artimg tside-img" src="${artSrc('upakaran', st.k)}" alt="${esc(up.n || '')}" loading="lazy" decoding="async" onload="${ART_LOAD}" onerror="${ART_FAIL}"/>
+          <span class="tside-glyph fallback">${upkGlyph(st.k)}</span>
+        </span>
+        <span class="tside-tx">
+          <span class="tside-nm">${esc(up.n || st.t)}</span>
+          <span class="tside-cap">${esc(st.t)}</span>
+        </span>
+      </button>`;
+    };
+
+    const last = steps.length - 1;
+    const rest = last;
+    const leftN = Math.ceil(rest / 2);
+    const leftRows = steps.slice(0, leftN).map((st, n) => item(st, n)).join('');
+    const rightRows = steps.slice(leftN, last).map((st, n) => item(st, n + leftN)).join('');
+    const wideRow = item(steps[last], last);
+
+    const legend = [
+      ['aasan', 'আসন', 'শুদ্ধি ও সংকল্প'],
+      ['jal', 'জল', 'পবিত্রতা'],
+      ['ful', 'পুষ্প', 'ভক্তি'],
+      ['dhup', 'ধূপ', 'গন্ধ-অর্পণ'],
+      ['noi', 'নৈবেদ্য', 'সমর্পণ']
+    ].map(([k, n, c]) => `<span class="m-leg">
+        <span class="m-legic" data-artbox>
+          <img class="artimg" src="${artSrc('upakaran', k)}" alt="${esc(n)}" loading="lazy" onload="${ART_LOAD}" onerror="${ART_FAIL}"/>
+          <span class="fallback">${upkGlyph(k)}</span>
+        </span>
+        <b>${esc(n)}</b><i>${esc(c)}</i>
+      </span>`).join('');
+
+    const order = steps.map((st, n) =>
+      `<span class="cmd-dot${n < done.length ? ' done' : ''}${n === i ? ' cur' : ''}" title="${esc((UPK[st.k] || {}).n || st.t)}">${n < done.length ? '✓' : bn(n + 1)}</span>`
+    ).join('<span class="cmd-sep">›</span>');
+
+    const cmd = finished ? `
+      <div class="cmdbar done">
+        <div class="cmd-order">${order}</div>
+        <div class="cmd-now">
+          <div class="cmd-h">পূজা সম্পূর্ণ 🌸 · ${bn(steps.length)} ধাপ</div>
+          <div class="cmd-m">মন্ত্রহীনং ক্রিয়াহীনং ভক্তিহীনং মহেশ্বর। যৎ পূজিতং ময়া দেব পরিপূর্ণং তদস্তু মে॥</div>
+        </div>
+        <div class="cmd-acts">
+          <button class="btn gold sm cmd-go" data-act="pujaAarti" data-id="${d.id}">আরতি করুন</button>
+          <button class="cbtn" data-act="devaReset" data-id="${d.id}">আবার শুরু</button>
+          <button class="cbtn" data-act="nav" data-to="#/puja">আরেক দেবতা</button>
+        </div>
+      </div>` : `
+      <div class="cmdbar">
+        <div class="cmd-order">${order}</div>
+        <div class="cmd-now">
+          <div class="cmd-h"><b>ধাপ ${bn(i + 1)}</b> · ${esc(cur.t)}</div>
+          <div class="cmd-m">${esc(cur.m)}</div>
+        </div>
+        <div class="cmd-acts">
+          <button class="btn gold sm cmd-go" data-act="devaOffer" data-id="${d.id}" data-k="${cur.k}">
+            ${esc((UPK[cur.k] || {}).n || '')} দিন</button>
+          <button class="cbtn" data-act="speak" data-text="${esc(cur.m)}">উচ্চারণ</button>
+          <button class="cbtn" data-act="bellRing">ঘণ্টা</button>
+          <button class="cbtn" data-act="pujaAarti" data-id="${d.id}">আরতি</button>
+        </div>
+      </div>`;
+
+    return `${appbar(`${d.n} পূজা`, esc(d.sub), '#/puja')}
+    <div class="pad mandir${has('diya') ? ' lamp-on' : ''}${finished ? ' finished' : ''}">
+      <div class="m-frame">
+        <i class="m-orn tl" aria-hidden="true"></i><i class="m-orn tr" aria-hidden="true"></i>
+        <i class="m-orn bl" aria-hidden="true"></i><i class="m-orn br" aria-hidden="true"></i>
+        <span class="m-bell lm" data-artbox>
+          <img class="artimg" src="${artSrc('upakaran', 'ganti')}" alt="" onload="${ART_LOAD}" onerror="${ART_FAIL}"/><span class="fallback">ঘ</span>
+        </span>
+        <span class="m-bell rm" data-artbox>
+          <img class="artimg" src="${artSrc('upakaran', 'ganti')}" alt="" onload="${ART_LOAD}" onerror="${ART_FAIL}"/><span class="fallback">ঘ</span>
+        </span>
+
+        <div class="m-head">
+          <div class="m-eyebrow">সনাতন বিদ্যাপীঠ · পূজা দর্পণ</div>
+          <h2 class="m-title"><span>॥</span> ${esc(d.n)} পূজা <span>॥</span></h2>
+          <div class="m-flourish" aria-hidden="true"><i></i><b>✦</b><i></i></div>
+          <p class="m-lead">এক দেবতা · ${bn(steps.length)} ধাপ · ${bn(keys.length)} উপকরণ</p>
+          <p class="m-lead2">আচমন থেকে প্রণাম — পুরোহিতের ক্রমে</p>
+        </div>
+
+        <div class="tpl">
+          <div class="tside left" aria-label="প্রথমার্ধের উপকরণ">${leftRows}</div>
+
+          <div class="tcore" data-artbox>
+            <div class="tc-halo" aria-hidden="true"></div>
+            <div class="tc-arch" aria-hidden="true"></div>
+            <img class="artimg t-figure" src="${artSrc('deva', d.id)}" alt="${esc(d.n)} দেবতার মূর্তি" onload="${ART_LOAD}" onerror="${ART_FAIL}"/>
+            <span class="tc-glyph fallback">${esc(d.murti || d.beej)}</span>
+            <div class="tc-pedestal" aria-hidden="true"><i></i></div>
+            <div class="tc-lamps" aria-hidden="true">
+              <span class="tc-di${has('diya') ? ' on' : ''}">${FLAME(13, 19)}</span>
+              <span class="tc-dh${has('dhup') ? ' on' : ''}"><i></i><i></i><i></i></span>
+              <span class="tc-pa${has('pancha') ? ' on' : ''}"><b></b><b></b><b></b><b></b><b></b></span>
+            </div>
+            <div class="tc-bar"><i style="width:${pct}%"></i></div>
+            <div class="tc-pct">${finished ? 'সম্পূর্ণ 🌸' : `${bn(pct)}% · ধাপ ${bn(i + 1)}/${bn(steps.length)}`}</div>
+          </div>
+
+          <div class="tside right" aria-label="দ্বিতীয়ার্ধের উপকরণ">${rightRows}</div>
+        </div>
+
+        <div class="m-wide">${wideRow}</div>
+
+        <div class="m-legend">
+          <div class="m-legttl"><i></i><span>এই উপকরণগুলোর অর্থ কী?</span><i></i></div>
+          <div class="m-legrow">${legend}</div>
+        </div>
+
+        <div class="m-foot"><span>সনাতন বিদ্যাপীঠ</span><i>যেখানে প্রতিটি আরতির একটি কারণ আছে</i></div>
+      </div>
+
+      <p class="m-hint">সোনালি রিং-এ যে উপকরণ, <b>সেটি আঙুলে ধরে মাঝের মূর্তির দিকে টেনে ছেড়ে দিন</b> — অর্পণ হয়ে যাবে। চাইলে কার্ডে ট্যাপও করতে পারেন। বাঁ দিকের উপকরণ উপর থেকে নিচে, তারপর ডান দিক।</p>
+
+      <div class="sect"><h4>এই পূজার মন্ত্র</h4><div class="line"></div>
+        <span class="mini muted">${bn(d.mantras.length)}টি</span></div>
+      <div class="card pad dv-mantras">
+        <p class="mini muted" style="line-height:1.7;margin:0 0 8px">${esc(d.dhyan)}</p>
+        ${d.mantras.map(([lab, m]) => `
+          <div class="dv-mrow">
+            <div style="flex:1;min-width:0">
+              <div class="dv-mlab">${esc(lab)}</div>
+              <div class="dv-mtxt">${esc(m)}</div>
+            </div>
+            <button class="iconbtn dv-play" data-act="speak" data-text="${esc(m)}" aria-label="শুনুন">${ico('play', 'sm')}</button>
+          </div>`).join('')}
+        <div class="dv-note">উপকরণ: ${esc(d.items)}</div>
+      </div>
+
+      <div class="card pad dv-disc">
+        <b>সৎ নোট</b>
+        <p class="mini muted">ধাপের ক্রম সাধারণ পূজা-পদ্ধতি অনুসারে; মন্ত্রগুলো প্রচলিত বীজ/নাম মন্ত্র ও সুপরিচিত ধ্যানশ্লোকের সংক্ষিপ্ত রূপ। পূর্ণ বিধি (ন্যাস, কল্প, সংস্কার) অঞ্চল ও সম্প্রদায়ভেদে ভিন্ন — গুরুর কাছে শেখাই শ্রেষ্ঠ। অসুস্থতা, বিগ্রহ-স্থাপনা বা বিশেষ ব্রতে পুরোহিতের পরামর্শ নিন।</p>
+        <button class="btn ghost sm" data-act="nav" data-to="#/panjika">আজকের তিথি-নক্ষত্র দেখুন</button>
+      </div>
+    </div>
+    <div style="height:190px"></div>
+    ${cmd}`;
+  }
+
   function pujaGuideScreen(id) {
     const p = DB.pujas.find(x => x.id === id) || DB.pujas[0];
     const k = p.id + ':' + TODAY_KEY;
@@ -2169,6 +2715,255 @@
   }
 
   /* --------------------------------------------------------------- 12. me */
+  /* পছন্দের তালিকা — “আমি” ও “সেটিংস” দুই জায়গাতেই একই */
+  function prefCard() {
+    return `<div class="card pad" style="padding:4px 14px">
+        <div class="setting" data-act="toggleTheme">
+          <span style="color:var(--gold-300)">${ico('sun', 'sm')}</span>
+          <div style="flex:1;font-size:12.5px">লাইট মোড (পাটা-থিম)</div>
+          <span class="toggle ${S.theme === 'light' ? 'on' : ''}"></span></div>
+        <div class="setting" data-act="toggleBg">
+          <span style="color:var(--gold-300)">${ico('flame', 'sm')}</span>
+          <div style="flex:1;font-size:12.5px">পটভূমি থিম (মন্দির-পত্র)</div>
+          <span class="toggle ${S.bg ? 'on' : ''}"></span></div>
+        <div class="setting" data-act="toggleSound">
+          <span style="color:var(--gold-300)">${ico('bell', 'sm')}</span>
+          <div style="flex:1;font-size:12.5px">মৃদু ঘণ্টাধ্বনি</div>
+          <span class="toggle ${S.sound ? 'on' : ''}"></span></div>
+        <div class="setting" data-act="toggleMotion">
+          <span style="color:var(--gold-300)">${ico('flame', 'sm')}</span>
+          <div style="flex:1;font-size:12.5px">অ্যানিমেশন</div>
+          <span class="toggle ${S.motion ? 'on' : ''}"></span></div>
+        <div class="setting" data-act="toggleName">
+          <span style="color:var(--gold-300)">${vico('user', 'sm')}</span>
+          <div style="flex:1;font-size:12.5px">নাম পরিবর্তন</div>
+          <span class="mini muted">${esc(S.name.split(' ')[0])} ›</span></div>
+        <div class="setting" data-act="reset">
+          <span style="color:var(--danger)">${ico('close', 'sm')}</span>
+          <div style="flex:1;font-size:12.5px;color:var(--danger)">ডেমো ডেটা রিসেট</div>
+          <span class="mini muted">›</span></div>
+      </div>
+`;
+  }
+
+  /* =========================== সার্চ ইঞ্জিন =========================== */
+  const SI = { idx: null, q: '', t: null };
+  /* বাংলা অঙ্ক, যতিচিহ্ন, ড্যাশ — সব সমান করে খোঁজার জন্য */
+  function bangNorm(v) {
+    return (v || '').toString().toLowerCase()
+      .replace(/[\u09e6-\u09ef]/g, d => String(d.charCodeAt(0) - 0x09e6))
+      .replace(/[\u0966-\u096f]/g, d => String(d.charCodeAt(0) - 0x0966))
+      .replace(/[।॥,;:!?"'“”‘’()\[\]{}··–—-]/g, ' ')
+      .replace(/\s+/g, ' ').trim();
+  }
+  function buildSearchIndex() {
+    const out = [];
+    const add = (t, sub, r, k) => out.push({ t, s: sub || '', r, k: k || '', tt: bangNorm(t), ss: bangNorm(sub + ' ' + (k || '')) });
+    [['হোম', 'আজকের পাঠ ও পঞ্জিকা', '#/home', 'পর্দা'],
+     ['গ্রন্থাগার', 'শাস্ত্র, বই ও অডিও', '#/library', 'পর্দা'],
+     ['পঞ্জিকা', 'তিথি · নক্ষত্র · উৎসব', '#/panjika', 'পর্দা'],
+     ['উৎসব পঞ্জি', 'বছরের পার্বণ-তালিকা', '#/panjika/calendar', 'পঞ্জিকা'],
+     ['শুভ সময়', 'শুভক্ষণ ও লগ্ন', '#/panjika/shubho', 'পঞ্জিকা'],
+     ['রাশিফল', 'দৈনিক রাশিফল', '#/panjika/rashifal', 'পঞ্জিকা'],
+     ['বিবাহ মিলন', 'কুষ্ঠি মিলন', '#/panjika/bibaho', 'পঞ্জিকা'],
+     ['ফিড', 'পোস্ট ও আলোচনা', '#/feed', 'পর্দা'],
+     ['রিলস', 'ভিডিও ফিড', '#/reels', 'পর্দা'],
+     ['পরীক্ষা', 'সাপ্তাহিক পরীক্ষা ও কুইজ', '#/exam', 'পর্দা'],
+     ['সাধনা', 'জপ · ধ্যান · যোগা', '#/sadhana', 'পর্দা'],
+     ['সেবা ও দান', 'অভিযান ও সহায়তা', '#/seva', 'পর্দা'],
+     ['মার্কেটপ্লেস', 'দক্ষ সেবা ও টিউটর', '#/market', 'পর্দা'],
+     ['আমার অগ্রগতি', 'প্রোফাইল ও পরিসংখ্যান', '#/me', 'পর্দা'],
+     ['সেটিংস', 'থিম, ধ্বনি, নাম', '#/settings', 'পর্দা'],
+     ['নোট', 'ব্যক্তিগত নোট', '#/notes', 'পর্দা']
+    ].forEach(x => add(x[0], x[1], x[2], x[3]));
+
+    (DB.books || []).forEach(b => {
+      add(b.title, b.author + ' · ' + (b.tag || ''), '#/book/' + b.id, 'গ্রন্থ');
+      (b.texts || []).forEach((x, i) => {
+        if (!x) return;
+        const t = x.ch ? 'অধ্যায় ' + x.ch + ' · শ্লোক ' + (x.v || i + 1) : 'শ্লোক ' + (i + 1);
+        add(t, (x.bn || x.sk || '').toString().replace(/\s+/g, ' ').slice(0, 100), '#/reader/' + b.id + '/' + i, 'শ্লোক');
+      });
+    });
+    (DB.courses || []).forEach(c => add(c.title, c.summary || c.level || '', '#/course/' + c.id, 'কোর্স'));
+    (DB.pujas || []).forEach(p => add(p.title, p.summary || p.time || '', '#/puja/' + p.id, 'পূজা'));
+    (DEVA || []).forEach(d => add(d.n + ' পূজা', d.sub + ' · ' + d.items, '#/puja/deva/' + d.id, 'পূজা দর্পণ'));
+    (DB.quizzes && DB.quizzes.weekly ? [DB.quizzes.weekly] : []).forEach(q => add(q.title, q.topic || '', '#/quiz', 'কুইজ'));
+    (DB.asanas || []).forEach(a => add(a.name, a.benefit || a.level || '', '#/sadhana', 'যোগাসন'));
+    (DB.japas || []).forEach(j => add(j.title, j.note || '', '#/sadhana', 'জপ'));
+    (DB.meditations || []).forEach(m => add(m.title, m.note || (m.mins + ' মিনিট'), '#/sadhana', 'ধ্যান'));
+    (DB.campaigns || []).forEach(c => add(c.title, c.blurb || c.sh || '', '#/seva', 'অভিযান'));
+    (DB.providers || []).forEach(p => add(p.name, p.role || p.cat || '', '#/market', 'সেবাদাতা'));
+    ((DB.feed && DB.feed.posts) || []).forEach(p => add(p.name + ' — পোস্ট', (p.text || '').slice(0, 90), '#/feed', 'ফিড'));
+    ((DB.feed && DB.feed.reels) || []).forEach(r => add(r.title, r.sub || '', '#/reels/' + r.id, 'রিলস'));
+    (DB.gitaAudio || []).forEach(g => add('গীতা অডিও · অধ্যায় ' + g.ch, g.name + ' · ' + g.dur, '#/gita/' + g.ch, 'অডিও'));
+    (DB.bhaktiAudio || []).forEach(b => add(b.name, (b.cat || '') + ' · ' + (b.ch || ''), '#/gita', 'কীর্তন'));
+    Object.entries((DB.panjika && DB.panjika.festivals) || {}).forEach(([d, n]) =>
+      add(n, d, '#/panjika/calendar', 'উৎসব'));
+    return out;
+  }
+  function searchAll(qRaw) {
+    const q = bangNorm(qRaw);
+    if (!q) return [];
+    if (!SI.idx) SI.idx = buildSearchIndex();
+    const toks = q.split(' ').filter(Boolean);
+    const strict = [], loose = [];
+    for (const e of SI.idx) {
+      let sc = 0, hit = 0;
+      for (const t of toks) {
+        let s = 0;
+        if (e.tt === t) s = 130;
+        else if (e.tt.startsWith(t)) s = 100;
+        else if (e.tt.includes(t)) s = 70;
+        else if (e.ss.includes(t)) s = 32;
+        if (s) { sc += s; hit++; }
+      }
+      if (!hit) continue;
+      const KW = { 'গ্রন্থ': 30, 'পর্দা': 14, 'কোর্স': 12, 'পূজা': 10, 'অভিযান': 10, 'কুইজ': 8, 'উৎসব': 6 };
+      sc += KW[e.k] || 0;
+      sc += Math.min(18, hit * 6) - Math.min(14, e.t.length / 6);
+      (hit === toks.length ? strict : loose).push([sc, e]);
+    }
+    const rank = a => a.sort((x, y) => y[0] - x[0] || x[1].t.length - y[1].t.length);
+    return (strict.length ? rank(strict) : rank(loose)).slice(0, 12).map(x => x[1]);
+  }
+  function searchResultsHTML(q) {
+    if (!bangNorm(q)) {
+      return `<div class="sres-empty">${vico('search', 'sm')}<div>কিছু লিখুন — যেমন <b>গীতা</b>, <b>ধ্যান</b>, <b>অক্ষয়</b>, <b>২:৪৭</b>, <b>যোগাসন</b></div></div>`;
+    }
+    const list = searchAll(q);
+    if (!list.length) {
+      return `<div class="sres-empty">${vico('search', 'sm')}<div>“${esc(q)}” — কিছু পাওয়া যায়নি।<br/><span class="mini muted">অন্য শব্দ বা ছোট কীওয়ার্ড দিয়ে দেখুন।</span></div></div>`;
+    }
+    return list.map(e => `<button class="sres" data-act="searchGo" data-to="${e.r}">
+        <span class="sres-k">${esc(e.k || '·')}</span>
+        <span class="sres-t"><b>${esc(e.t)}</b>${e.s ? `<i>${esc(e.s)}</i>` : ''}</span>
+        ${vico('arrow', 'sm sr-arrow')}
+      </button>`).join('') + `<div class="sres-count">${bn(list.length)}টি মিল পাওয়া গেল</div>`;
+  }
+  function searchPopHTML() {
+    return `<div class="setpop-bg" data-act="searchClose" aria-hidden="true"></div>
+      <div class="setpop-card search-card" role="dialog" aria-modal="true" aria-label="সার্চ">
+        <div class="setpop-head">
+          <div>
+            <div class="mini muted" style="letter-spacing:.14em;text-transform:uppercase;font-weight:700;font-size:9px">Search</div>
+            <div class="display" style="font-size:16px;margin-top:2px">খুঁজুন</div>
+          </div>
+          <button class="iconbtn" data-act="searchClose" aria-label="বন্ধ করুন">${vico('close')}</button>
+        </div>
+        <div class="sbar">
+          ${vico('search', 'sm')}
+          <input id="sq" class="sq" type="search" inputmode="search" autocomplete="off"
+            placeholder="গীতা, ধ্যান, অক্ষয় তৃতীয়া, ২:৪৭…" aria-label="যা খুঁজছেন লিখুন" />
+        </div>
+        <div class="search-res" id="searchRes">${searchResultsHTML('')}</div>
+      </div>`;
+  }
+  function openSearchPop() {
+    let host = document.getElementById('searchPop');
+    if (!host) {
+      document.body.insertAdjacentHTML('beforeend', '<div id="searchPop" class="setpop searchpop"></div>');
+      host = document.getElementById('searchPop');
+    }
+    host.innerHTML = searchPopHTML();
+    host.classList.add('on');
+    document.body.classList.add('setpop-lock');
+    setTimeout(() => { const q = document.getElementById('sq'); if (q) q.focus(); }, 90);
+  }
+  function closeSearchPop() {
+    const host = document.getElementById('searchPop');
+    if (host) { host.classList.remove('on'); host.innerHTML = ''; }
+    document.body.classList.remove('setpop-lock');
+  }
+  function runSearch(val) {
+    const box = document.getElementById('searchRes');
+    if (box) box.innerHTML = searchResultsHTML(val);
+  }
+
+  /* --------------------------- সেটিংস পপআপ --------------------------- */
+  function setPopHTML() {
+    return `<div class="setpop-bg" data-act="setPopupClose" aria-hidden="true"></div>
+      <div class="setpop-card" role="dialog" aria-modal="true" aria-label="সেটিংস">
+        <div class="setpop-head">
+          <div>
+            <div class="mini muted" style="letter-spacing:.14em;text-transform:uppercase;font-weight:700;font-size:9px">Preferences</div>
+            <div class="display" style="font-size:16px;margin-top:2px">সেটিংস</div>
+          </div>
+          <button class="iconbtn" data-act="setPopupClose" aria-label="বন্ধ করুন">${vico('close')}</button>
+        </div>
+        <div class="setpop-theme">
+          <button class="segt ${S.theme === 'light' ? 'on' : ''}" data-act="themeSet" data-v="light">☀ লাইট</button>
+          <button class="segt ${S.theme === 'dark' ? 'on' : ''}" data-act="themeSet" data-v="dark">🌙 ডার্ক</button>
+        </div>
+        ${prefCard()}
+        <div class="mini muted" style="text-align:center;margin-top:10px;line-height:1.6">ডেটা শুধু এই ব্রাউজারে সংরক্ষিত</div>
+      </div>`;
+  }
+  function openSetPop() {
+    let host = document.getElementById('setPop');
+    if (!host) {
+      document.body.insertAdjacentHTML('beforeend', '<div id="setPop" class="setpop"></div>');
+      host = document.getElementById('setPop');
+    }
+    host.innerHTML = setPopHTML();
+    host.classList.add('on');
+    document.body.classList.add('setpop-lock');
+  }
+  function refreshSetPop() {
+    const host = document.getElementById('setPop');
+    if (host && host.classList.contains('on')) host.innerHTML = setPopHTML();
+  }
+  function closeSetPop() {
+    const host = document.getElementById('setPop');
+    if (host) { host.classList.remove('on'); host.innerHTML = ''; }
+    document.body.classList.remove('setpop-lock');
+  }
+
+  /* সেটিংস পর্দা — লাইট/ডার্ক টগল এখানেই */
+  function settingsScreen() {
+    return `${appbar('সেটিংস', 'Settings', '#/home')}
+    <div class="pad settings-pop" style="padding-top:0">
+      <div class="sect"><h4>প্রদর্শন</h4><div class="line"></div>
+        <span class="pill">${S.theme === 'light' ? 'লাইট' : 'ডার্ক'}</span></div>
+      <div class="card pad stack" style="gap:6px">
+        <div class="mini muted" style="line-height:1.75">থিম বদলাতে নিচের <b>লাইট মোড</b> সারিতে ট্যাপ করুন — পুরো অ্যাপ সঙ্গে সঙ্গে বদলে যাবে।</div>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <button class="btn ${S.theme === 'light' ? 'gold' : 'ghost'} sm" data-act="themeSet" data-v="light">☀ লাইট</button>
+          <button class="btn ${S.theme === 'dark' ? 'gold' : 'ghost'} sm" data-act="themeSet" data-v="dark">🌙 ডার্ক</button>
+        </div>
+      </div>
+      <div class="sect"><h4>পছন্দ ও সেটিংস</h4><div class="line"></div></div>
+<div class="card pad" style="padding:4px 14px">
+        <div class="setting" data-act="toggleTheme">
+          <span style="color:var(--gold-300)">${ico('sun', 'sm')}</span>
+          <div style="flex:1;font-size:12.5px">লাইট মোড (পাটা-থিম)</div>
+          <span class="toggle ${S.theme === 'light' ? 'on' : ''}"></span></div>
+        <div class="setting" data-act="toggleBg">
+          <span style="color:var(--gold-300)">${ico('flame', 'sm')}</span>
+          <div style="flex:1;font-size:12.5px">পটভূমি থিম (মন্দির-পত্র)</div>
+          <span class="toggle ${S.bg ? 'on' : ''}"></span></div>
+        <div class="setting" data-act="toggleSound">
+          <span style="color:var(--gold-300)">${ico('bell', 'sm')}</span>
+          <div style="flex:1;font-size:12.5px">মৃদু ঘণ্টাধ্বনি</div>
+          <span class="toggle ${S.sound ? 'on' : ''}"></span></div>
+        <div class="setting" data-act="toggleMotion">
+          <span style="color:var(--gold-300)">${ico('flame', 'sm')}</span>
+          <div style="flex:1;font-size:12.5px">অ্যানিমেশন</div>
+          <span class="toggle ${S.motion ? 'on' : ''}"></span></div>
+        <div class="setting" data-act="toggleName">
+          <span style="color:var(--gold-300)">${vico('user', 'sm')}</span>
+          <div style="flex:1;font-size:12.5px">নাম পরিবর্তন</div>
+          <span class="mini muted">${esc(S.name.split(' ')[0])} ›</span></div>
+        <div class="setting" data-act="reset">
+          <span style="color:var(--danger)">${ico('close', 'sm')}</span>
+          <div style="flex:1;font-size:12.5px;color:var(--danger)">ডেমো ডেটা রিসেট</div>
+          <span class="mini muted">›</span></div>
+      </div>
+      <p class="mini muted" style="text-align:center;margin:18px 0 0;line-height:1.7">সনাতন বিদ্যাপীঠ · ডেমো সংস্করণ ১.০<br/>আপনার ডেটা শুধু এই ব্রাউজারে সংরক্ষিত</p>
+      <div style="height:24px"></div>
+    </div>`;
+  }
+
   function meScreen() {
     const days = Object.keys(S.activity).sort().slice(-7);
     const max = Math.max(...days.map(d => S.activity[d]), 100);
@@ -2235,32 +3030,7 @@
       </div>
 
       <div class="sect"><h4>পছন্দ ও সেটিংস</h4><div class="line"></div></div>
-      <div class="card pad" style="padding:4px 14px">
-        <div class="setting" data-act="toggleTheme">
-          <span style="color:var(--gold-300)">${ico('sun', 'sm')}</span>
-          <div style="flex:1;font-size:12.5px">লাইট মোড (পাটা-থিম)</div>
-          <span class="toggle ${S.theme === 'light' ? 'on' : ''}"></span></div>
-        <div class="setting" data-act="toggleBg">
-          <span style="color:var(--gold-300)">${ico('flame', 'sm')}</span>
-          <div style="flex:1;font-size:12.5px">পটভূমি থিম (মন্দির-পত্র)</div>
-          <span class="toggle ${S.bg ? 'on' : ''}"></span></div>
-        <div class="setting" data-act="toggleSound">
-          <span style="color:var(--gold-300)">${ico('bell', 'sm')}</span>
-          <div style="flex:1;font-size:12.5px">মৃদু ঘণ্টাধ্বনি</div>
-          <span class="toggle ${S.sound ? 'on' : ''}"></span></div>
-        <div class="setting" data-act="toggleMotion">
-          <span style="color:var(--gold-300)">${ico('flame', 'sm')}</span>
-          <div style="flex:1;font-size:12.5px">অ্যানিমেশন</div>
-          <span class="toggle ${S.motion ? 'on' : ''}"></span></div>
-        <div class="setting" data-act="toggleName">
-          <span style="color:var(--gold-300)">${vico('user', 'sm')}</span>
-          <div style="flex:1;font-size:12.5px">নাম পরিবর্তন</div>
-          <span class="mini muted">${esc(S.name.split(' ')[0])} ›</span></div>
-        <div class="setting" data-act="reset">
-          <span style="color:var(--danger)">${ico('close', 'sm')}</span>
-          <div style="flex:1;font-size:12.5px;color:var(--danger)">ডেমো ডেটা রিসেট</div>
-          <span class="mini muted">›</span></div>
-      </div>
+      ${prefCard()}
       <p class="mini muted" style="text-align:center;margin:18px 0 0;line-height:1.7">সনাতন বিদ্যাপীঠ · ডেমো সংস্করণ ১.০<br/>আপনার ডেটা শুধু এই ব্রাউজারে সংরক্ষিত</p>
     </div><div style="height:24px"></div>`;
   }
@@ -2903,23 +3673,16 @@
     const auto = todayAuto();
     const sc = scoreOf(e, auto);
     const pillars = [['আধ্যাত্মিক', sc.sadhana], ['চরিত্র', sc.charitra], ['কর্ম', sc.karma], ['জীবন', sc.jibon]];
-    return `<div class="sheet-bg" data-act="sheetClose" aria-hidden="true"></div>
-    <div class="sheet" role="dialog" aria-modal="true" aria-label="আজকের হিসাব ও নোট">
-      <div class="grab"></div>
-      <div class="kv" style="align-items:flex-start">
-        <div>
-          <div class="mini muted">আজকের হিসাব · দৈনন্দিন ট্র্যাক</div>
-          <div class="display" style="font-size:20px;color:var(--gold-200);margin-top:4px">${bn(sc.total)} <span class="tiny muted" style="font-family:var(--f-body)">/ ১০০ পয়েন্ট</span></div>
-        </div>
-        <button class="iconbtn" data-act="sheetClose" aria-label="বন্ধ করুন">${ico('close')}</button>
-      </div>
-      <div class="grid2" style="margin-top:12px">
-        ${pillars.map(([n, v]) => `<div class="stat"><div class="k">${n}</div>
-          <div class="v" style="font-size:12.5px">${bn(v)}<span class="tiny muted">/১০০</span></div>
-          <div class="bar thin" style="margin-top:6px"><i style="width:${v}%"></i></div></div>`).join('')}
-      </div>
+    const tab = U.sheetTab === 'note' ? 'note' : 'hisab';
+    const notes = S.notes.slice().sort((a, b) => b.id - a.id).slice(0, 4);
 
-      <div class="sheet-list">
+    const hisabPane = `
+      <div class="grid2 sp-pillars">
+        ${pillars.map(([n, v]) => `<div class="stat"><div class="k">${n}</div>
+          <div class="v">${bn(v)}<span class="tiny muted">/১০০</span></div>
+          <div class="bar thin" style="margin-top:5px"><i style="width:${v}%"></i></div></div>`).join('')}
+      </div>
+      <div class="sp-scroll">
         ${stepper('puja', 'নিত্য পূজা', e.puja, 5, 'মিনিট')}
         ${stepper('japaExtra', 'জপ', e.japaExtra, 1, 'মালা', `অ্যাপে ${bn(auto.japa)} জপ`)}
         ${stepper('dhyanaExtra', 'ধ্যান', e.dhyanaExtra, 5, 'মিনিট', `অ্যাপে ${bn(auto.dhyana)} মিনিট`)}
@@ -2929,20 +3692,52 @@
         ${stepper('workMin', 'কর্ম', e.workMin, 15, 'মিনিট')}
         ${stepper('familyMin', 'পরিবারের সঙ্গে', e.familyMin, 15, 'মিনিট')}
         ${stepper('lies', 'মিথ্যা বলা', e.lies, 1, 'বার')}
+      </div>`;
+
+    const notePane = `
+      <div class="sp-notes">
+        ${notes.length ? notes.map(n => `<button class="sp-nrow" data-act="nav" data-to="#/notes">
+            <span class="sp-nd">${bn(new Date(n.id).getDate())} ${BN_MONTH[new Date(n.id).getMonth()].slice(0, 4)}</span>
+            <span class="sp-nt">${esc((n.t || '').slice(0, 58))}${(n.t || '').length > 58 ? '…' : ''}</span>
+            ${(n.tags || []).length ? `<span class="sp-ntag">${esc(n.tags.slice(0, 2).join(' · '))}</span>` : ''}
+          </button>`).join('')
+          : `<div class="sres-empty" style="padding:14px 8px"><div class="mini muted">এখনও কোনো নোট নেই — প্রথম নোটটি লিখুন।</div></div>`}
+      </div>
+      <button class="btn ghost block" style="margin-top:9px" data-act="nav" data-to="#/notes">সব নোট (${bn(S.notes.length)}) ›</button>`;
+
+    return `<div class="setpop-bg" data-act="sheetClose" aria-hidden="true"></div>
+    <div class="setpop-card sheetpop" role="dialog" aria-modal="true" aria-label="আজকের হিসাব ও নোট">
+      <div class="setpop-head">
+        <div>
+          <div class="mini muted sp-eyebrow">আজকের হিসাব ও নোট</div>
+          <div class="display sp-score">${bn(sc.total)}<span class="tiny muted" style="font-family:var(--f-body)"> /১০০</span></div>
+        </div>
+        <button class="iconbtn" data-act="sheetClose" aria-label="বন্ধ করুন">${ico('close')}</button>
       </div>
 
-      <div style="display:flex;gap:8px;margin-top:12px">
-        <button class="btn gold" style="flex:1.3" data-act="noteNew">${ico('pen', 'sm')} নোট লিখুন</button>
+      <div class="segment sp-seg">
+        <button class="${tab === 'hisab' ? 'on' : ''}" data-act="sheetTab" data-t="hisab">হিসাব</button>
+        <button class="${tab === 'note' ? 'on' : ''}" data-act="sheetTab" data-t="note">নোট · ${bn(S.notes.length)}</button>
+      </div>
+
+      ${tab === 'note' ? notePane : hisabPane}
+
+      <div class="sp-acts">
+        <button class="btn gold" style="flex:1.2" data-act="noteNew">${ico('pen', 'sm')} নোট লিখুন</button>
         <button class="btn ghost" style="flex:1" data-act="nav" data-to="#/track">পূর্ণ হিসাব ›</button>
       </div>
-      <p class="tiny muted" style="text-align:center;margin:10px 0 0;line-height:1.7">প্রতিটি কাজ পয়েন্টে গোনা হয় — আধ্যাত্মিক ৪০%, চরিত্র ২৫%, কর্ম ২০%, জীবন ১৫%</p>
+      <p class="tiny muted sp-foot">প্রতিটি কাজ পয়েন্টে গোনা হয় · আধ্যাত্মিক ৪০% · চরিত্র ২৫% · কর্ম ২০% · জীবন ১৫%</p>
     </div>`;
   }
   function openSheet() {
     const host = document.getElementById('sheetHost');
     if (!host) return;
+    const prev = host.querySelector('.sp-scroll');
+    const keep = prev ? prev.scrollTop : 0;
     host.innerHTML = quickSheetHTML();
     host.classList.add('on');
+    const scl = host.querySelector('.sp-scroll');
+    if (scl && keep) scl.scrollTop = keep;
     U.sheet = true;
   }
   function refreshSheet() { if (U.sheet) openSheet(); }
@@ -3171,10 +3966,12 @@
     { id: 'me', icon: 'user', label: 'আমি', target: '#/me' }
   ];
 
+  /* ট্যাববার: আগের হিন্দু-ধর্মীয় AI আইকনই — শুধু রঙ নেভির কালারে (ক্রিম / মেরুন) */
+  const tabIco = (n, on) => `<img class="tabai ${on ? 'on' : 'off'}" src="icons/ai/tab/${AI_ICON[n]}-${on ? 'on' : 'off'}.png" alt="" aria-hidden="true"/>`;
   function renderTabbar(active) {
     document.getElementById('tabbar').innerHTML = TABS.map(t => `
-      <button class="tab ${active === t.id ? 'on' : ''}" data-act="nav" data-to="${t.target}" aria-label="${t.label}">
-        <span class="ind"></span>${ico(t.icon)}${t.label}</button>`).join('');
+      <button class="tab ${active === t.id ? 'on' : ''}" data-act="nav" data-to="${t.target}" aria-label="${t.label}" ${active === t.id ? 'aria-current="page"' : ''}>
+        <span class="tbox">${tabIco(t.icon, active === t.id)}<span class="tlabel">${t.label}</span></span></button>`).join('');
   }
 
   function route() {
@@ -3195,7 +3992,10 @@
       case 'exam': html = examScreen(); tab = 'exam'; root = true; break;
       case 'quiz': html = quizScreen(); tab = 'exam'; break;
       case 'result': html = resultScreen(); tab = 'exam'; break;
-      case 'puja': html = a ? pujaGuideScreen(a) : pujaScreen(); tab = 'home'; break;
+      case 'puja':
+        if (a === 'deva') html = devaPujaScreen(b);
+        else html = a ? pujaGuideScreen(a) : pujaScreen();
+        tab = 'home'; break;
       case 'panjika': html = a ? panjikaSub(a) : panjikaScreen(); tab = 'home'; break;
       case 'feed':
         if (a === 'reel') { html = reelScreen(b); tab = 'feed'; }
@@ -3206,6 +4006,7 @@
       case 'reelssaved': html = savedReelsScreen(); tab = 'home'; break;
       case 'notes': html = notesScreen(); tab = 'home'; break;
       case 'note': html = noteComposerScreen(); tab = 'home'; break;
+      case 'settings': html = settingsScreen(); tab = 'me'; break;
       case 'seva': html = sevaScreen(); tab = 'seva'; root = true; break;
       case 'market': html = marketScreen(); tab = 'seva'; break;
       case 'me': html = meScreen(); tab = 'me'; root = true; break;
@@ -3222,8 +4023,11 @@
     clearInterval(U.medTimer); U.medTimer = null;
     clearInterval(U.seqTimer); U.seqTimer = null;
     const view = document.getElementById('view');
+    const _keep = U.keepTop === location.hash ? view.scrollTop : 0;
+    U.keepTop = null;
     view.innerHTML = html;
-    view.scrollTop = 0;
+    view.scrollTop = _keep;
+    try { hydrateArt(); } catch (e) {}
     document.querySelector('.shell').classList.toggle('sub', !root);
     renderTabbar(tab);
     if (name === 'reels' && !a) attachReelScroll();
@@ -3441,6 +4245,26 @@
       if (location.hash !== '#/reels') location.hash = '#/reels'; else render();
     },
     sheetOpen: () => openSheet(),
+    /* ---- পূজা দর্পণ ---- */
+    devaOffer: el => offerStep(el.dataset.id, el.dataset.k),
+    pujaExit: () => {
+      if (location.hash !== '#/puja') location.hash = '#/puja';
+      render();
+      toast('পূজা তালিকায় ফেরা হলো');
+    },
+    bellRing: el => {
+      bellTone(1);
+      if (el) { el.classList.remove('ring'); void el.offsetWidth; el.classList.add('ring'); }
+    },
+    pujaAarti: el => openAarti(el.dataset.id),
+    aartiClose: () => { closeAarti(); toast('আরতি শেষ — জয় মা'); },
+    devaReset: el => {
+      S.deva[devaKey(el.dataset.id)] = []; save('deva');
+      U.keepTop = location.hash;
+      toast('পূজা আবার শুরু হলো');
+      render();
+    },
+    sheetTab: el => { U.sheetTab = el.dataset.t === 'note' ? 'note' : 'hisab'; openSheet(); },
     sheetClose: () => closeSheet(),
     /* ---- নোট ---- */
     noteNew: () => {
@@ -3552,6 +4376,22 @@
       const next = S.theme === 'light' ? 'dark' : 'light';
       setTheme(next); render();
       toast(next === 'light' ? 'লাইট মোড (পাটা-থিম) চালু ☀' : 'ডার্ক মোড চালু 🌙');
+    },
+    /* হেডারের সেটিংস বাটন: পপ হয়ে ছোট পপআপ খোলে */
+    setPopupOpen: el => {
+      const b = el.closest('.hbtn-set') || el;
+      b.classList.add('popping');
+      if (S.sound) chime('soft');
+      setTimeout(() => { b.classList.remove('popping'); openSetPop(); }, 200);
+    },
+    setPopupClose: () => closeSetPop(),
+    /* সার্চ পপআপ */
+    searchOpen: () => openSearchPop(),
+    searchClose: () => closeSearchPop(),
+    searchGo: el => {
+      const to = el.dataset.to;
+      closeSearchPop();
+      if (to) { location.hash = to; }
     },
     toggleBg: () => { S.bg = !S.bg; save('bg'); applyBg(); render(); toast(S.bg ? 'পটভূমি থিম চালু' : 'পটভূমি থিম বন্ধ'); },
     toggleSound: () => { S.sound = !S.sound; save('sound'); if (S.sound) chime('soft'); render(); },
@@ -3839,17 +4679,26 @@
   });
 
   document.addEventListener('click', e => {
+    const hd = e.target.closest('.hx-d');
+    if (hd) { heroShow(+hd.dataset.hd); return; }
+    if (e.target.closest('.hx-rot')) { heroShow(_hxIdx + 1); return; }
     const el = e.target.closest('[data-act]');
     if (!el) return;
     const fn = ACTIONS[el.dataset.act];
     if (fn) { e.preventDefault(); fn(el, e); }
   });
   document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeSetPop(); closeSearchPop(); return; }
     if (e.key !== 'Enter' && e.key !== ' ') return;
     const el = e.target.closest('[data-act][role="button"],[data-act][role="checkbox"]');
     if (el) { e.preventDefault(); el.click(); }
   });
   document.addEventListener('input', e => {
+    if (e.target && e.target.id === 'sq') {
+      SI.q = e.target.value;
+      clearTimeout(SI.t); SI.t = setTimeout(() => runSearch(SI.q), 110);
+      return;
+    }
     if (e.target.id === 'chatDraft') { U.chatDraft = e.target.value; return; }
     if (e.target.id === 'noteText') { U.note.text = e.target.value; return; }
     if (e.target.id === 'noteSearch') {
@@ -3903,11 +4752,134 @@
     }
   });
   window.addEventListener('hashchange', render);
+  initDragEngine();
 
   /* =====================================================================
      INIT
      ===================================================================== */
-  function render() { route(); }
+  /* ---- ব্র্যান্ড বার্তা-টিকার: প্রতি ৩ সেকেন্ডে এক লাইন, মাঝে মাঝে শিশু-শিক্ষার দুই-ভাগ বার্তা (৫+৫ = ১০ সেকেন্ড) ---- */
+  const BL_LINES = [
+    '॥ ধর্মো রক্ষতি রক্ষিতঃ ॥',
+    'প্রতিদিন এক শ্লোক · প্রতিদিন এক ধাপ',
+    'গীতা · উপনিষদ · পুরাণ — সব এক জায়গায়',
+    '৮০৫ চ্যানেলের কথা, কীর্তন ও শাস্ত্রপাঠ',
+    'নিয়মিত জপে মন স্থির হয়, পূজায় ঘর পবিত্র'
+  ];
+  const BL_PROMO = ['আপনার শিশুকে প্রাতিষ্ঠানিক শিক্ষার', 'পাশাপাশি ধর্মীয় শিক্ষায় শিক্ষিত করুন।'];
+  let _blTimer = null, _blCount = 0, _blSince = 0, _blPhase = 'line';
+  function brandLineSet(text) {
+    const el = document.getElementById('brandline');
+    if (!el || el.dataset.txt === text) return;
+    el.dataset.txt = text;
+    el.classList.add('out');
+    setTimeout(() => {
+      el.textContent = text;
+      el.classList.remove('out');
+      el.classList.add('in');
+      setTimeout(() => el.classList.remove('in'), 460);
+    }, 220);
+  }
+  function brandTicker() {
+    clearTimeout(_blTimer);
+    const tick = () => {
+      const el = document.getElementById('brandline');
+      if (!el) { _blTimer = null; return; }
+      if (_blPhase === 'promo1') {
+        brandLineSet(BL_PROMO[0]); el.classList.add('promo');
+        _blPhase = 'promo2'; _blTimer = setTimeout(tick, 5000); return;
+      }
+      if (_blPhase === 'promo2') {
+        brandLineSet(BL_PROMO[1]);
+        _blPhase = 'line'; _blSince = 0; _blTimer = setTimeout(tick, 5000); return;
+      }
+      el.classList.remove('promo');
+      brandLineSet(BL_LINES[_blCount % BL_LINES.length]);
+      _blCount++; _blSince++;
+      _blPhase = (_blSince >= 4) ? 'promo1' : 'line';
+      _blTimer = setTimeout(tick, 3000);
+    };
+    tick();
+  }
+
+  /* ---------------------------------------------- হেডার: স্ক্রলে ছোট (v70)
+     স্ক্রল >৫২px হলে .home-head-এ hdr-min — শুধু লোগো · নাম · সার্চ আইকন থাকে। */
+  let _hdrRaf = null;
+  function hdrUpdate() {
+    const v = document.getElementById('view');
+    const h = document.querySelector('.home-head');
+    if (!h) return;
+    const on = !!v && v.scrollTop > 52;
+    if (on !== h.classList.contains('hdr-min')) h.classList.toggle('hdr-min', on);
+  }
+  function hdrInit() {
+    const v = document.getElementById('view');
+    if (!v || v.dataset.hdrBound) return;
+    v.dataset.hdrBound = '1';
+    v.addEventListener('scroll', () => {
+      if (_hdrRaf) return;
+      _hdrRaf = (window.requestAnimationFrame || (f => setTimeout(f, 16)))(() => { _hdrRaf = null; hdrUpdate(); });
+    }, { passive: true });
+  }
+
+  /* ------------------------------------- অ্যাপবারের শিরোনাম: মাঝে মাঝে ব্র্যান্ড নাম (v72)
+     প্রতিটি পর্দার নিজের শিরোনাম থাকলেও প্রতি তিন ধাপে একবার “সনাতন বিদ্যাপীঠ” আসে। */
+  let _abTimer = null, _abCount = 0;
+  function appbarTicker() {
+    clearInterval(_abTimer); _abTimer = null;
+    const h0 = document.querySelector('.appbar h3');
+    if (!h0) return;
+    if (h0.dataset.orig === undefined) h0.dataset.orig = h0.innerHTML;
+    const orig = h0.dataset.orig, alt = 'সনাতন বিদ্যাপীঠ';
+    _abCount = 0;
+    const swap = (txt) => {
+      const el = document.querySelector('.appbar h3');
+      if (!el) return;
+      el.classList.toggle('ab-brand', txt === alt);
+      el.classList.add('ab-out');
+      setTimeout(() => {
+        const e2 = document.querySelector('.appbar h3');
+        if (!e2) return;
+        e2.innerHTML = txt;
+        e2.classList.toggle('ab-brand', txt === alt);
+        e2.classList.remove('ab-out');
+        e2.classList.add('ab-in');
+        setTimeout(() => { const e3 = document.querySelector('.appbar h3'); if (e3) e3.classList.remove('ab-in'); }, 430);
+      }, 180);
+    };
+    _abTimer = setInterval(() => {
+      const el = document.querySelector('.appbar h3');
+      if (!el) { clearInterval(_abTimer); _abTimer = null; return; }
+      if (document.hidden) return;
+      _abCount++;
+      swap(_abCount % 3 === 0 ? alt : orig);
+    }, 3600);
+  }
+
+  /* হিরো কার্ডের শিরোনাম-রোটেশন (পঞ্জিকার ব্রত/উৎসব/আসন্ন) */
+  let _hxTimer = null, _hxIdx = 0;
+  function heroItems() { const r = document.getElementById('heroRot'); return r ? Array.from(r.children) : []; }
+  function heroShow(i) {
+    const items = heroItems(); if (!items.length) return;
+    _hxIdx = ((i % items.length) + items.length) % items.length;
+    items.forEach((el, k) => el.classList.toggle('on', k === _hxIdx));
+    document.querySelectorAll('.hx-d').forEach((d, k) => d.classList.toggle('on', k === _hxIdx));
+  }
+  function heroTicker() {
+    clearInterval(_hxTimer); _hxTimer = null;
+    if (heroItems().length < 2) return;
+    heroShow(0);
+    const slow = document.documentElement.classList.contains('no-motion')
+      || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+    _hxTimer = setInterval(() => {
+      if (!document.getElementById('heroRot')) { clearInterval(_hxTimer); _hxTimer = null; return; }
+      if (document.hidden) return;
+      heroShow(_hxIdx + 1);
+    }, slow ? 14000 : 6500);
+  }
+
+  function render() { route(); hdrInit(); hdrUpdate(); appbarTicker(); if (document.getElementById('brandline')) brandTicker();
+    if (document.getElementById('heroRot')) heroTicker();
+    refreshSetPop(); }
 
   function init() {
     /* ডিফল্ট থিম এখন লাইট — পুরনো সেভ করা 'dark' একবার বদলে দেওয়া হয় */
